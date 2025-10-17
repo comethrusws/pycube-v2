@@ -69,7 +69,7 @@ export default function DashboardContent() {
             </div>
 
             <div className="flex justify-center py-6">
-              <div className="relative w-40 h-40">
+              <div className="relative w-96 h-56">
                 {(() => {
                   const pct = Number(data?.tagging.percentTagged ?? 0)
                   // semicircle gauge parameters
@@ -85,16 +85,16 @@ export default function DashboardContent() {
                           <stop offset="100%" stopColor="#c41e3a" />
                         </linearGradient>
                       </defs>
-                      <path d="M10,50 A40,40 0 0 1 90,50" fill="none" stroke="#E0E6ED" strokeWidth="10" />
-                      <path d="M10,50 A40,40 0 0 1 90,50" fill="none" stroke="url(#tagGrad)" strokeWidth="10" strokeDasharray={`${dash} ${gap}`} />
+                      <path d="M10,50 A40,40 0 0 1 90,50" fill="none" stroke="#E0E6ED" strokeWidth="18" />
+                      <path d="M10,50 A40,40 0 0 1 90,50" fill="none" stroke="url(#tagGrad)" strokeWidth="18" strokeDasharray={`${dash} ${gap}`} strokeLinecap="round" />
                     </svg>
                   )
                 })()}
-                <div className="absolute left-0 right-0 top-10 flex flex-col items-center justify-center">
-                  <p className="text-2xl font-light" style={{ color: "#001f3f" }}>
+                <div className="absolute left-0 right-0 top-24 flex flex-col items-center justify-center">
+                  <p className="text-4xl font-light" style={{ color: "#001f3f" }}>
                     {data?.tagging.percentTagged ?? 0}%
                   </p>
-                  <p className="text-xs text-gray-600">Asset Tagged</p>
+                  <p className="text-base text-gray-600">Asset Tagged</p>
                 </div>
               </div>
             </div>
