@@ -372,6 +372,9 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   // Generate dashboard aggregated data
   const dashboardData = generateDashboardData(assets, maintenanceTasks, movementLogs, zones, users)
 
+  // Generate asset-locator specific data
+  const assetLocatorData = generateAssetLocatorData(assets, movementLogs, zones, maintenanceTasks)
+
   return {
     facilities,
     departments,
@@ -388,7 +391,8 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
     maintenanceTasks,
     alerts,
     userUtilizations,
-    dashboardData, // Add aggregated dashboard data
+    dashboardData,
+    assetLocatorData, // Add asset-locator specific data
   }
 }
 
@@ -533,6 +537,100 @@ function generateDashboardData(assets: Asset[], maintenanceTasks: MaintenanceTas
       topCategories,
       maintenanceDue
     }
+  }
+}
+
+function generateAssetLocatorData(assets: Asset[], movementLogs: MovementLog[], zones: Zone[], maintenanceTasks: MaintenanceTask[]) {
+  const totalAssets = assets.length
+  const locatedAssets = assets.filter(a => a.status !== "lost").length
+  const assetsToLocate = totalAssets - locatedAssets
+  const flaggedAssets = assets.filter(a => 
+    a.status === "lost" || 
+    maintenanceTasks.some(m => m.assetId === a.id && m.status === "overdue")
+  ).length
+
+  // Monitored product categories with realistic distribution
+  const categoryCounts = assets.reduce((acc, asset) => {
+    const category = asset.category || asset.type
+    acc[category] = (acc[category] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  const totalCategoryAssets = Object.values(categoryCounts).reduce((sum, count) => sum + count, 0)
+  const monitoredCategories = Object.entries(categoryCounts)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 6)
+    .map(([name, count], index) => ({
+      name,
+      value: Math.round((count / totalCategoryAssets) * 100),
+      color: [
+        "#0d7a8c", "#1e40af", "#7c3aed", "#dc2626", 
+        "#059669", "#d97706", "#be123c", "#4338f5"
+      ][index % 8]
+    }))
+
+  // Location trends (last 30 days)
+  const locationTrends = []
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+    const dateStr = `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
+    
+    const dayMovements = movementLogs.filter(log => {
+      const logDate = new Date(log.timestamp)
+      return logDate.toDateString() === date.toDateString()
+    })
+    
+    const locatedCount = new Set(dayMovements.map(log => log.assetId)).size
+    const unlocatedCount = Math.max(0, Math.floor(totalAssets * 0.15) - locatedCount + randomInt(-5, 5))
+    
+    locationTrends.push({
+      date: dateStr,
+      located: locatedCount + randomInt(50, 150),
+      unlocated: Math.max(0, unlocatedCount)
+    })
+  }
+
+  // Recorded asset locations distribution
+  const zoneCounts = assets.reduce((acc, asset) => {
+    const zone = zones.find(z => z.id === asset.location.zoneId)
+    const zoneName = zone?.name || "Unknown"
+    acc[zoneName] = (acc[zoneName] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  const totalZoneAssets = Object.values(zoneCounts).reduce((sum, count) => sum + count, 0)
+  const recordedLocations = Object.entries(zoneCounts)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 8)
+    .map(([name, count], index) => ({
+      name,
+      value: Math.round((count / totalZoneAssets) * 100),
+      color: [
+        "#0d7a8c", "#1e40af", "#7c3aed", "#dc2626", 
+        "#059669", "#d97706", "#be123c", "#4338f5"
+      ][index % 8]
+    }))
+
+  // Flagged reasons distribution
+  const flaggedReasons = [
+    { name: "Asset Lost", value: 35, color: "#dc2626" },
+    { name: "Maintenance Overdue", value: 25, color: "#d97706" },
+    { name: "Unauthorized Movement", value: 20, color: "#7c3aed" },
+    { name: "Low Battery", value: 12, color: "#059669" },
+    { name: "Geofence Violation", value: 8, color: "#1e40af" }
+  ]
+
+  return {
+    stats: {
+      total: totalAssets,
+      toLocate: assetsToLocate,
+      located: locatedAssets,
+      flagged: flaggedAssets
+    },
+    monitoredCategories,
+    locationTrends,
+    recordedLocations,
+    flaggedReasons
   }
 }
 

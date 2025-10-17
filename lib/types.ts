@@ -203,7 +203,8 @@ export interface SeedData {
   maintenanceTasks: MaintenanceTask[]
   alerts: Alert[]
   userUtilizations: UserUtilization[]
-  dashboardData?: DashboardData // Add dashboard data
+  dashboardData?: any // Add optional dashboard data
+  assetLocatorData?: any // Add optional asset-locator data
 }
 
 export interface GeneratorConfig {
