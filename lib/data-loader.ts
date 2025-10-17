@@ -11,11 +11,19 @@ export async function loadSeedData(): Promise<SeedData> {
 
   try {
     const seedPath = join(process.cwd(), "data", "seed.json")
+    console.log("Loading seed data from:", seedPath)
     const rawData = readFileSync(seedPath, "utf-8")
     cachedData = JSON.parse(rawData) as SeedData
+    console.log("Seed data loaded successfully:", {
+      assets: cachedData.assets.length,
+      zones: cachedData.zones.length,
+      users: cachedData.users.length,
+      facilities: cachedData.facilities.length
+    })
     return cachedData
   } catch (error) {
     console.error("Failed to load seed data:", error)
+    console.log("Make sure to run: npm run seed to generate the data first")
     
     // Return minimal fallback data structure
     return {
@@ -40,4 +48,5 @@ export async function loadSeedData(): Promise<SeedData> {
 
 export function clearCache() {
   cachedData = null
+  console.log("Seed data cache cleared")
 }

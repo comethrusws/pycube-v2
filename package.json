@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "seed": "ts-node --esm ./scripts/seed-generator.ts"
+    "seed": "npx tsx scripts/seed-generator.ts",
+    "seed:clear": "rm -rf data/seed.json"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

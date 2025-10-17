@@ -17,7 +17,11 @@ export default function DashboardContent() {
 
   const [range, setRange] = useState<"day" | "week" | "month">("week")
   useEffect(() => {
-    apiGet<typeof data>(`/api/core/dashboard?range=${range}`).then((d) => setData(d as any)).catch(() => {})
+    apiGet<typeof data>(`/api/core/dashboard?range=${range}`)
+      .then((d) => setData(d as any))
+      .catch((error) => {
+        console.error("Failed to fetch dashboard data:", error)
+      })
   }, [range])
   return (
     <div className="p-6 lg:p-8 space-y-8">
@@ -210,9 +214,9 @@ export default function DashboardContent() {
               </span>
               <span className="text-xs text-gray-600">Status</span>
             </div>
-            <div className="space-y-3 max-h-64 overflow-y-auto">
+            <div className="space-y-4 max-h-64 overflow-y-auto">
               {(data?.zonesNotScanned && data.zonesNotScanned.length > 0 ? data.zonesNotScanned : [
-                "ICU", "Emergency", "Radiology", "Surgery", "Pediatrics", "Pharmacy"
+                "ICU", "Emergency", "Radiology", "Surgery", "Orthopedics", "Pharmacy", "Neurology"
               ]).slice(0, 6).map((zone, i) => (
                 <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-gray-200">
                   <span className="text-sm font-light" style={{ color: "#001f3f" }}>
@@ -272,11 +276,11 @@ export default function DashboardContent() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2"
                 style={{ "--tw-ring-color": "#0d7a8c" } as React.CSSProperties}
                 value={range}
-                onChange={(e) => setRange(e.target.value as any)}
+                onChange={(e) => setRange(e.target.value as "day" | "week" | "month")}
               >
-                <option value="day">Day</option>
-                <option value="week">Week</option>
-                <option value="month">Month</option>
+                <option value="day">Last 24 Hours</option>
+                <option value="week">Last 7 Days</option>
+                <option value="month">Last 30 Days</option>
               </select>
             </div>
             <button className="mt-4 text-sm transition-opacity hover:opacity-80" style={{ color: "#0d7a8c" }}>
@@ -287,11 +291,41 @@ export default function DashboardContent() {
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={data?.visibility.trend ?? []} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="date" stroke="#94a3b8" style={{ fontSize: "12px" }} />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#94a3b8" 
+                  style={{ fontSize: "12px" }}
+                  interval="preserveStartEnd"
+                />
                 <YAxis stroke="#94a3b8" style={{ fontSize: "12px" }} />
-                <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "8px" }} />
-                <Line type="monotone" dataKey="scanned" stroke="#0d7a8c" strokeWidth={2} dot={{ r: 2 }} />
-                <Line type="monotone" dataKey="notScanned" stroke="#c41e3a" strokeWidth={2} dot={{ r: 2 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: "#fff", 
+                    border: "1px solid #e5e7eb", 
+                    borderRadius: "8px",
+                    fontSize: "12px"
+                  }}
+                  labelFormatter={(value) => {
+                    if (range === "day") return `Time: ${value}`
+                    return `Date: ${value}`
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="scanned" 
+                  stroke="#0d7a8c" 
+                  strokeWidth={2} 
+                  dot={{ r: 2 }} 
+                  name="Scanned"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="notScanned" 
+                  stroke="#c41e3a" 
+                  strokeWidth={2} 
+                  dot={{ r: 2 }} 
+                  name="Not Scanned"
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>

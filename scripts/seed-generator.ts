@@ -45,7 +45,7 @@ const DEFAULT_CONFIG: GeneratorConfig = {
   zonesPerFloor: 8,
   readersPerZone: 2,
   departmentsPerFacility: 6,
-  assetsTotal: 18000, // > 16k as requested
+  assetsTotal: 6734, // Changed from 18000 to 6734 as requested
   usersPerDepartment: 12,
   maintenanceTaskPerAssetRatio: 0.3, // Increased for better maintenance data
   movementLogsPerAsset: 4, // Increased for better tracking
@@ -236,7 +236,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   const taggingRate = 0.75 // Increased to 75% for better data
 
   // Generate assets with enhanced data
-  for (let a = 0; a < DEFAULT_CONFIG.assetsTotal; a++) {
+  for (let a = 0; a < config.assetsTotal; a++) {
     const zoneId = randomChoice(allZones)
     const floorId = zoneToFloor.get(zoneId) as string
     const buildingId = floorToBuilding.get(floorId) as string
