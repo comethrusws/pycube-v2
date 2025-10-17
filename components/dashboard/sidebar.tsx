@@ -58,8 +58,8 @@ const menuSections = [
         label: "Asset Locator",
         href: "/asset-locator",
         submenu: [
-          { label: "Dashboard", href: "/asset-locator" },
-          { label: "Location Lists", href: "/asset-locator" },
+          { label: "Dashboard", href: "/asset-locator/dashboard" },
+          { label: "Location Lists", href: "/asset-locator/location-lists" }
         ],
       },
     ] as MenuItem[],

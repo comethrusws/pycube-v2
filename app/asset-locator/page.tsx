@@ -1,11 +1,22 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 import AssetLocatorDashboard from "@/components/asset-locator/asset-locator-dashboard"
 import AssetLocatorContent from "@/components/asset-locator/asset-locator-content"
 
 export default function AssetLocatorPage() {
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab")
   const [activeTab, setActiveTab] = useState<"dashboard" | "lists">("dashboard")
+
+  useEffect(() => {
+    if (tabParam === "lists") {
+      setActiveTab("lists")
+    } else {
+      setActiveTab("dashboard")
+    }
+  }, [tabParam])
 
   return (
     <DashboardLayout>
