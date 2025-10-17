@@ -12,6 +12,7 @@ export default function DashboardContent() {
     overview: { notFound: number; inUse: number; found: number }
     visibility: { scanned: number; notScanned: number; trend: { date: string; scanned: number; notScanned: number }[] }
     zonesNotScanned: string[]
+    assetDetails: { recentAssets: { id: string; name: string; type: string; location: string; status: string }[]; topCategories: { name: string; count: number }[]; maintenanceDue: { id: string; name: string; dueDate: string }[] }
   }>()
 
   const [range, setRange] = useState<"day" | "week" | "month">("week")
@@ -72,11 +73,6 @@ export default function DashboardContent() {
               <div className="relative w-96 h-56">
                 {(() => {
                   const pct = Number(data?.tagging.percentTagged ?? 0)
-                  // semicircle gauge parameters
-                  const r = 40
-                  const circumference = Math.PI * r
-                  const dash = (pct / 100) * circumference
-                  const gap = circumference - dash
                   return (
                     <svg viewBox="0 0 100 60" className="w-full h-full">
                       <defs>
@@ -85,7 +81,7 @@ export default function DashboardContent() {
                           <stop offset="100%" stopColor="#c41e3a" />
                         </linearGradient>
                       </defs>
-                      <path d="M10,50 A40,40 0 0 1 90,50" fill="none" stroke="#E0E6ED" strokeWidth="18" pathLength={100} />
+                      <path d="M10,50 A40,40 0 0 1 90,50" fill="none" stroke="#c41e3a" strokeWidth="18" pathLength={100} />
                       <path
                         d="M10,50 A40,40 0 0 1 90,50"
                         fill="none"
@@ -142,6 +138,53 @@ export default function DashboardContent() {
                   <p className="text-3xl font-light" style={{ color: "#001f3f" }}>{item.value}</p>
                 </div>
               ))}
+            </div>
+            
+            {/* Recent Assets */}
+            <div className="mt-6">
+              <p className="text-xs font-medium uppercase tracking-wide mb-3" style={{ color: "#0d7a8c" }}>
+                Recent Assets
+              </p>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {(data?.assetDetails?.recentAssets ?? [
+                  { id: "A001", name: "MRI Scanner", type: "Medical", location: "Zone A", status: "In Use" },
+                  { id: "A002", name: "Ultrasound", type: "Medical", location: "Zone B", status: "Available" },
+                  { id: "A003", name: "X-Ray Machine", type: "Medical", location: "Zone C", status: "Maintenance" }
+                ]).slice(0, 3).map((asset, i) => (
+                  <div key={i} className="flex items-center justify-between p-2 bg-slate-50 rounded border border-gray-200">
+                    <div>
+                      <p className="text-sm font-medium" style={{ color: "#001f3f" }}>{asset.name}</p>
+                      <p className="text-xs text-gray-500">{asset.location}</p>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      asset.status === 'Available' ? 'bg-green-100 text-green-600' :
+                      asset.status === 'In Use' ? 'bg-blue-100 text-blue-600' : 
+                      'bg-orange-100 text-orange-600'
+                    }`}>
+                      {asset.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Top Categories */}
+            <div className="mt-4">
+              <p className="text-xs font-medium uppercase tracking-wide mb-3" style={{ color: "#0d7a8c" }}>
+                Top Categories
+              </p>
+              <div className="space-y-2">
+                {(data?.assetDetails?.topCategories ?? [
+                  { name: "Medical Equipment", count: 156 },
+                  { name: "IT Equipment", count: 89 },
+                  { name: "Furniture", count: 67 }
+                ]).slice(0, 3).map((category, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: "#001f3f" }}>{category.name}</span>
+                    <span className="text-sm font-medium" style={{ color: "#0d7a8c" }}>{category.count}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
