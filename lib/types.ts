@@ -1,4 +1,5 @@
 export type Status = "available" | "in-use" | "maintenance" | "lost"
+export type MaintenanceStatus = "pending" | "in-progress" | "completed" | "overdue"
 
 export interface Facility {
   id: string
@@ -78,20 +79,22 @@ export interface Asset {
   id: string
   name: string
   type: string
+  category?: string // Add category field
   tagId: string
   departmentId: string
-  location: AssetLocationRef
+  location: {
+    buildingId: string
+    floorId: string
+    zoneId: string
+  }
   status: Status
   utilization: number
   lastActive: string
   maintenanceDue: string
-}
-
-export interface UserLog {
-  id: string
-  userId: string
-  action: string
-  timestamp: string
+  serialNumber?: string // Add serial number
+  purchaseDate?: string // Add purchase date
+  warrantyExpiry?: string // Add warranty expiry
+  value?: number // Add asset value
 }
 
 export interface MovementLog {
@@ -101,34 +104,87 @@ export interface MovementLog {
   toZoneId: string
   timestamp: string
   authorized: boolean
+  movedBy?: string // Add who moved it
+  reason?: string // Add reason for movement
 }
-
-export type MaintenanceStatus = "pending" | "in-progress" | "completed"
 
 export interface MaintenanceTask {
   id: string
   assetId: string
+  type?: string // Add maintenance type
+  description?: string // Add description
   scheduledDate: string
+  completedDate?: string // Add completion date
   status: MaintenanceStatus
   assignedTo: string
+  priority?: string // Add priority
+  estimatedDuration?: number // Add estimated duration in minutes
+  cost?: number // Add estimated/actual cost
 }
 
-export type AlertType = "movement" | "maintenance" | "geofence"
-export type TargetRole = "biomedical" | "nursing"
+export type AlertType = "movement" | "maintenance" | "geofence" | "utilization" | "battery"
+export type TargetRole = "biomedical" | "nursing" | "admin"
 
 export interface Alert {
   id: string
   type: AlertType
+  assetId?: string // Link to specific asset
   targetRole: TargetRole
   message: string
+  severity?: "low" | "medium" | "high" | "critical" // Add severity
   createdAt: string
   resolved: boolean
+  resolvedAt?: string // Add resolution timestamp
+  resolvedBy?: string // Add who resolved it
 }
 
 export interface UserUtilization {
   userId: string
   sessions: number
   avgSessionTime: number
+  totalTime?: number // Add total time spent
+  lastActivity?: string // Add last activity timestamp
+  featuresUsed?: string[] // Add features used
+}
+
+export interface UserLog {
+  id: string
+  userId: string
+  action: string
+  details?: string // Add action details
+  timestamp: string
+  ipAddress?: string // Add IP address
+  userAgent?: string // Add user agent
+}
+
+export interface DashboardData {
+  stats: {
+    totalAssets: number
+    totalFacilities: number
+    totalUsers: number
+    categories: number
+  }
+  tagging: {
+    tagged: number
+    untagged: number
+    percentTagged: number
+  }
+  overview: {
+    notFound: number
+    inUse: number
+    found: number
+  }
+  visibility: {
+    scanned: number
+    notScanned: number
+    trend: { date: string; scanned: number; notScanned: number }[]
+  }
+  zonesNotScanned: string[]
+  assetDetails: {
+    recentAssets: { id: string; name: string; type: string; location: string; status: string; lastActive: string }[]
+    topCategories: { name: string; count: number }[]
+    maintenanceDue: { id: string; assetId: string; name: string; dueDate: string; type: string }[]
+  }
 }
 
 export interface SeedData {
@@ -147,6 +203,7 @@ export interface SeedData {
   maintenanceTasks: MaintenanceTask[]
   alerts: Alert[]
   userUtilizations: UserUtilization[]
+  dashboardData?: DashboardData // Add dashboard data
 }
 
 export interface GeneratorConfig {
