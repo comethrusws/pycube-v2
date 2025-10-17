@@ -1,63 +1,47 @@
 "use client"
-import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
-import AssetLocatorDashboard from "@/components/asset-locator/asset-locator-dashboard"
-import AssetLocatorContent from "@/components/asset-locator/asset-locator-content"
+import AssetLocatorPageContent from "@/components/asset-locator/asset-locator-page-content"
 
-export default function AssetLocatorPage() {
-  const searchParams = useSearchParams()
-  const tabParam = searchParams.get("tab")
-  const [activeTab, setActiveTab] = useState<"dashboard" | "lists">("dashboard")
-
-  useEffect(() => {
-    if (tabParam === "lists") {
-      setActiveTab("lists")
-    } else {
-      setActiveTab("dashboard")
-    }
-  }, [tabParam])
-
+function AssetLocatorPageFallback() {
   return (
-    <DashboardLayout>
-      <div className="p-6">
-        {/* Tab Navigation */}
-        <div className="mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab("dashboard")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "dashboard"
-                    ? "border-teal-500 text-teal-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Dashboard
-              </button>
-              <button
-                onClick={() => setActiveTab("lists")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "lists"
-                    ? "border-teal-500 text-teal-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Location Lists
-              </button>
-            </nav>
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        <div className="-mx-6 -mb-6">
-          {activeTab === "dashboard" ? (
-            <AssetLocatorDashboard />
-          ) : (
-            <AssetLocatorContent />
-          )}
+    <div className="p-6">
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <div className="py-2 px-1 border-b-2 border-teal-500 text-teal-600 font-medium text-sm">
+              Dashboard
+            </div>
+            <div className="py-2 px-1 border-b-2 border-transparent text-gray-500 font-medium text-sm">
+              Location Lists
+            </div>
+          </nav>
         </div>
       </div>
+      <div className="-mx-6 -mb-6">
+        <div className="p-8 bg-gray-50 min-h-screen">
+          <div className="max-w-7xl mx-auto">
+            <div className="animate-pulse space-y-8">
+              <div className="h-8 bg-gray-200 rounded w-48"></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-32 bg-gray-200 rounded-2xl"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function AssetLocatorPage() {
+  return (
+    <DashboardLayout>
+      <Suspense fallback={<AssetLocatorPageFallback />}>
+        <AssetLocatorPageContent />
+      </Suspense>
     </DashboardLayout>
   )
 }
