@@ -32,7 +32,7 @@ export default function DashboardContent() {
           { title: "Total Facilities", subtitle: "Facility", value: data?.stats.totalFacilities ?? "-" },
           { title: "Total Users", subtitle: "Active", value: data?.stats.totalUsers ?? "-" },
         ].map((card, i) => (
-          <div key={i} className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+          <div key={i} className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
             <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>
               {card.title}
             </p>
@@ -47,7 +47,7 @@ export default function DashboardContent() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Asset Tagged */}
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="space-y-6">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: "#0d7a8c" }}>
@@ -105,23 +105,19 @@ export default function DashboardContent() {
         </div>
 
         {/* Assets Overview */}
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
           <h3 className="text-sm font-medium uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
             Assets Overview
           </h3>
           <div className="space-y-4">
-            <div className="text-center py-8">
-              <p className="text-sm text-gray-600">No records found!</p>
-            </div>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { icon: "⚠️", label: "Assets Not Found", value: data?.overview.notFound ?? 0 },
-                { icon: "⏱️", label: "Assets In Use", value: data?.overview.inUse ?? 0 },
-                { icon: "✓", label: "Assets Found", value: data?.overview.found ?? 0 },
+                { label: "Assets Not Found", value: data?.overview.notFound ?? 0, color: "#c41e3a" },
+                { label: "Assets In Use", value: data?.overview.inUse ?? 0, color: "#0d7a8c" },
+                { label: "Assets Found", value: data?.overview.found ?? 0, color: "#0d7a8c" },
               ].map((item, i) => (
-                <div key={i} className="text-center">
-                  <div className="flex justify-center mb-2 text-2xl">{item.icon}</div>
-                  <p className="text-2xl font-light" style={{ color: "#001f3f" }}>
+                <div key={i} className="text-center p-4 bg-slate-50 rounded-lg border border-gray-200">
+                  <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
                     {item.value}
                   </p>
                   <p className="text-xs text-gray-600 mt-1">{item.label}</p>
@@ -132,7 +128,7 @@ export default function DashboardContent() {
         </div>
 
         {/* Zones */}
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
           <h3 className="text-sm font-medium uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
             Zones Not Scanned
           </h3>
@@ -145,14 +141,11 @@ export default function DashboardContent() {
             </div>
             <div className="space-y-3">
               {(data?.zonesNotScanned ?? ["-"]).map((zone, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 bg-slate-100 rounded-lg">
-                  <div
-                    className="w-8 h-8 rounded-full"
-                    style={{ backgroundColor: ["#fee2e2", "#fed7aa", "#fecaca"][i] }}
-                  ></div>
+                <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-gray-200">
                   <span className="text-sm font-light" style={{ color: "#001f3f" }}>
                     {zone}
                   </span>
+                  <span className="text-xs text-gray-500">Unscanned</span>
                 </div>
               ))}
             </div>
@@ -167,7 +160,7 @@ export default function DashboardContent() {
       </div>
 
       {/* Visibility */}
-      <div className="bg-white rounded-lg p-6 border border-gray-200">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-light mb-6" style={{ color: "#001f3f" }}>
           Visibility and Location
         </h2>
@@ -179,7 +172,7 @@ export default function DashboardContent() {
                   Assets Scanned
                 </p>
                 <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                  0
+                  {data?.visibility.scanned ?? 0}
                 </p>
               </div>
               <div>
@@ -187,14 +180,14 @@ export default function DashboardContent() {
                   Assets Not Scanned
                 </p>
                 <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                  155
+                  {data?.visibility.notScanned ?? 0}
                 </p>
               </div>
             </div>
             <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
               <div
                 className="bg-gradient-to-r h-full rounded-full"
-                style={{ width: "0%", backgroundImage: "linear-gradient(to right, #0d7a8c, #c41e3a)" }}
+                style={{ width: `${Math.min(100, Math.max(0, (Number(data?.visibility.scanned ?? 0) / Number(data?.stats.totalAssets || 1)) * 100))}%`, backgroundImage: "linear-gradient(to right, #0d7a8c, #c41e3a)" }}
               ></div>
             </div>
             <div className="mt-4">
