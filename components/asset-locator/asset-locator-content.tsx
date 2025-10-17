@@ -38,14 +38,31 @@ const StatusBadge = ({ status }: { status: string }) => {
         return "bg-blue-100 text-blue-800 border-blue-200"
       case "overdue":
         return "bg-red-100 text-red-800 border-red-200"
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200"
       default:
         return "bg-gray-100 text-gray-800 border-gray-200"
     }
   }
 
+  const formatStatus = (status: string) => {
+    switch (status) {
+      case "in-progress":
+        return "In Progress"
+      case "overdue":
+        return "Overdue"
+      case "pending":
+        return "Pending"
+      case "completed":
+        return "Completed"
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1)
+    }
+  }
+
   return (
-    <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(status)}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+    <span className={`inline-block items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyle(status)}`}>
+      {formatStatus(status)}
     </span>
   )
 }
@@ -59,13 +76,15 @@ const PriorityBadge = ({ priority }: { priority: string }) => {
         return "bg-orange-500 text-white"
       case "medium":
         return "bg-yellow-500 text-white"
+      case "low":
+        return "bg-green-500 text-white"
       default:
         return "bg-gray-400 text-white"
     }
   }
 
   return (
-    <span className={`px-2 py-1 text-xs font-medium rounded ${getPriorityStyle(priority)}`}>
+    <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${getPriorityStyle(priority)}`}>
       {priority.toUpperCase()}
     </span>
   )
@@ -332,16 +351,16 @@ export default function AssetLocatorContent() {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Actions
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-32">
                     List ID
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider min-w-48">
                     List Name
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-32">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-24">
                     Priority
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
