@@ -174,7 +174,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                           onClick={(e) => toggleSubmenu(item.label, e)}
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm text-left"
                           style={{
-                            backgroundColor: active ? "#0d7a8c" : "transparent",
+                            backgroundColor: active ? "bg-teal-400" : "transparent",
                             color: "white",
                           }}
                         >

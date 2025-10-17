@@ -59,6 +59,9 @@ const ASSET_TYPES = [
   "Ultrasound",
   "X-Ray",
   "Defibrillator",
+  "Patient Monitor",
+  "Syringe Pump",
+  "Telemetry Transmitter",
 ]
 
 const ROLES = ["admin", "biomedical", "nursing", "technician", "viewer"]
@@ -144,15 +147,29 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
       buildings.push(building)
       facility.buildings.push(building)
 
-      for (let fl = 0; fl < config.floorsPerBuilding; fl++) {
+    for (let fl = 0; fl < config.floorsPerBuilding; fl++) {
         const floorId = randomUUID()
         const floor: Floor = { id: floorId, name: `Floor ${fl + 1}`, buildingId, zones: [] }
         floors.push(floor)
         building.floors.push(floor)
 
+        const ZONE_NAMES = [
+          "ICU",
+          "Emergency",
+          "Radiology",
+          "Surgery",
+          "Pediatrics",
+          "Pharmacy",
+          "Clinical Engineering",
+          "General Ward",
+          "Lab Services",
+          "Reception",
+        ]
+
         for (let z = 0; z < config.zonesPerFloor; z++) {
           const zoneId = randomUUID()
-          const zone: Zone = { id: zoneId, name: `Zone ${z + 1}`, floorId, readers: [] }
+          const zoneName = ZONE_NAMES[(b * 100 + fl * 10 + z) % ZONE_NAMES.length]
+          const zone: Zone = { id: zoneId, name: zoneName, floorId, readers: [] }
           zones.push(zone)
           floor.zones.push(zone)
 
@@ -185,6 +202,16 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
 
   const statuses: Status[] = ["available", "in-use", "maintenance", "lost"]
 
+  // Weighted status distribution (more available, fewer lost)
+  const statusPool: Status[] = [
+    ...Array(55).fill("available"),
+    ...Array(25).fill("in-use"),
+    ...Array(15).fill("maintenance"),
+    ...Array(5).fill("lost"),
+  ]
+
+  const taggingRate = 0.3 // 30% tagged
+
   for (let a = 0; a < DEFAULT_CONFIG.assetsTotal; a++) {
     const zoneId = randomChoice(allZones)
     const floorId = zoneToFloor.get(zoneId) as string
@@ -193,17 +220,22 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
     const deptIds = facilityToDepartments.get(facilityId) as string[]
     const departmentId = randomChoice(deptIds)
 
+    const status = randomChoice(statusPool)
+    const isTagged = Math.random() < taggingRate
+    const type = randomChoice(ASSET_TYPES)
+    const lastActiveDays = status === "in-use" ? randomInt(0, 3) : status === "available" ? randomInt(0, 14) : randomInt(7, 60)
+
     const asset: Asset = {
       id: randomUUID(),
-      name: `${randomChoice(ASSET_TYPES)} #${a + 1}`,
-      type: randomChoice(ASSET_TYPES),
-      tagId: `TAG-${a + 1}`.padStart(8, "0"),
+      name: `${type} #${a + 1}`,
+      type,
+      tagId: isTagged ? `TAG-${(a + 1).toString().padStart(6, "0")}` : "",
       departmentId,
       location: { buildingId, floorId, zoneId },
-      status: randomChoice(statuses),
-      utilization: randomInt(0, 100),
-      lastActive: randomDateISO(30),
-      maintenanceDue: randomDateISO(180),
+      status,
+      utilization: status === "in-use" ? randomInt(40, 95) : status === "available" ? randomInt(5, 40) : randomInt(0, 20),
+      lastActive: randomDateISO(lastActiveDays),
+      maintenanceDue: status === "maintenance" ? randomDateISO(15) : randomDateISO(120),
     }
     assets.push(asset)
 
@@ -215,7 +247,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
         assetId: asset.id,
         fromZoneId: zoneId,
         toZoneId,
-        timestamp: randomDateISO(90),
+        timestamp: randomDateISO(m === 0 ? lastActiveDays : randomInt(3, 90)),
         authorized: Math.random() > 0.1,
       })
     }

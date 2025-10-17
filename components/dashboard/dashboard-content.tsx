@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useEffect, useState } from "react"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { apiGet } from "@/lib/fetcher"
 
 export default function DashboardContent() {
@@ -9,13 +10,14 @@ export default function DashboardContent() {
     stats: { totalAssets: number; totalFacilities: number; totalUsers: number; categories: number }
     tagging: { tagged: number; untagged: number; percentTagged: number }
     overview: { notFound: number; inUse: number; found: number }
-    visibility: { scanned: number; notScanned: number }
+    visibility: { scanned: number; notScanned: number; trend: { date: string; scanned: number; notScanned: number }[] }
     zonesNotScanned: string[]
   }>()
 
+  const [range, setRange] = useState<"day" | "week" | "month">("week")
   useEffect(() => {
-    apiGet<typeof data>("/api/core/dashboard").then((d) => setData(d as any)).catch(() => {})
-  }, [])
+    apiGet<typeof data>(`/api/core/dashboard?range=${range}`).then((d) => setData(d as any)).catch(() => {})
+  }, [range])
   return (
     <div className="p-6 lg:p-8 space-y-8">
       <div>
@@ -67,32 +69,28 @@ export default function DashboardContent() {
             </div>
 
             <div className="flex justify-center py-6">
-              <div className="relative w-32 h-32">
-                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                  <circle cx="50" cy="50" r="40" fill="none" stroke="#E0E6ED" strokeWidth="8" />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="#0D7A8C"
-                    strokeWidth="8"
-                    strokeDasharray="75.4 251.3"
-                    strokeLinecap="round"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="#C41E3A"
-                    strokeWidth="8"
-                    strokeDasharray="175.9 251.3"
-                    strokeDashoffset="-75.4"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="relative w-40 h-40">
+                {(() => {
+                  const pct = Number(data?.tagging.percentTagged ?? 0)
+                  // semicircle gauge parameters
+                  const r = 40
+                  const circumference = Math.PI * r
+                  const dash = (pct / 100) * circumference
+                  const gap = circumference - dash
+                  return (
+                    <svg viewBox="0 0 100 60" className="w-full h-full">
+                      <defs>
+                        <linearGradient id="tagGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#0d7a8c" />
+                          <stop offset="100%" stopColor="#c41e3a" />
+                        </linearGradient>
+                      </defs>
+                      <path d="M10,50 A40,40 0 0 1 90,50" fill="none" stroke="#E0E6ED" strokeWidth="10" />
+                      <path d="M10,50 A40,40 0 0 1 90,50" fill="none" stroke="url(#tagGrad)" strokeWidth="10" strokeDasharray={`${dash} ${gap}`} />
+                    </svg>
+                  )
+                })()}
+                <div className="absolute left-0 right-0 top-10 flex flex-col items-center justify-center">
                   <p className="text-2xl font-light" style={{ color: "#001f3f" }}>
                     {data?.tagging.percentTagged ?? 0}%
                   </p>
@@ -110,17 +108,29 @@ export default function DashboardContent() {
             Assets Overview
           </h3>
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: "Assets Not Found", value: data?.overview.notFound ?? 0, color: "#c41e3a" },
-                { label: "Assets In Use", value: data?.overview.inUse ?? 0, color: "#0d7a8c" },
-                { label: "Assets Found", value: data?.overview.found ?? 0, color: "#0d7a8c" },
-              ].map((item, i) => (
-                <div key={i} className="text-center p-4 bg-slate-50 rounded-lg border border-gray-200">
-                  <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                    {item.value}
-                  </p>
-                  <p className="text-xs text-gray-600 mt-1">{item.label}</p>
+            <div className="grid grid-cols-3 gap-4">
+              {[{
+                label: "Assets Not Found",
+                value: data?.overview.notFound ?? 0,
+                accent: "#fee2e2",
+                border: "#fecaca",
+                text: "#c41e3a",
+              }, {
+                label: "Assets In Use",
+                value: data?.overview.inUse ?? 0,
+                accent: "#e0f2f1",
+                border: "#b2dfdb",
+                text: "#0d7a8c",
+              }, {
+                label: "Assets Found",
+                value: data?.overview.found ?? 0,
+                accent: "#eef2ff",
+                border: "#c7d2fe",
+                text: "#1e3a8a",
+              }].map((item, i) => (
+                <div key={i} className="p-4 rounded-xl" style={{ backgroundColor: item.accent, border: `1px solid ${item.border}` }}>
+                  <p className="text-xs font-medium mb-1" style={{ color: item.text }}>{item.label}</p>
+                  <p className="text-3xl font-light" style={{ color: "#001f3f" }}>{item.value}</p>
                 </div>
               ))}
             </div>
@@ -194,33 +204,29 @@ export default function DashboardContent() {
               <select
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2"
                 style={{ "--tw-ring-color": "#0d7a8c" } as React.CSSProperties}
+                value={range}
+                onChange={(e) => setRange(e.target.value as any)}
               >
-                <option>Day</option>
-                <option>Week</option>
-                <option>Month</option>
+                <option value="day">Day</option>
+                <option value="week">Week</option>
+                <option value="month">Month</option>
               </select>
             </div>
             <button className="mt-4 text-sm transition-opacity hover:opacity-80" style={{ color: "#0d7a8c" }}>
               Today
             </button>
           </div>
-          <div className="flex items-center justify-center bg-slate-100 rounded-lg p-8 min-h-64">
-            <div className="text-center">
-              <svg
-                className="w-16 h-16 text-gray-400 mx-auto mb-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-              <p className="text-sm text-gray-600">Chart visualization</p>
-            </div>
+          <div className="bg-slate-50 rounded-lg p-0 min-h-64 border border-gray-200">
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={data?.visibility.trend ?? []} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="date" stroke="#94a3b8" style={{ fontSize: "12px" }} />
+                <YAxis stroke="#94a3b8" style={{ fontSize: "12px" }} />
+                <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "8px" }} />
+                <Line type="monotone" dataKey="scanned" stroke="#0d7a8c" strokeWidth={2} dot={{ r: 2 }} />
+                <Line type="monotone" dataKey="notScanned" stroke="#c41e3a" strokeWidth={2} dot={{ r: 2 }} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
