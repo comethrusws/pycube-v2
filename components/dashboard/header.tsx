@@ -25,7 +25,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
         <button onClick={onMenuClick} className="lg:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors">
           <Menu className="w-5 h-5" style={{ color: "#001f3f" }} />
         </button>
-        <Image src="/pycube-logo.png" alt="Pycube" width={140} height={40} className="h-10 w-auto" />
+        <Image src="/pycube-logo.svg" alt="Pycube" width={140} height={40} className="h-10 w-auto" />
       </div>
 
       <div className="hidden md:flex flex-1 max-w-xs mx-8">

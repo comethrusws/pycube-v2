@@ -7,7 +7,7 @@ const geistSans = Geist({ subsets: ["latin"] })
 const geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Pycube - Asset Management",
+  title: "Pycube",
   description: "Intelligent Location System for Asset Management",
 }
 
