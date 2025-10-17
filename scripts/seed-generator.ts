@@ -1,5 +1,6 @@
 import { writeFileSync, mkdirSync, existsSync } from "fs"
 import { join } from "path"
+import { pathToFileURL } from "url"
 import { randomUUID } from "crypto"
 import type {
   SeedData,
@@ -271,18 +272,64 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   }
 }
 
+function parseArgs(): Partial<GeneratorConfig> {
+  const overrides: Partial<GeneratorConfig> = {}
+  for (const arg of process.argv.slice(2)) {
+    const [k, v] = arg.split("=")
+    if (!k || v === undefined) continue
+    const key = k.replace(/^--/, "") as keyof GeneratorConfig
+    const num = Number(v)
+    if (!Number.isNaN(num)) (overrides as any)[key] = num
+  }
+  // Env overrides
+  if (process.env.SEED_ASSETS) overrides.assetsTotal = Number(process.env.SEED_ASSETS)
+  return overrides
+}
+
 function main() {
+  const overrides = parseArgs()
+  const effective: GeneratorConfig = { ...DEFAULT_CONFIG, ...overrides }
   const outDir = join(process.cwd(), "data")
   const outFile = join(outDir, "seed.json")
   if (!existsSync(outDir)) mkdirSync(outDir)
-  const data = generateSeed()
+  const data = generateSeed(effective)
   writeFileSync(outFile, JSON.stringify(data), { encoding: "utf-8" })
   // eslint-disable-next-line no-console
   console.log(`Generated seed at ${outFile}`)
+  // eslint-disable-next-line no-console
+  console.log(
+    JSON.stringify(
+      {
+        counts: {
+          facilities: data.facilities.length,
+          departments: data.departments.length,
+          buildings: data.buildings.length,
+          floors: data.floors.length,
+          zones: data.zones.length,
+          readers: data.readers.length,
+          users: data.users.length,
+          assets: data.assets.length,
+          movementLogs: data.movementLogs.length,
+          maintenanceTasks: data.maintenanceTasks.length,
+          alerts: data.alerts.length,
+        },
+        config: effective,
+      },
+      null,
+      2,
+    ),
+  )
 }
 
-if (require.main === module) {
-  main()
+// ESM-compatible direct execution check
+try {
+  const isDirect = import.meta.url === pathToFileURL(process.argv[1]).href
+  if (isDirect) {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    Promise.resolve().then(() => main())
+  }
+} catch {
+  // noop
 }
 
 export { generateSeed }
