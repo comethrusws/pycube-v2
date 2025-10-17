@@ -28,6 +28,13 @@ interface SidebarProps {
   onToggle: () => void
 }
 
+interface MenuItem {
+  icon: React.ComponentType<any>
+  label: string
+  href: string
+  submenu?: { label: string; href: string }[]
+}
+
 const menuSections = [
   {
     items: [
@@ -35,27 +42,27 @@ const menuSections = [
       { icon: Settings, label: "Implementation", href: "/dashboard/implementation" },
       { icon: Zap, label: "App Settings", href: "/dashboard/settings" },
       { icon: Bot, label: "AI Assistant", href: "/dashboard/ai-assistant" },
-    ],
+    ] as MenuItem[],
   },
   {
     items: [
       { icon: Package, label: "Product Categories", href: "/dashboard/categories" },
       { icon: List, label: "Products", href: "/dashboard/products" },
       { icon: Database, label: "Assets", href: "/dashboard/assets" },
-    ],
+    ] as MenuItem[],
   },
   {
     items: [
       {
         icon: MapPin,
         label: "Asset Locator",
-        href: "/asset-locator/dashboard",
+        href: "/asset-locator",
         submenu: [
-          { label: "Dashboard", href: "/asset-locator/dashboard" },
-          { label: "Asset Locator", href: "/asset-locator" },
+          { label: "Dashboard", href: "/asset-locator" },
+          { label: "Location Lists", href: "/asset-locator" },
         ],
       },
-    ],
+    ] as MenuItem[],
   },
   {
     items: [
@@ -68,7 +75,7 @@ const menuSections = [
           { label: "Maintenance Requests", href: "/preventative-maintenance/requests" },
         ],
       },
-    ],
+    ] as MenuItem[],
   },
   {
     items: [
@@ -84,7 +91,7 @@ const menuSections = [
           { label: "Roofers", href: "/dashboard/space/roofers" },
         ],
       },
-    ],
+    ] as MenuItem[],
   },
   {
     items: [
@@ -97,13 +104,13 @@ const menuSections = [
           { label: "Assets", href: "/dashboard/protection/assets" },
         ],
       },
-    ],
+    ] as MenuItem[],
   },
   {
     items: [
       { icon: Warehouse, label: "Facilities", href: "/dashboard/facilities" },
       { icon: Users, label: "Departments", href: "/dashboard/departments" },
-    ],
+    ] as MenuItem[],
   },
 ]
 
@@ -118,10 +125,10 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
     setExpandedItems((prev) => (prev.includes(label) ? prev.filter((item) => item !== label) : [...prev, label]))
   }
 
-  const isItemActive = (item: any): boolean => {
+  const isItemActive = (item: MenuItem): boolean => {
     if (item.href === pathname) return true
     if (item.submenu) {
-      return item.submenu.some((sub: any) => sub.href === pathname)
+      return item.submenu.some((sub) => sub.href === pathname)
     }
     return false
   }
@@ -169,12 +176,12 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
 
                   return (
                     <div key={item.label}>
-                      {item.submenu ? (
+                      {'submenu' in item && item.submenu ? (
                         <button
                           onClick={(e) => toggleSubmenu(item.label, e)}
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm text-left"
                           style={{
-                            backgroundColor: active ? "bg-teal-400" : "transparent",
+                            backgroundColor: active ? "#0d7a8c" : "transparent",
                             color: "white",
                           }}
                         >
@@ -199,9 +206,9 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                         </Link>
                       )}
 
-                      {item.submenu && isExpanded && (
+                      {'submenu' in item && item.submenu && isExpanded && (
                         <div className="ml-4 space-y-1 mt-1">
-                          {item.submenu.map((subitem: any) => {
+                          {item.submenu.map((subitem) => {
                             const subActive = pathname === subitem.href
                             return (
                               <Link key={subitem.label} href={subitem.href}>

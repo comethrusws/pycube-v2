@@ -10,7 +10,7 @@ interface LocationList {
   listName: string
   createdDate: string
   targetCompletionDate: string
-  completedDate: string
+  completedDate?: string
   createdBy: string
   assignedGroup: string
   assetCount: number

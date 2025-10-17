@@ -1,19 +1,13 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
-import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
+import { useState, useEffect } from "react"
+import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import { apiGet } from "@/lib/fetcher"
 
-const StatCard = ({
-  label,
-  value,
-  subLabel,
-  bgColor,
-}: { label: string; value: string | number; subLabel?: string; bgColor: string }) => (
-  <div className={`${bgColor} rounded-2xl p-8 text-white shadow-sm hover:shadow-md transition-all duration-300`}>
-    <p className="text-sm font-medium opacity-90 mb-2">{label}</p>
-    <p className="text-4xl font-light mb-1">{value}</p>
-    {subLabel && <p className="text-xs opacity-75">{subLabel}</p>}
+const StatCard = ({ label, value, bgColor }: { label: string; value: string | number; bgColor: string }) => (
+  <div className={`${bgColor} text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300`}>
+    <h3 className="text-sm font-medium uppercase tracking-wider opacity-90 mb-2">{label}</h3>
+    <p className="text-4xl font-light">{typeof value === 'number' ? value.toLocaleString() : value}</p>
   </div>
 )
 
@@ -91,22 +85,22 @@ export default function AssetLocatorDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard 
             label="Total Monitored Assets" 
-            value={data?.stats.total?.toLocaleString() ?? "-"} 
+            value={data?.stats.total ?? 0} 
             bgColor="bg-gradient-to-br from-teal-600 to-teal-700" 
           />
           <StatCard 
             label="Assets to be Located" 
-            value={data?.stats.toLocate?.toLocaleString() ?? "-"} 
+            value={data?.stats.toLocate ?? 0} 
             bgColor="bg-gradient-to-br from-red-500 to-red-600" 
           />
           <StatCard 
             label="Total Assets Located" 
-            value={data?.stats.located?.toLocaleString() ?? "-"} 
+            value={data?.stats.located ?? 0} 
             bgColor="bg-gradient-to-br from-teal-500 to-teal-600" 
           />
           <StatCard 
             label="Total Assets Flagged" 
-            value={data?.stats.flagged ?? "-"} 
+            value={data?.stats.flagged ?? 0} 
             bgColor="bg-gradient-to-br from-slate-500 to-slate-600" 
           />
         </div>
