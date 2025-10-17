@@ -1,8 +1,21 @@
 "use client"
 
 import type React from "react"
+import { useEffect, useState } from "react"
+import { apiGet } from "@/lib/fetcher"
 
 export default function DashboardContent() {
+  const [data, setData] = useState<{
+    stats: { totalAssets: number; totalFacilities: number; totalUsers: number; categories: number }
+    tagging: { tagged: number; untagged: number; percentTagged: number }
+    overview: { notFound: number; inUse: number; found: number }
+    visibility: { scanned: number; notScanned: number }
+    zonesNotScanned: string[]
+  }>()
+
+  useEffect(() => {
+    apiGet<typeof data>("/api/core/dashboard").then((d) => setData(d as any)).catch(() => {})
+  }, [])
   return (
     <div className="p-6 lg:p-8 space-y-8">
       <div>
@@ -14,10 +27,10 @@ export default function DashboardContent() {
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { title: "Total Assets", subtitle: "In System", value: "155" },
-          { title: "Total Assets", subtitle: "Category", value: "4" },
-          { title: "Total Facilities", subtitle: "Facility", value: "2" },
-          { title: "Total Users", subtitle: "Active", value: "3" },
+          { title: "Total Assets", subtitle: "In System", value: data?.stats.totalAssets ?? "-" },
+          { title: "Total Assets", subtitle: "Category", value: data?.stats.categories ?? "-" },
+          { title: "Total Facilities", subtitle: "Facility", value: data?.stats.totalFacilities ?? "-" },
+          { title: "Total Users", subtitle: "Active", value: data?.stats.totalUsers ?? "-" },
         ].map((card, i) => (
           <div key={i} className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow">
             <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>
@@ -41,7 +54,7 @@ export default function DashboardContent() {
                 Asset Tagged
               </p>
               <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                46
+                {data?.tagging.tagged ?? 0}
               </p>
             </div>
             <div>
@@ -49,7 +62,7 @@ export default function DashboardContent() {
                 Untagged
               </p>
               <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                109
+                {data?.tagging.untagged ?? 0}
               </p>
             </div>
 
@@ -81,13 +94,13 @@ export default function DashboardContent() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <p className="text-2xl font-light" style={{ color: "#001f3f" }}>
-                    30%
+                    {data?.tagging.percentTagged ?? 0}%
                   </p>
                   <p className="text-xs text-gray-600">Asset Tagged</p>
                 </div>
               </div>
             </div>
-            <p className="text-xs text-gray-600 text-center">0 Assets tagged in last 7 days</p>
+            <p className="text-xs text-gray-600 text-center">Asset tagging summary</p>
           </div>
         </div>
 
@@ -102,9 +115,9 @@ export default function DashboardContent() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { icon: "⚠️", label: "Assets Not Found", value: "0" },
-                { icon: "⏱️", label: "Assets In Use", value: "0" },
-                { icon: "✓", label: "Assets Found", value: "0" },
+                { icon: "⚠️", label: "Assets Not Found", value: data?.overview.notFound ?? 0 },
+                { icon: "⏱️", label: "Assets In Use", value: data?.overview.inUse ?? 0 },
+                { icon: "✓", label: "Assets Found", value: data?.overview.found ?? 0 },
               ].map((item, i) => (
                 <div key={i} className="text-center">
                   <div className="flex justify-center mb-2 text-2xl">{item.icon}</div>
@@ -131,7 +144,7 @@ export default function DashboardContent() {
               <span className="text-xs text-gray-600">Time</span>
             </div>
             <div className="space-y-3">
-              {["Mod...", "Emo...", "Clini..."].map((zone, i) => (
+              {(data?.zonesNotScanned ?? ["-"]).map((zone, i) => (
                 <div key={i} className="flex items-center gap-3 p-3 bg-slate-100 rounded-lg">
                   <div
                     className="w-8 h-8 rounded-full"

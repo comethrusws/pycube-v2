@@ -15,6 +15,8 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts"
+import { useEffect, useState } from "react"
+import { apiGet } from "@/lib/fetcher"
 
 const StatCard = ({
   label,
@@ -37,39 +39,32 @@ const ChartCard = ({ title, children }: { title: string; children: React.ReactNo
 )
 
 export default function AssetLocatorDashboard() {
-  const monitoredCategories = [
-    { name: "Industrial Pumps, Multistage", value: 45, color: "#0d7a8c" },
-    { name: "Centrifugal, Inline Pump Systems, Programmable", value: 30, color: "#1a9fb5" },
-    { name: "Industrial Pumps, Inline Feeding", value: 15, color: "#c41e3a" },
-    { name: "Centrifugal, Inline Pump Systems", value: 10, color: "#f59e0b" },
-  ]
+  const [data, setData] = useState<{
+    stats: { total: number; toLocate: number; located: number; flagged: number }
+    monitoredCategories: { name: string; value: number; color: string }[]
+    locationTrends: { date: string; located: number; unlocated: number }[]
+    recordedLocations: { name: string; value: number; color: string }[]
+    flaggedReasons: { name: string; value: number; color: string }[]
+  }>()
 
-  const locationTrends = [
-    { date: "2025-01-17", located: 2, unlocated: 8 },
-    { date: "2025-01-18", located: 3, unlocated: 7 },
-    { date: "2025-01-19", located: 5, unlocated: 5 },
-    { date: "2025-01-20", located: 8, unlocated: 2 },
-    { date: "2025-01-21", located: 12, unlocated: 0 },
-    { date: "2025-01-22", located: 15, unlocated: 0 },
-  ]
+  useEffect(() => {
+    apiGet<typeof data>("/api/asset-locator/dashboard").then((d) => setData(d as any)).catch(() => {})
+  }, [])
 
-  const recordedLocations = [
-    { name: "No Location", value: 65, color: "#e5e7eb" },
-    { name: "Jolt Substation", value: 20, color: "#0d7a8c" },
-    { name: "Clinical Engineering", value: 15, color: "#7c3aed" },
-  ]
-
-  const flaggedReasons = [{ name: "Flagged", value: 100, color: "#0d7a8c" }]
+  const monitoredCategories = data?.monitoredCategories ?? []
+  const locationTrends = data?.locationTrends ?? []
+  const recordedLocations = data?.recordedLocations ?? []
+  const flaggedReasons = data?.flaggedReasons ?? []
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <h1 className="text-2xl font-semibold text-slate-900 mb-6">Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total Monitored Assets" value="155" bgColor="bg-teal-700" />
-        <StatCard label="Assets to be Located" value="1" bgColor="bg-red-600" />
-        <StatCard label="Total Assets Located" value="0" bgColor="bg-teal-600" />
-        <StatCard label="Total Assets Flagged" value="1" bgColor="bg-slate-600" />
+        <StatCard label="Total Monitored Assets" value={data?.stats.total ?? "-"} bgColor="bg-teal-700" />
+        <StatCard label="Assets to be Located" value={data?.stats.toLocate ?? "-"} bgColor="bg-red-600" />
+        <StatCard label="Total Assets Located" value={data?.stats.located ?? "-"} bgColor="bg-teal-600" />
+        <StatCard label="Total Assets Flagged" value={data?.stats.flagged ?? "-"} bgColor="bg-slate-600" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
