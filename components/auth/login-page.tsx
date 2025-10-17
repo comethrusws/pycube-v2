@@ -14,12 +14,23 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError("")
+
+    // Simulate loading delay
     await new Promise((resolve) => setTimeout(resolve, 500))
-    onLogin(email, password)
+
+    // Validate credentials - only allow demo@pycube.com with password Turing123
+    if (email === "demo@pycube.com" && password === "Turing123") {
+      onLogin(email, password)
+    } else {
+      setError("Invalid credentials. Please use the demo credentials provided below.")
+    }
+
     setIsLoading(false)
   }
 
@@ -122,6 +133,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Error Message */}
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
             {/* Email */}
             <div>
               <label className="block text-sm font-medium mb-2" style={{ color: "#001f3f" }}>
@@ -180,17 +198,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <button className="text-sm transition-opacity hover:opacity-80" style={{ color: "#0d7a8c" }}>
               Reset Password
             </button>
-          </div>
-
-          {/* Demo Credentials */}
-          <div className="mt-8 p-4 bg-slate-100 rounded-lg border border-gray-300">
-            <p className="text-xs text-gray-600 text-center">
-              <span className="font-medium">Demo Credentials:</span>
-              <br />
-              Email: demo@pycube.com
-              <br />
-              Password: demo123
-            </p>
           </div>
         </div>
       </div>
