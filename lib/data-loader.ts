@@ -42,6 +42,8 @@ export async function loadSeedData(): Promise<SeedData> {
       maintenanceTasks: [],
       alerts: [],
       userUtilizations: [],
+      locationLists: [],
+      locationActivities: [],
     }
   }
 }
