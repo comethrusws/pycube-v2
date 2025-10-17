@@ -39,16 +39,16 @@ const menuSections = [
   {
     items: [
       { icon: Home, label: "Homepage", href: "/dashboard" },
-      { icon: Settings, label: "Implementation", href: "/dashboard/implementation" },
-      { icon: Zap, label: "App Settings", href: "/dashboard/settings" },
-      { icon: Bot, label: "AI Assistant", href: "/dashboard/ai-assistant" },
+      { icon: Settings, label: "Implementation", href: "/dashboard" },
+      { icon: Zap, label: "App Settings", href: "/dashboard" },
+      { icon: Bot, label: "AI Assistant", href: "/dashboard/" },
     ] as MenuItem[],
   },
   {
     items: [
-      { icon: Package, label: "Product Categories", href: "/dashboard/categories" },
-      { icon: List, label: "Products", href: "/dashboard/products" },
-      { icon: Database, label: "Assets", href: "/dashboard/assets" },
+      { icon: Package, label: "Product Categories", href: "/dashboard" },
+      { icon: List, label: "Products", href: "/dashboard" },
+      { icon: Database, label: "Assets", href: "/dashboard" },
     ] as MenuItem[],
   },
   {
@@ -71,8 +71,8 @@ const menuSections = [
         label: "Preventative Maintenance",
         href: "/preventative-maintenance",
         submenu: [
-          { label: "Dashboard", href: "/preventative-maintenance" },
-          { label: "Maintenance Requests", href: "/preventative-maintenance/requests" },
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Maintenance Requests", href: "/dashboard" },
         ],
       },
     ] as MenuItem[],
@@ -82,13 +82,13 @@ const menuSections = [
       {
         icon: Building2,
         label: "Space Management",
-        href: "/dashboard/space",
+        href: "/dashboard",
         submenu: [
-          { label: "Asset Tracking", href: "/dashboard/space/tracking" },
-          { label: "Buildings", href: "/dashboard/space/buildings" },
-          { label: "Floors", href: "/dashboard/space/floors" },
-          { label: "Zones", href: "/dashboard/space/zones" },
-          { label: "Roofers", href: "/dashboard/space/roofers" },
+          { label: "Asset Tracking", href: "/dashboard" },
+          { label: "Buildings", href: "/dashboard" },
+          { label: "Floors", href: "/dashboard" },
+          { label: "Zones", href: "/dashboard" },
+          { label: "Roofers", href: "/dashboard" },
         ],
       },
     ] as MenuItem[],
@@ -98,18 +98,18 @@ const menuSections = [
       {
         icon: Shield,
         label: "Asset Protection",
-        href: "/dashboard/protection",
+        href: "/dashboard",
         submenu: [
-          { label: "Dashboard", href: "/dashboard/protection" },
-          { label: "Assets", href: "/dashboard/protection/assets" },
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Assets", href: "/dashboard" },
         ],
       },
     ] as MenuItem[],
   },
   {
     items: [
-      { icon: Warehouse, label: "Facilities", href: "/dashboard/facilities" },
-      { icon: Users, label: "Departments", href: "/dashboard/departments" },
+      { icon: Warehouse, label: "Facilities", href: "/dashboard" },
+      { icon: Users, label: "Departments", href: "/dashboard" },
     ] as MenuItem[],
   },
 ]
