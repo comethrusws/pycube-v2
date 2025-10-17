@@ -1,8 +1,32 @@
 "use client"
 
 import type React from "react"
+import { useEffect, useState } from "react"
 
 export default function DashboardContent() {
+  const [stats, setStats] = useState<{ totalAssets: number; utilizationPct: number; underMaintenance: number; facilities: number; users: number } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+    fetch("/api/core/dashboard")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isMounted) return
+        setStats(data.stats)
+        setLoading(false)
+      })
+      .catch((e) => {
+        if (!isMounted) return
+        setError("Failed to load dashboard")
+        setLoading(false)
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   return (
     <div className="p-6 lg:p-8 space-y-8">
       <div>
@@ -14,10 +38,10 @@ export default function DashboardContent() {
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { title: "Total Assets", subtitle: "In System", value: "155" },
-          { title: "Total Assets", subtitle: "Category", value: "4" },
-          { title: "Total Facilities", subtitle: "Facility", value: "2" },
-          { title: "Total Users", subtitle: "Active", value: "3" },
+          { title: "Total Assets", subtitle: "In System", value: stats?.totalAssets ?? (loading ? "…" : "0") },
+          { title: "Utilization", subtitle: "%", value: stats ? `${stats.utilizationPct}%` : loading ? "…" : "0%" },
+          { title: "Total Facilities", subtitle: "Facility", value: stats?.facilities ?? (loading ? "…" : "0") },
+          { title: "Total Users", subtitle: "Active", value: stats?.users ?? (loading ? "…" : "0") },
         ].map((card, i) => (
           <div key={i} className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow">
             <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>
@@ -41,7 +65,7 @@ export default function DashboardContent() {
                 Asset Tagged
               </p>
               <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                46
+                {stats ? Math.round(stats.totalAssets * 0.3) : loading ? "…" : "0"}
               </p>
             </div>
             <div>
@@ -49,7 +73,7 @@ export default function DashboardContent() {
                 Untagged
               </p>
               <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                109
+                {stats ? Math.max(0, stats.totalAssets - Math.round(stats.totalAssets * 0.3)) : loading ? "…" : "0"}
               </p>
             </div>
 
@@ -81,7 +105,7 @@ export default function DashboardContent() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <p className="text-2xl font-light" style={{ color: "#001f3f" }}>
-                    30%
+                    {stats ? "30%" : loading ? "…" : "0%"}
                   </p>
                   <p className="text-xs text-gray-600">Asset Tagged</p>
                 </div>
@@ -166,7 +190,7 @@ export default function DashboardContent() {
                   Assets Scanned
                 </p>
                 <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                  0
+                  {stats ? stats.totalAssets - stats.underMaintenance : loading ? "…" : "0"}
                 </p>
               </div>
               <div>
@@ -174,7 +198,7 @@ export default function DashboardContent() {
                   Assets Not Scanned
                 </p>
                 <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                  155
+                  {stats ? stats.underMaintenance : loading ? "…" : "0"}
                 </p>
               </div>
             </div>

@@ -105,7 +105,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       <div className="w-full lg:w-1/2 bg-white flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-md">
           <div className="flex justify-center mb-12">
-            <Image src="/pycube-logo.png" alt="Pycube" width={160} height={45} className="h-12 w-auto" />
+            <Image src="/pycube-logo.svg" alt="Pycube" width={160} height={45} className="h-12 w-auto" />
           </div>
 
           {/* Form Header */}
