@@ -85,8 +85,17 @@ export default function DashboardContent() {
                           <stop offset="100%" stopColor="#c41e3a" />
                         </linearGradient>
                       </defs>
-                      <path d="M10,50 A40,40 0 0 1 90,50" fill="none" stroke="#E0E6ED" strokeWidth="18" />
-                      <path d="M10,50 A40,40 0 0 1 90,50" fill="none" stroke="url(#tagGrad)" strokeWidth="18" strokeDasharray={`${dash} ${gap}`} strokeLinecap="round" />
+                      <path d="M10,50 A40,40 0 0 1 90,50" fill="none" stroke="#E0E6ED" strokeWidth="18" pathLength={100} />
+                      <path
+                        d="M10,50 A40,40 0 0 1 90,50"
+                        fill="none"
+                        stroke="url(#tagGrad)"
+                        strokeWidth="18"
+                        pathLength={100}
+                        strokeDasharray={`${(pct).toFixed(3)} ${(100 - pct).toFixed(3)}`}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   )
                 })()}
