@@ -73,24 +73,33 @@ export default function DashboardContent() {
               <div className="relative w-96 h-56">
                 {(() => {
                   const pct = Number(data?.tagging.percentTagged ?? 0)
+                  const circumference = 2 * Math.PI * 40 * 0.5 // Half circle
+                  const strokeDasharray = circumference
+                  const strokeDashoffset = circumference - (pct / 100) * circumference
+                  
                   return (
                     <svg viewBox="0 0 100 60" className="w-full h-full">
-                      <defs>
-                        <linearGradient id="tagGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#0d7a8c" />
-                          <stop offset="100%" stopColor="#c41e3a" />
-                        </linearGradient>
-                      </defs>
-                      <path d="M10,50 A40,40 0 0 1 90,50" fill="none" stroke="#c41e3a" strokeWidth="18" pathLength={100} />
-                      <path
-                        d="M10,50 A40,40 0 0 1 90,50"
-                        fill="none"
-                        stroke="url(#tagGrad)"
-                        strokeWidth="18"
-                        pathLength={100}
-                        strokeDasharray={`${(pct).toFixed(3)} ${(100 - pct).toFixed(3)}`}
+                      {/* Background arc */}
+                      <path 
+                        d="M10,50 A40,40 0 0 1 90,50" 
+                        fill="none" 
+                        stroke="#e5e7eb" 
+                        strokeWidth="8" 
                         strokeLinecap="round"
-                        strokeLinejoin="round"
+                      />
+                      {/* Progress arc */}
+                      <path 
+                        d="M10,50 A40,40 0 0 1 90,50" 
+                        fill="none" 
+                        stroke="#0d7a8c" 
+                        strokeWidth="8" 
+                        strokeLinecap="round"
+                        pathLength="100"
+                        strokeDasharray="100"
+                        strokeDashoffset={100 - pct}
+                        style={{
+                          transition: 'stroke-dashoffset 0.5s ease-in-out'
+                        }}
                       />
                     </svg>
                   )
