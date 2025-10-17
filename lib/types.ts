@@ -187,6 +187,37 @@ export interface DashboardData {
   }
 }
 
+export interface LocationList {
+  id: string
+  listId: string
+  listName: string
+  createdDate: string
+  targetCompletionDate: string
+  completedDate?: string
+  createdBy: string
+  assignedGroup: string
+  assetIds: string[]
+  updatedBy: string
+  status: "pending" | "in-progress" | "completed" | "overdue"
+  priority: "low" | "medium" | "high" | "critical"
+  description?: string
+  completionPercentage: number
+}
+
+export interface LocationActivity {
+  id: string
+  locationListId: string
+  assetId: string
+  action: "scanned" | "located" | "flagged" | "updated"
+  timestamp: string
+  performedBy: string
+  notes?: string
+  location?: {
+    zoneId: string
+    zoneName: string
+  }
+}
+
 export interface SeedData {
   facilities: Facility[]
   departments: Department[]
@@ -203,8 +234,10 @@ export interface SeedData {
   maintenanceTasks: MaintenanceTask[]
   alerts: Alert[]
   userUtilizations: UserUtilization[]
-  dashboardData?: any // Add optional dashboard data
-  assetLocatorData?: any // Add optional asset-locator data
+  locationLists: LocationList[] // Add location lists
+  locationActivities: LocationActivity[] // Add location activities
+  dashboardData?: any
+  assetLocatorData?: any
 }
 
 export interface GeneratorConfig {

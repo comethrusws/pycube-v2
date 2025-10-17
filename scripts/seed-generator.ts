@@ -22,6 +22,8 @@ import type {
   UserUtilization,
   Status,
   MaintenanceStatus,
+  LocationList,
+  LocationActivity,
 } from "../lib/types"
 
 function randomChoice<T>(arr: T[]): T {
@@ -105,6 +107,8 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   const maintenanceTasks: MaintenanceTask[] = []
   const alerts: Alert[] = []
   const userUtilizations: UserUtilization[] = []
+  const locationLists: LocationList[] = []
+  const locationActivities: LocationActivity[] = []
 
   // User groups
   for (const role of ROLES) {
@@ -372,8 +376,129 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   // Generate dashboard aggregated data
   const dashboardData = generateDashboardData(assets, maintenanceTasks, movementLogs, zones, users)
 
-  // Generate asset-locator specific data
-  const assetLocatorData = generateAssetLocatorData(assets, movementLogs, zones, maintenanceTasks)
+  // Generate location lists with comprehensive data
+  const locationListNames = [
+    "ICU Equipment Audit",
+    "Emergency Department Inventory",
+    "Surgical Suite Assets",
+    "Main Warehouse Check",
+    "Radiology Equipment Scan",
+    "Pharmacy Asset Review",
+    "Pediatrics Ward Audit",
+    "Clinical Engineering Round",
+    "General Ward Inventory",
+    "Lab Equipment Check",
+    "Cardiology Unit Scan",
+    "Orthopedics Equipment",
+    "Neurology Asset Audit",
+    "Oncology Department Check",
+    "Rehabilitation Equipment",
+    "Outpatient Clinic Assets",
+    "Medical Records Inventory",
+    "IT Equipment Audit",
+    "Biomedical Maintenance Check",
+    "Annual Facility Inventory"
+  ]
+
+  const assignedGroups = [
+    "CMC Group",
+    "Biomedical Team",
+    "Nursing Staff",
+    "IT Department",
+    "Clinical Engineering",
+    "Asset Management",
+    "Security Team",
+    "Maintenance Crew"
+  ]
+
+  // Generate 25-30 location lists for comprehensive data
+  for (let i = 0; i < 28; i++) {
+    const listId = `LOC${(i + 1).toString().padStart(4, "0")}`
+    const createdDaysAgo = randomInt(1, 120)
+    const targetDaysFromCreation = randomInt(7, 30)
+    const isCompleted = Math.random() < 0.6 // 60% completion rate
+    const isOverdue = !isCompleted && Math.random() < 0.3 // 30% of incomplete are overdue
+    
+    const createdDate = new Date(Date.now() - createdDaysAgo * 24 * 60 * 60 * 1000)
+    const targetDate = new Date(createdDate.getTime() + targetDaysFromCreation * 24 * 60 * 60 * 1000)
+    const completedDate = isCompleted 
+      ? new Date(createdDate.getTime() + randomInt(1, targetDaysFromCreation) * 24 * 60 * 60 * 1000)
+      : undefined
+
+    // Randomly assign assets to this location list (5-50 assets per list)
+    const assetCount = randomInt(5, 50)
+    const assignedAssets = assets
+      .sort(() => Math.random() - 0.5)
+      .slice(0, assetCount)
+      .map(a => a.id)
+
+    const completionPercentage = isCompleted 
+      ? 100 
+      : randomInt(10, 95)
+
+    const status = isCompleted 
+      ? "completed" 
+      : isOverdue 
+        ? "overdue" 
+        : completionPercentage > 50 
+          ? "in-progress" 
+          : "pending"
+
+    const locationList: LocationList = {
+      id: randomUUID(),
+      listId,
+      listName: randomChoice(locationListNames),
+      createdDate: createdDate.toISOString(),
+      targetCompletionDate: targetDate.toISOString(),
+      completedDate: completedDate?.toISOString(),
+      createdBy: randomChoice(users).name,
+      assignedGroup: randomChoice(assignedGroups),
+      assetIds: assignedAssets,
+      updatedBy: randomChoice(users).name,
+      status,
+      priority: randomChoice(["low", "medium", "high", "critical"]),
+      description: `Comprehensive asset location verification for ${randomChoice(locationListNames).toLowerCase()}`,
+      completionPercentage
+    }
+
+    locationLists.push(locationList)
+
+    // Generate location activities for each list
+    const activityCount = randomInt(5, Math.min(20, assignedAssets.length))
+    for (let j = 0; j < activityCount; j++) {
+      const assetId = randomChoice(assignedAssets)
+      const asset = assets.find(a => a.id === assetId)
+      const zone = zones.find(z => z.id === asset?.location.zoneId)
+      
+      const activity: LocationActivity = {
+        id: randomUUID(),
+        locationListId: locationList.id,
+        assetId,
+        action: randomChoice(["scanned", "located", "flagged", "updated"]),
+        timestamp: new Date(
+          createdDate.getTime() + randomInt(0, (Date.now() - createdDate.getTime()))
+        ).toISOString(),
+        performedBy: randomChoice(users).name,
+        notes: randomChoice([
+          "Asset located in expected zone",
+          "Asset found in different location",
+          "Asset requires maintenance check",
+          "Asset tagged successfully",
+          "Location verified and updated",
+          undefined
+        ]),
+        location: zone ? {
+          zoneId: zone.id,
+          zoneName: zone.name
+        } : undefined
+      }
+
+      locationActivities.push(activity)
+    }
+  }
+
+  // Generate enhanced asset-locator data with location lists
+  const assetLocatorData = generateAssetLocatorData(assets, movementLogs, zones, maintenanceTasks, locationLists)
 
   return {
     facilities,
@@ -391,8 +516,10 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
     maintenanceTasks,
     alerts,
     userUtilizations,
+    locationLists,
+    locationActivities,
     dashboardData,
-    assetLocatorData, // Add asset-locator specific data
+    assetLocatorData,
   }
 }
 
@@ -540,7 +667,13 @@ function generateDashboardData(assets: Asset[], maintenanceTasks: MaintenanceTas
   }
 }
 
-function generateAssetLocatorData(assets: Asset[], movementLogs: MovementLog[], zones: Zone[], maintenanceTasks: MaintenanceTask[]) {
+function generateAssetLocatorData(
+  assets: Asset[], 
+  movementLogs: MovementLog[], 
+  zones: Zone[], 
+  maintenanceTasks: MaintenanceTask[],
+  locationLists: LocationList[]
+) {
   const totalAssets = assets.length
   const locatedAssets = assets.filter(a => a.status !== "lost").length
   const assetsToLocate = totalAssets - locatedAssets
@@ -620,12 +753,27 @@ function generateAssetLocatorData(assets: Asset[], movementLogs: MovementLog[], 
     { name: "Geofence Violation", value: 8, color: "#1e40af" }
   ]
 
+  // Add location list statistics
+  const completedLists = locationLists.filter(l => l.status === "completed").length
+  const pendingLists = locationLists.filter(l => l.status === "pending").length
+  const overdueLists = locationLists.filter(l => l.status === "overdue").length
+  
+  const avgCompletionRate = locationLists.length > 0 
+    ? Math.round(locationLists.reduce((sum, list) => sum + list.completionPercentage, 0) / locationLists.length)
+    : 0
+
   return {
     stats: {
       total: totalAssets,
       toLocate: assetsToLocate,
       located: locatedAssets,
-      flagged: flaggedAssets
+      flagged: flaggedAssets,
+      // Add location list stats
+      totalLists: locationLists.length,
+      completedLists,
+      pendingLists,
+      overdueLists,
+      avgCompletionRate
     },
     monitoredCategories,
     locationTrends,
