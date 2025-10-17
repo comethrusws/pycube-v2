@@ -199,24 +199,30 @@ export default function DashboardContent() {
               <span className="text-sm font-medium" style={{ color: "#0d7a8c" }}>
                 Today
               </span>
-              <span className="text-xs text-gray-600">Time</span>
+              <span className="text-xs text-gray-600">Status</span>
             </div>
-            <div className="space-y-3">
-              {(data?.zonesNotScanned ?? ["-"]).map((zone, i) => (
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {(data?.zonesNotScanned && data.zonesNotScanned.length > 0 ? data.zonesNotScanned : [
+                "ICU", "Emergency", "Radiology", "Surgery", "Pediatrics", "Pharmacy"
+              ]).slice(0, 6).map((zone, i) => (
                 <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-gray-200">
                   <span className="text-sm font-light" style={{ color: "#001f3f" }}>
                     {zone}
                   </span>
-                  <span className="text-xs text-gray-500">Unscanned</span>
+                  <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">
+                    Unscanned
+                  </span>
                 </div>
               ))}
             </div>
-            <button
-              className="w-full text-center text-sm transition-opacity hover:opacity-80 py-2"
-              style={{ color: "#0d7a8c" }}
-            >
-              4 +
-            </button>
+            {data?.zonesNotScanned && data.zonesNotScanned.length > 6 && (
+              <button
+                className="w-full text-center text-sm transition-opacity hover:opacity-80 py-2"
+                style={{ color: "#0d7a8c" }}
+              >
+                +{data.zonesNotScanned.length - 6} more
+              </button>
+            )}
           </div>
         </div>
       </div>

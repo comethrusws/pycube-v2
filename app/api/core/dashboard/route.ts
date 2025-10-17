@@ -15,6 +15,10 @@ export async function GET(request: NextRequest) {
     // Fallback: compute basic dashboard data if not pre-computed
     const totalAssets = data.assets.length
     const taggedAssets = data.assets.filter((a) => a.tagId).length
+
+    // Create zone lookup map for better performance
+    const zoneMap = new Map(data.zones.map((zone) => [zone.id, zone.name]))
+
     const stats = {
       totalAssets,
       totalFacilities: data.facilities.length,
@@ -46,31 +50,64 @@ export async function GET(request: NextRequest) {
     const visibility = {
       scanned: recentlyActive.length,
       notScanned: totalAssets - recentlyActive.length,
-      trend: [], // Would need more complex computation
+      trend: generateVisibilityTrend(data.movementLogs, totalAssets),
     }
+
+    // Real zones not scanned (zones with no recent movement in last 24 hours)
+    const recentMovements = data.movementLogs.filter(
+      (log) => new Date(log.timestamp) > new Date(Date.now() - 24 * 60 * 60 * 1000)
+    )
+    const scannedZoneIds = new Set(recentMovements.map((log) => log.toZoneId))
+    const zonesNotScanned = data.zones
+      .filter((zone) => !scannedZoneIds.has(zone.id))
+      .map((zone) => zone.name)
+      .slice(0, 6) // Show 6 zones as requested
+
+    // Get top categories from actual data
+    const categoryCounts = data.assets.reduce((acc, asset) => {
+      const category = asset.category || asset.type
+      acc[category] = (acc[category] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
+    const topCategories = Object.entries(categoryCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }))
 
     const responseData = {
       stats,
       tagging,
       overview,
       visibility,
-      zonesNotScanned: ["Zone A", "Zone B"], // Placeholder
+      zonesNotScanned,
       assetDetails: {
         recentAssets: data.assets
+          .sort((a, b) => new Date(b.lastActive).getTime() - new Date(a.lastActive).getTime())
           .slice(0, 5)
           .map((asset) => ({
             id: asset.id,
             name: asset.name,
             type: asset.type,
-            location: "Zone A", // Would need zone lookup
+            location: zoneMap.get(asset.location.zoneId) || "Unknown Zone",
             status: asset.status,
             lastActive: asset.lastActive,
           })),
-        topCategories: [
-          { name: "Medical Equipment", count: 150 },
-          { name: "IT Equipment", count: 89 },
-        ],
-        maintenanceDue: [],
+        topCategories,
+        maintenanceDue: data.maintenanceTasks
+          .filter((task) => task.status === "pending")
+          .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime())
+          .slice(0, 5)
+          .map((task) => {
+            const asset = data.assets.find((a) => a.id === task.assetId)
+            return {
+              id: task.id,
+              assetId: task.assetId,
+              name: asset?.name || "Unknown Asset",
+              dueDate: task.scheduledDate,
+              type: task.type || "maintenance",
+            }
+          }),
       },
     }
 
@@ -79,5 +116,25 @@ export async function GET(request: NextRequest) {
     console.error("Dashboard API error:", error)
     return NextResponse.json({ error: "Failed to load dashboard data" }, { status: 500 })
   }
+}
+
+// Helper function to generate visibility trend data
+function generateVisibilityTrend(movementLogs: any[], totalAssets: number) {
+  const trend = []
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+    const dateStr = date.toISOString().split("T")[0]
+
+    const dayMovements = movementLogs.filter((log) => log.timestamp.startsWith(dateStr))
+    const scannedAssets = new Set(dayMovements.map((log) => log.assetId)).size
+    const notScannedAssets = Math.max(0, totalAssets - scannedAssets)
+
+    trend.push({
+      date: dateStr,
+      scanned: scannedAssets,
+      notScanned: notScannedAssets,
+    })
+  }
+  return trend
 }
 
