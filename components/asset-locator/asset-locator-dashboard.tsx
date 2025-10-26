@@ -2,7 +2,230 @@
 
 import { useState, useEffect } from "react"
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts"
+import { X, CheckCircle, AlertCircle, Clock, MapPin, TrendingDown, ExternalLink, Search, Filter, Download, RefreshCw, PenToolIcon } from "lucide-react"
 import { apiGet } from "@/lib/fetcher"
+
+// Enhanced Modal Component
+const Modal = ({ isOpen, onClose, title, children }: {
+  isOpen: boolean
+  onClose: () => void
+  title: string
+  children: React.ReactNode
+}) => {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold" style={{ color: "#001f3f" }}>{title}</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Asset Detail Modal Content
+const AssetDetailModal = ({ asset, onClose }: { asset: any, onClose: () => void }) => (
+  <div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-4">
+        <div>
+          <label className="text-sm font-medium text-gray-500">Asset Name</label>
+          <p className="text-lg font-semibold" style={{ color: "#001f3f" }}>{asset.name}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Type</label>
+          <p className="text-base">{asset.type}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Department</label>
+          <p className="text-base">{asset.department}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Current Location</label>
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-gray-400" />
+            <p className="text-base">{asset.location}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="space-y-4">
+        <div>
+          <label className="text-sm font-medium text-gray-500">Utilization Rate</label>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 bg-gray-200 rounded-full h-3">
+              <div 
+                className={`h-3 rounded-full ${
+                  asset.utilization > 60 ? 'bg-green-500' : 
+                  asset.utilization > 30 ? 'bg-yellow-500' : 'bg-red-500'
+                }`}
+                style={{ width: `${asset.utilization}%` }}
+              ></div>
+            </div>
+            <span className="text-sm font-medium">{asset.utilization}%</span>
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Last Used</label>
+          <p className="text-base">{new Date(asset.lastUsed).toLocaleDateString()}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Idle Duration</label>
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-gray-400" />
+            <p className="text-base">{asset.idleDuration} days</p>
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Asset Value</label>
+          <p className="text-base">${asset.value?.toLocaleString() || 'N/A'}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div className="border-t border-gray-200 pt-6">
+      <h3 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Recommended Actions</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button className="p-4 border border-teal-200 rounded-xl hover:bg-teal-50 transition-colors text-left">
+          <div className="flex items-center gap-3 mb-2">
+            <TrendingDown className="w-5 h-5 text-teal-600" />
+            <span className="font-medium text-teal-700">Schedule Review</span>
+          </div>
+          <p className="text-sm text-gray-600">Analyze usage patterns and optimization opportunities</p>
+        </button>
+        
+        <button className="p-4 border border-blue-200 rounded-xl hover:bg-blue-50 transition-colors text-left">
+          <div className="flex items-center gap-3 mb-2">
+            <ExternalLink className="w-5 h-5 text-blue-600" />
+            <span className="font-medium text-blue-700">Relocate Asset</span>
+          </div>
+          <p className="text-sm text-gray-600">Move to higher-demand department</p>
+        </button>
+        
+        <button className="p-4 border border-orange-200 rounded-xl hover:bg-orange-50 transition-colors text-left">
+          <div className="flex items-center gap-3 mb-2">
+            <PenToolIcon className="w-5 h-5 text-orange-600" />
+            <span className="font-medium text-orange-700">Maintenance Check</span>
+          </div>
+          <p className="text-sm text-gray-600">Verify asset condition and functionality</p>
+        </button>
+      </div>
+    </div>
+
+    <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+      <button
+        onClick={onClose}
+        className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+      >
+        Close
+      </button>
+      <button className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">
+        Take Action
+      </button>
+    </div>
+  </div>
+)
+
+// Monitor Action Modal Content  
+const MonitorActionModal = ({ asset, onClose }: { asset: any, onClose: () => void }) => {
+  const [selectedAction, setSelectedAction] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true)
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    setIsSubmitting(false)
+    onClose()
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+          <div>
+            <h4 className="font-medium text-blue-900">Asset Monitoring Action</h4>
+            <p className="text-sm text-blue-700 mt-1">
+              Configure monitoring parameters for <strong>{asset.name}</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">Select Action</label>
+          <div className="grid grid-cols-1 gap-3">
+            {[
+              { id: 'usage', title: 'Monitor Usage Pattern', desc: 'Track daily utilization and activity' },
+              { id: 'location', title: 'Enable Location Tracking', desc: 'Real-time position monitoring' },
+              { id: 'maintenance', title: 'Schedule Maintenance Review', desc: 'Proactive maintenance planning' },
+              { id: 'alert', title: 'Set Low Utilization Alert', desc: 'Get notified when usage drops below threshold' }
+            ].map((action) => (
+              <label key={action.id} className="flex items-start gap-3 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer">
+                <input
+                  type="radio"
+                  name="action"
+                  value={action.id}
+                  checked={selectedAction === action.id}
+                  onChange={(e) => setSelectedAction(e.target.value)}
+                  className="mt-1"
+                />
+                <div>
+                  <p className="font-medium text-gray-900">{action.title}</p>
+                  <p className="text-sm text-gray-600">{action.desc}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {selectedAction === 'alert' && (
+          <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+            <label className="block text-sm font-medium text-gray-700">Utilization Threshold (%)</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              defaultValue="20"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+        <button
+          onClick={onClose}
+          disabled={isSubmitting}
+          className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={!selectedAction || isSubmitting}
+          className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+        >
+          {isSubmitting && <RefreshCw className="w-4 h-4 animate-spin" />}
+          {isSubmitting ? 'Setting Up...' : 'Start Monitoring'}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 const StatCard = ({ label, value, bgColor, trend }: { label: string; value: string | number; bgColor: string; trend?: string }) => (
   <div className={`${bgColor} text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300`}>
@@ -48,7 +271,11 @@ export default function AssetLocatorDashboard() {
   }>()
 
   const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<"overview" | "utilization">("utilization") // Default to utilization tab
+  const [activeTab, setActiveTab] = useState<"overview" | "utilization">("utilization")
+  const [selectedAsset, setSelectedAsset] = useState<any>(null)
+  const [monitorAsset, setMonitorAsset] = useState<any>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([])
   const [filters, setFilters] = useState({
     department: "all",
     assetType: "all",
@@ -85,10 +312,13 @@ export default function AssetLocatorDashboard() {
     return type.avgUtilization <= filters.utilizationThreshold
   }) || []
 
+  // Filter idle assets based on current filters and search
   const filteredIdleAssets = utilization?.idleAssets?.filter(asset => {
     if (filters.department !== "all" && asset.departmentId !== filters.department) return false
     if (filters.assetType !== "all" && asset.type !== filters.assetType) return false
-    return true
+    return asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           asset.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           asset.type.toLowerCase().includes(searchTerm.toLowerCase())
   }) || []
 
   if (isLoading) {
@@ -111,6 +341,20 @@ export default function AssetLocatorDashboard() {
         </div>
       </div>
     )
+  }
+
+  const handleAssetSelect = (assetId: string) => {
+    setSelectedAssets(prev => 
+      prev.includes(assetId) 
+        ? prev.filter(id => id !== assetId)
+        : [...prev, assetId]
+    )
+  }
+
+  const handleBulkAction = (action: string) => {
+    console.log(`Performing ${action} on assets:`, selectedAssets)
+    // Implement bulk actions here
+    setSelectedAssets([])
   }
 
   return (
@@ -291,48 +535,146 @@ export default function AssetLocatorDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Top 10 Idle Assets Table */}
               <ChartCard title="Top 10 Idle Assets">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-2 font-medium text-gray-900">Asset Name</th>
-                        <th className="text-left py-3 px-2 font-medium text-gray-900">Department</th>
-                        <th className="text-left py-3 px-2 font-medium text-gray-900">Last Used</th>
-                        <th className="text-left py-3 px-2 font-medium text-gray-900">Idle Duration</th>
-                        <th className="text-left py-3 px-2 font-medium text-gray-900">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {utilization?.top10IdleAssets?.map((asset, idx) => (
-                        <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
-                          <td className="py-3 px-2">
-                            <div>
-                              <p className="font-medium text-gray-900">{asset.name}</p>
-                              <p className="text-xs text-gray-500">{asset.type}</p>
-                            </div>
-                          </td>
-                          <td className="py-3 px-2 text-gray-700">{asset.department}</td>
-                          <td className="py-3 px-2 text-gray-700">
-                            {new Date(asset.lastUsed).toLocaleDateString()}
-                          </td>
-                          <td className="py-3 px-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              asset.idleDuration > 30 ? 'bg-red-100 text-red-700' :
-                              asset.idleDuration > 14 ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-green-100 text-green-700'
-                            }`}>
-                              {asset.idleDuration} days
-                            </span>
-                          </td>
-                          <td className="py-3 px-2">
-                            <button className="text-xs px-3 py-1 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">
-                              {asset.recommendedAction.split(' ')[0]}
-                            </button>
-                          </td>
+                <div className="space-y-4">
+                  {/* Search and Bulk Actions */}
+                  <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <div className="relative flex-1 max-w-md">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search assets..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                    
+                    {selectedAssets.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">{selectedAssets.length} selected</span>
+                        <button
+                          onClick={() => handleBulkAction('schedule_review')}
+                          className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Bulk Review
+                        </button>
+                        <button
+                          onClick={() => handleBulkAction('export')}
+                          className="px-3 py-1.5 text-xs bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-1"
+                        >
+                          <Download className="w-3 h-3" />
+                          Export
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-2 w-12">
+                            <input
+                              type="checkbox"
+                              checked={selectedAssets.length === filteredIdleAssets.length && filteredIdleAssets.length > 0}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedAssets(filteredIdleAssets.map(a => a.id))
+                                } else {
+                                  setSelectedAssets([])
+                                }
+                              }}
+                              className="rounded"
+                            />
+                          </th>
+                          <th className="text-left py-3 px-2 font-medium text-gray-900">Asset Name</th>
+                          <th className="text-left py-3 px-2 font-medium text-gray-900">Department</th>
+                          <th className="text-left py-3 px-2 font-medium text-gray-900">Last Used</th>
+                          <th className="text-left py-3 px-2 font-medium text-gray-900">Idle Duration</th>
+                          <th className="text-left py-3 px-2 font-medium text-gray-900">Utilization</th>
+                          <th className="text-left py-3 px-2 font-medium text-gray-900">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {filteredIdleAssets.map((asset, idx) => (
+                          <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50 group">
+                            <td className="py-3 px-2">
+                              <input
+                                type="checkbox"
+                                checked={selectedAssets.includes(asset.id)}
+                                onChange={() => handleAssetSelect(asset.id)}
+                                className="rounded"
+                              />
+                            </td>
+                            <td className="py-3 px-2">
+                              <button
+                                onClick={() => setSelectedAsset(asset)}
+                                className="text-left hover:text-teal-600 transition-colors"
+                              >
+                                <div>
+                                  <p className="font-medium text-gray-900 group-hover:text-teal-700">{asset.name}</p>
+                                  <p className="text-xs text-gray-500">{asset.type}</p>
+                                </div>
+                              </button>
+                            </td>
+                            <td className="py-3 px-2 text-gray-700">{asset.department}</td>
+                            <td className="py-3 px-2 text-gray-700">
+                              {new Date(asset.lastUsed).toLocaleDateString()}
+                            </td>
+                            <td className="py-3 px-2">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                asset.idleDuration > 30 ? 'bg-red-100 text-red-700' :
+                                asset.idleDuration > 14 ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-green-100 text-green-700'
+                              }`}>
+                                {asset.idleDuration} days
+                              </span>
+                            </td>
+                            <td className="py-3 px-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-16 bg-gray-200 rounded-full h-2">
+                                  <div 
+                                    className={`h-2 rounded-full ${
+                                      asset.utilization > 30 ? 'bg-green-500' : 'bg-red-500'
+                                    }`}
+                                    style={{ width: `${asset.utilization}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-xs text-gray-600">{asset.utilization}%</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-2">
+                              <div className="flex items-center gap-2">
+                                <button 
+                                  onClick={() => setMonitorAsset(asset)}
+                                  className="text-xs px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-1"
+                                >
+                                  <AlertCircle className="w-3 h-3" />
+                                  Monitor
+                                </button>
+                                <button 
+                                  onClick={() => setSelectedAsset(asset)}
+                                  className="text-xs px-2 py-1.5 text-gray-600 hover:text-teal-600 transition-colors"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {filteredIdleAssets.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg mb-2">No idle assets found</p>
+                      <p className="text-sm">
+                        {searchTerm ? 'Try adjusting your search terms' : 'All assets are being utilized efficiently'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </ChartCard>
 
@@ -735,6 +1077,33 @@ export default function AssetLocatorDashboard() {
             </div>
           </>
         )}
+
+        {/* Modals */}
+        <Modal 
+          isOpen={!!selectedAsset} 
+          onClose={() => setSelectedAsset(null)}
+          title="Asset Details"
+        >
+          {selectedAsset && (
+            <AssetDetailModal 
+              asset={selectedAsset} 
+              onClose={() => setSelectedAsset(null)} 
+            />
+          )}
+        </Modal>
+
+        <Modal 
+          isOpen={!!monitorAsset} 
+          onClose={() => setMonitorAsset(null)}
+          title="Monitor Asset"
+        >
+          {monitorAsset && (
+            <MonitorActionModal 
+              asset={monitorAsset} 
+              onClose={() => setMonitorAsset(null)} 
+            />
+          )}
+        </Modal>
       </div>
     </div>
   )
