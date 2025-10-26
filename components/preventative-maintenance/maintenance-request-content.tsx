@@ -23,6 +23,27 @@ interface MaintenanceRequest {
   assignedTo?: string
 }
 
+interface ApiResponse {
+  requests: MaintenanceRequest[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+    hasNext: boolean
+    hasPrev: boolean
+  }
+  summary: {
+    total: number
+    pending: number
+    inProgress: number
+    completed: number
+    overdue: number
+    highPriority: number
+    totalCost: number
+  }
+}
+
 const CreateRequestDialog = ({ isOpen, onClose, onSubmit }: {
   isOpen: boolean
   onClose: () => void
@@ -39,7 +60,9 @@ const CreateRequestDialog = ({ isOpen, onClose, onSubmit }: {
     maintenanceDate: "",
     businessCriticality: "Medium",
     assetName: "",
-    estimatedCost: ""
+    estimatedCost: "",
+    createdBy: "", // Add missing field
+    assignedTo: "" // Add missing field (optional but included in interface)
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -60,7 +83,9 @@ const CreateRequestDialog = ({ isOpen, onClose, onSubmit }: {
     if (Object.keys(newErrors).length === 0) {
       onSubmit({
         ...formData,
-        estimatedCost: formData.estimatedCost ? parseInt(formData.estimatedCost) : undefined
+        estimatedCost: formData.estimatedCost ? parseInt(formData.estimatedCost) : undefined,
+        createdBy: formData.requestor, // Use requestor as createdBy
+        assignedTo: formData.assignedTo || undefined // Optional field
       })
       
       // Reset form
@@ -68,14 +93,16 @@ const CreateRequestDialog = ({ isOpen, onClose, onSubmit }: {
         status: "Pending",
         requestor: "",
         category: "Preventive",
-        priority: "Medium",
+        priority: "Medium",  
         urgency: "Normal",
         department: "",
         description: "",
         maintenanceDate: "",
         businessCriticality: "Medium",
         assetName: "",
-        estimatedCost: ""
+        estimatedCost: "",
+        createdBy: "",
+        assignedTo: ""
       })
       setErrors({})
       onClose()
@@ -250,6 +277,19 @@ const CreateRequestDialog = ({ isOpen, onClose, onSubmit }: {
                 min="0"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Assigned To
+              </label>
+              <input
+                type="text"
+                value={formData.assignedTo}
+                onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                placeholder="Enter assigned technician (optional)"
+              />
+            </div>
           </div>
 
           <div className="mt-6">
@@ -292,11 +332,7 @@ const CreateRequestDialog = ({ isOpen, onClose, onSubmit }: {
 }
 
 export default function MaintenanceRequestContent() {
-  const [data, setData] = useState<{
-    requests: MaintenanceRequest[]
-    pagination: any
-    summary: any
-  }>()
+  const [data, setData] = useState<ApiResponse>()
   const [isLoading, setIsLoading] = useState(true)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
@@ -318,7 +354,7 @@ export default function MaintenanceRequestContent() {
           ...(departmentFilter && { department: departmentFilter })
         })
 
-        const response = await apiGet(`/api/preventative-maintenance/requests?${params}`)
+        const response = await apiGet(`/api/preventative-maintenance/requests?${params}`) as ApiResponse
         setData(response)
       } catch (error) {
         console.error('Failed to load maintenance requests:', error)
@@ -351,7 +387,7 @@ export default function MaintenanceRequestContent() {
           ...(departmentFilter && { department: departmentFilter })
         })
 
-        const refreshedData = await apiGet(`/api/preventative-maintenance/requests?${params}`)
+        const refreshedData = await apiGet(`/api/preventative-maintenance/requests?${params}`) as ApiResponse
         setData(refreshedData)
       }
     } catch (error) {
@@ -399,7 +435,13 @@ export default function MaintenanceRequestContent() {
     return matchesSearch && matchesStatus
   }) || []
 
-  const summary = data?.summary || {}
+  const summary = data?.summary || {
+    total: 0,
+    pending: 0,
+    completed: 0,
+    highPriority: 0,
+    totalCost: 0
+  }
 
   if (isLoading) {
     return (
