@@ -246,6 +246,78 @@ export async function GET() {
       { name: "Geofence Violation", value: 8, color: "#1e40af" }
     ]
 
+    // Asset type utilization breakdown
+    const typeUtilization = data.assets.reduce((acc, asset) => {
+      if (!acc[asset.type]) {
+        acc[asset.type] = { total: 0, utilization: 0, underutilized: 0 }
+      }
+      acc[asset.type].total++
+      acc[asset.type].utilization += asset.utilization
+      if (asset.utilization < 40) acc[asset.type].underutilized++
+      return acc
+    }, {} as Record<string, { total: number, utilization: number, underutilized: number }>)
+
+    const assetTypeUtilization = Object.entries(typeUtilization)
+      .map(([type, typeData]) => ({
+        type,
+        avgUtilization: Math.round(typeData.utilization / typeData.total),
+        totalAssets: typeData.total,
+        underutilized: typeData.underutilized,
+        utilizationRate: Math.round((typeData.total - typeData.underutilized) / typeData.total * 100)
+      }))
+      .sort((a, b) => a.avgUtilization - b.avgUtilization)
+
+    // Generate redistribution suggestions
+    const redistributionSuggestions = []
+    const lowUtilDepts = departmentUtilization.filter(d => d.avgUtilization < 50).slice(0, 3)
+    const highUtilDepts = departmentUtilization.filter(d => d.avgUtilization > 80).slice(0, 3)
+
+    for (let i = 0; i < Math.min(5, lowUtilDepts.length); i++) {
+      const lowDept = lowUtilDepts[i]
+      const highDept = highUtilDepts[i % highUtilDepts.length] || highUtilDepts[0]
+      
+      if (highDept) {
+        const lowDeptAssets = data.assets.filter(a => a.departmentId === lowDept.departmentId && a.utilization < 30)
+        if (lowDeptAssets.length > 0) {
+          const suggestedAsset = lowDeptAssets[Math.floor(Math.random() * lowDeptAssets.length)]
+          redistributionSuggestions.push({
+            id: `redistrib-${i}`,
+            assetId: suggestedAsset.id,
+            assetName: suggestedAsset.name,
+            assetType: suggestedAsset.type,
+            currentUtilization: suggestedAsset.utilization,
+            fromDepartment: lowDept.departmentName,
+            fromDepartmentId: lowDept.departmentId,
+            toDepartment: highDept.departmentName,
+            toDepartmentId: highDept.departmentId,
+            potentialImpact: `+${Math.floor(Math.random() * 20) + 25}% utilization`,
+            priority: suggestedAsset.utilization < 20 ? "high" : "medium",
+            estimatedSavings: Math.floor(Math.random() * 4000) + 1000,
+            reason: "Low utilization in current department, high demand in target department"
+          })
+        }
+      }
+    }
+
+    // Idle asset alerts
+    const idleAssets = data.assets
+      .filter(a => a.utilization < 20 && a.status === "available")
+      .sort((a, b) => a.utilization - b.utilization)
+      .slice(0, 10)
+      .map(asset => {
+        const zone = data.zones.find(z => z.id === asset.location.zoneId)
+        return {
+          id: asset.id,
+          name: asset.name,
+          type: asset.type,
+          utilization: asset.utilization,
+          location: zone?.name || "Unknown",
+          departmentId: asset.departmentId,
+          lastActive: asset.lastActive,
+          idleDays: Math.floor((Date.now() - new Date(asset.lastActive).getTime()) / (24 * 60 * 60 * 1000))
+        }
+      })
+
     const responseData = {
       stats: {
         total: totalAssets,
@@ -257,18 +329,18 @@ export async function GET() {
       },
       utilization: {
         departmentUtilization,
-        assetTypeUtilization: [], // Keep existing implementation
-        redistributionSuggestions: [], // Keep existing implementation
-        idleAssets: [], // Keep existing implementation
+        assetTypeUtilization,
+        redistributionSuggestions,
+        idleAssets,
         top10IdleAssets,
         utilizationTrend,
         maintenanceImpact,
         movementAlerts: recentMovements
       },
-      monitoredCategories: [], // Keep existing implementation
-      locationTrends: [], // Keep existing implementation
-      recordedLocations: [], // Keep existing implementation
-      flaggedReasons: [] // Keep existing implementation
+      monitoredCategories,
+      locationTrends,
+      recordedLocations,
+      flaggedReasons
     }
 
     return NextResponse.json(responseData)

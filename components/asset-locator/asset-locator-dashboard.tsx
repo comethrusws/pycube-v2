@@ -119,9 +119,8 @@ export default function AssetLocatorDashboard() {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-light mb-2" style={{ color: "#001f3f" }}>
-            Dynamic Asset Utilization Dashboard
+            Asset Utilization Dashboard
           </h1>
-          <p className="text-gray-600">Optimize resource deployment through utilization analytics</p>
         </div>
 
         {/* Tab Navigation */}
