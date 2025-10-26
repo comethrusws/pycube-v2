@@ -292,3 +292,4 @@ This flow pattern is consistent across modules.
 | Basic logs          | Audit logs with Kafka/EventStream  |
 
 ---
+

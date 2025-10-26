@@ -264,7 +264,37 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
       departmentId,
       location: { buildingId, floorId, zoneId },
       status,
-      utilization: status === "in-use" ? randomInt(60, 95) : status === "available" ? randomInt(10, 40) : randomInt(0, 20),
+      utilization: (() => {
+        // Create more realistic utilization patterns based on asset type and department
+        let utilizationBase = 50
+        
+        // Asset type influences base utilization
+        if (type.includes("Monitor") || type.includes("Ventilator") || type.includes("Pump")) {
+          utilizationBase = 75 // High-demand equipment
+        } else if (type.includes("IV Stand") || type.includes("Wheelchair") || type.includes("Hospital Bed")) {
+          utilizationBase = 45 // Medium-demand equipment
+        } else if (type.includes("Surgical") || type.includes("MRI") || type.includes("CT") || type.includes("X-Ray")) {
+          utilizationBase = 35 // Specialized, scheduled equipment
+        }
+
+        // Department influences utilization (some departments are busier)
+        const deptIndex = parseInt(departmentId.slice(-3)) % 6
+        if (deptIndex < 2) {
+          utilizationBase += 20 // High-activity departments (ICU, Emergency)
+        } else if (deptIndex > 4) {
+          utilizationBase -= 25 // Lower-activity departments (Storage, Admin)
+        }
+
+        // Status influences utilization
+        if (status === "in-use") {
+          utilizationBase = Math.max(utilizationBase, 60)
+        } else if (status === "maintenance" || status === "lost") {
+          utilizationBase = Math.min(utilizationBase, 20)
+        }
+
+        // Add randomness but ensure realistic distribution
+        return Math.max(5, Math.min(98, utilizationBase + randomInt(-25, 25)))
+      })(),
       lastActive: randomDateISO(lastActiveDays),
       maintenanceDue: status === "maintenance" ? randomDateISO(15) : randomDateISO(180),
       serialNumber: `SN${(a + 1).toString().padStart(8, "0")}`, // Add serial number
@@ -744,12 +774,32 @@ function generateAssetLocatorData(
 
   for (const lowDept of lowUtilDepts) {
     for (const highDept of highUtilDepts) {
-      // Find common asset types between departments
-      const lowDeptAssets = assets.filter(a => a.departmentId === lowDept.departmentId && a.utilization < 30)
-      const commonTypes = [...new Set(lowDeptAssets.map(a => a.type))]
+      // Find underutilized assets that could benefit from redistribution
+      const lowDeptAssets = assets.filter(a => 
+        a.departmentId === lowDept.departmentId && 
+        a.utilization < 30 &&
+        a.status === "available"
+      )
       
-      if (commonTypes.length > 0 && lowDeptAssets.length > 0) {
-        const suggestedAsset = randomChoice(lowDeptAssets)
+      // Find what types are in demand in high-utilization departments
+      const highDeptAssets = assets.filter(a => a.departmentId === highDept.departmentId)
+      const highDemandTypes = [...new Set(highDeptAssets.filter(a => a.utilization > 70).map(a => a.type))]
+      
+      // Find matching assets that could be redistributed
+      const redistributableAssets = lowDeptAssets.filter(a => 
+        highDemandTypes.includes(a.type) || 
+        a.type.includes("Monitor") || 
+        a.type.includes("Pump") || 
+        a.type.includes("Bed") ||
+        a.type.includes("Wheelchair")
+      )
+      
+      if (redistributableAssets.length > 0) {
+        const suggestedAsset = randomChoice(redistributableAssets)
+        const potentialGain = randomInt(25, 45)
+        const currentCost = (suggestedAsset.value || 5000) * 0.1  // 10% of asset value annually for underutilization
+        const projectedSavings = Math.floor(currentCost * (potentialGain / 100))
+        
         redistributionSuggestions.push({
           id: randomUUID(),
           assetId: suggestedAsset.id,
@@ -760,13 +810,18 @@ function generateAssetLocatorData(
           fromDepartmentId: lowDept.departmentId,
           toDepartment: highDept.departmentName,
           toDepartmentId: highDept.departmentId,
-          potentialImpact: `+${randomInt(25, 45)}% utilization`,
-          priority: suggestedAsset.utilization < 20 ? "high" : "medium",
-          estimatedSavings: randomInt(1000, 5000),
-          reason: "Low utilization in current department, high demand in target department"
+          potentialImpact: `+${potentialGain}% utilization`,
+          priority: suggestedAsset.utilization < 15 ? "high" : 
+                   suggestedAsset.utilization < 25 ? "medium" : "low",
+          estimatedSavings: projectedSavings,
+          reason: `${suggestedAsset.type} shows ${suggestedAsset.utilization}% utilization in ${lowDept.departmentName}, while ${highDept.departmentName} has high demand for similar equipment`
         })
+        
+        // Limit to avoid too many suggestions
+        if (redistributionSuggestions.length >= 8) break
       }
     }
+    if (redistributionSuggestions.length >= 8) break
   }
 
   // Idle asset alerts
