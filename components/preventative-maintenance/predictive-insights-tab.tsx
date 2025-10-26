@@ -476,12 +476,6 @@ export default function PredictiveInsightsTab() {
                         <Calendar className="w-4 h-4" />
                         Schedule
                       </button>
-                      <button
-                        onClick={() => setSelectedAsset(asset)}
-                        className="px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
                     </div>
                   </td>
                 </tr>
