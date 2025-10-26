@@ -442,7 +442,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   ]
 
   // Generate 25-30 location lists for comprehensive data
-  for (let i = 0; i < 28; i++) {
+  for (let i = 0; i < 57; i++) {
     const listId = `LOC${(i + 1).toString().padStart(4, "0")}`
     const createdDaysAgo = randomInt(1, 120)
     const targetDaysFromCreation = randomInt(7, 30)
