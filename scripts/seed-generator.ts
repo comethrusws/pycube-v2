@@ -682,6 +682,112 @@ function generateAssetLocatorData(
     maintenanceTasks.some(m => m.assetId === a.id && m.status === "overdue")
   ).length
 
+  // Enhanced utilization analytics
+  const underutilizedAssets = assets.filter(a => a.utilization < 40)
+  const underutilizedCount = underutilizedAssets.length
+  const avgUtilization = Math.round(assets.reduce((sum, a) => sum + a.utilization, 0) / assets.length)
+
+  // Department-level utilization analysis
+  const deptUtilization = assets.reduce((acc, asset) => {
+    if (!acc[asset.departmentId]) {
+      acc[asset.departmentId] = {
+        assets: [],
+        totalUtilization: 0,
+        underutilized: 0
+      }
+    }
+    acc[asset.departmentId].assets.push(asset)
+    acc[asset.departmentId].totalUtilization += asset.utilization
+    if (asset.utilization < 40) {
+      acc[asset.departmentId].underutilized++
+    }
+    return acc
+  }, {} as Record<string, { assets: Asset[], totalUtilization: number, underutilized: number }>)
+
+  const departmentUtilization = Object.entries(deptUtilization).map(([deptId, data]) => ({
+    departmentId: deptId,
+    departmentName: `Department ${deptId.slice(-3)}`,
+    avgUtilization: Math.round(data.totalUtilization / data.assets.length),
+    totalAssets: data.assets.length,
+    underutilized: data.underutilized,
+    utilizationTrend: Array.from({ length: 7 }, (_, i) => ({
+      date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      utilization: Math.max(20, Math.min(95, data.totalUtilization / data.assets.length + randomInt(-15, 15)))
+    }))
+  })).sort((a, b) => a.avgUtilization - b.avgUtilization)
+
+  // Asset type utilization breakdown
+  const typeUtilization = assets.reduce((acc, asset) => {
+    if (!acc[asset.type]) {
+      acc[asset.type] = { total: 0, utilization: 0, underutilized: 0 }
+    }
+    acc[asset.type].total++
+    acc[asset.type].utilization += asset.utilization
+    if (asset.utilization < 40) acc[asset.type].underutilized++
+    return acc
+  }, {} as Record<string, { total: number, utilization: number, underutilized: number }>)
+
+  const assetTypeUtilization = Object.entries(typeUtilization)
+    .map(([type, data]) => ({
+      type,
+      avgUtilization: Math.round(data.utilization / data.total),
+      totalAssets: data.total,
+      underutilized: data.underutilized,
+      utilizationRate: Math.round((data.total - data.underutilized) / data.total * 100)
+    }))
+    .sort((a, b) => a.avgUtilization - b.avgUtilization)
+
+  // Redistribution suggestions based on utilization imbalance
+  const redistributionSuggestions = []
+  const lowUtilDepts = departmentUtilization.filter(d => d.avgUtilization < 50).slice(0, 3)
+  const highUtilDepts = departmentUtilization.filter(d => d.avgUtilization > 80).slice(0, 3)
+
+  for (const lowDept of lowUtilDepts) {
+    for (const highDept of highUtilDepts) {
+      // Find common asset types between departments
+      const lowDeptAssets = assets.filter(a => a.departmentId === lowDept.departmentId && a.utilization < 30)
+      const commonTypes = [...new Set(lowDeptAssets.map(a => a.type))]
+      
+      if (commonTypes.length > 0 && lowDeptAssets.length > 0) {
+        const suggestedAsset = randomChoice(lowDeptAssets)
+        redistributionSuggestions.push({
+          id: randomUUID(),
+          assetId: suggestedAsset.id,
+          assetName: suggestedAsset.name,
+          assetType: suggestedAsset.type,
+          currentUtilization: suggestedAsset.utilization,
+          fromDepartment: lowDept.departmentName,
+          fromDepartmentId: lowDept.departmentId,
+          toDepartment: highDept.departmentName,
+          toDepartmentId: highDept.departmentId,
+          potentialImpact: `+${randomInt(25, 45)}% utilization`,
+          priority: suggestedAsset.utilization < 20 ? "high" : "medium",
+          estimatedSavings: randomInt(1000, 5000),
+          reason: "Low utilization in current department, high demand in target department"
+        })
+      }
+    }
+  }
+
+  // Idle asset alerts
+  const idleAssets = assets
+    .filter(a => a.utilization < 20 && a.status === "available")
+    .sort((a, b) => a.utilization - b.utilization)
+    .slice(0, 10)
+    .map(asset => {
+      const zone = zones.find(z => z.id === asset.location.zoneId)
+      return {
+        id: asset.id,
+        name: asset.name,
+        type: asset.type,
+        utilization: asset.utilization,
+        location: zone?.name || "Unknown",
+        departmentId: asset.departmentId,
+        lastActive: asset.lastActive,
+        idleDays: Math.floor((Date.now() - new Date(asset.lastActive).getTime()) / (24 * 60 * 60 * 1000))
+      }
+    })
+
   // Monitored product categories with realistic distribution
   const categoryCounts = assets.reduce((acc, asset) => {
     const category = asset.category || asset.type
@@ -768,12 +874,22 @@ function generateAssetLocatorData(
       toLocate: assetsToLocate,
       located: locatedAssets,
       flagged: flaggedAssets,
+      // Enhanced utilization stats
+      underutilized: underutilizedCount,
+      avgUtilization,
       // Add location list stats
       totalLists: locationLists.length,
       completedLists,
       pendingLists,
       overdueLists,
       avgCompletionRate
+    },
+    // Enhanced utilization analytics
+    utilization: {
+      departmentUtilization,
+      assetTypeUtilization,
+      redistributionSuggestions,
+      idleAssets
     },
     monitoredCategories,
     locationTrends,

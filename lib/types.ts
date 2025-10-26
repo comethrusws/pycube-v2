@@ -240,6 +240,58 @@ export interface SeedData {
   assetLocatorData?: any
 }
 
+// Add new interfaces for utilization analytics
+export interface DepartmentUtilization {
+  departmentId: string
+  departmentName: string
+  avgUtilization: number
+  totalAssets: number
+  underutilized: number
+  utilizationTrend: { date: string; utilization: number }[]
+}
+
+export interface AssetTypeUtilization {
+  type: string
+  avgUtilization: number
+  totalAssets: number
+  underutilized: number
+  utilizationRate: number
+}
+
+export interface RedistributionSuggestion {
+  id: string
+  assetId: string
+  assetName: string
+  assetType: string
+  currentUtilization: number
+  fromDepartment: string
+  fromDepartmentId: string
+  toDepartment: string
+  toDepartmentId: string
+  potentialImpact: string
+  priority: "high" | "medium" | "low"
+  estimatedSavings: number
+  reason: string
+}
+
+export interface IdleAsset {
+  id: string
+  name: string
+  type: string
+  utilization: number
+  location: string
+  departmentId: string
+  lastActive: string
+  idleDays: number
+}
+
+export interface UtilizationAnalytics {
+  departmentUtilization: DepartmentUtilization[]
+  assetTypeUtilization: AssetTypeUtilization[]
+  redistributionSuggestions: RedistributionSuggestion[]
+  idleAssets: IdleAsset[]
+}
+
 export interface GeneratorConfig {
   facilityCount: number
   buildingsPerFacility: number
