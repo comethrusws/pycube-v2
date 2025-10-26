@@ -122,6 +122,25 @@ export interface MaintenanceTask {
   cost?: number // Add estimated/actual cost
 }
 
+export interface MaintenanceRequest {
+  id: string
+  status: string
+  requestor: string
+  category: string
+  priority: string
+  urgency: string
+  department: string
+  description: string
+  maintenanceDate: string
+  businessCriticality: string
+  lastModified: string
+  assetName?: string
+  assetId?: string
+  estimatedCost?: number
+  createdBy: string
+  assignedTo?: string
+}
+
 export type AlertType = "movement" | "maintenance" | "geofence" | "utilization" | "battery"
 export type TargetRole = "biomedical" | "nursing" | "admin"
 
@@ -232,6 +251,7 @@ export interface SeedData {
   userLogs: UserLog[]
   movementLogs: MovementLog[]
   maintenanceTasks: MaintenanceTask[]
+  maintenanceRequests: MaintenanceRequest[]
   alerts: Alert[]
   userUtilizations: UserUtilization[]
   locationLists: LocationList[]

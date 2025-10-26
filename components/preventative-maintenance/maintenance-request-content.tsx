@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Download, Plus, X, Calendar, AlertCircle } from "lucide-react"
+import { Download, Plus, X, Calendar, AlertCircle, Search } from "lucide-react"
+import { apiGet } from "@/lib/fetcher"
 
 interface MaintenanceRequest {
   id: string
@@ -16,7 +17,10 @@ interface MaintenanceRequest {
   businessCriticality: string
   lastModified: string
   assetName?: string
+  assetId?: string
   estimatedCost?: number
+  createdBy: string
+  assignedTo?: string
 }
 
 const CreateRequestDialog = ({ isOpen, onClose, onSubmit }: {
@@ -288,80 +292,79 @@ const CreateRequestDialog = ({ isOpen, onClose, onSubmit }: {
 }
 
 export default function MaintenanceRequestContent() {
-  const [requests, setRequests] = useState<MaintenanceRequest[]>([])
+  const [data, setData] = useState<{
+    requests: MaintenanceRequest[]
+    pagination: any
+    summary: any
+  }>()
+  const [isLoading, setIsLoading] = useState(true)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
+  const [priorityFilter, setPriorityFilter] = useState("")
+  const [departmentFilter, setDepartmentFilter] = useState("")
 
-  // Load requests from localStorage on component mount
+  // Load maintenance requests from API
   useEffect(() => {
-    const savedRequests = localStorage.getItem('maintenanceRequests')
-    if (savedRequests) {
+    const loadRequests = async () => {
       try {
-        setRequests(JSON.parse(savedRequests))
+        setIsLoading(true)
+        const params = new URLSearchParams({
+          page: "1",
+          limit: "100",
+          ...(searchTerm && { search: searchTerm }),
+          ...(statusFilter && { status: statusFilter }),
+          ...(priorityFilter && { priority: priorityFilter }),
+          ...(departmentFilter && { department: departmentFilter })
+        })
+
+        const response = await apiGet(`/api/preventative-maintenance/requests?${params}`)
+        setData(response)
       } catch (error) {
-        console.error('Error loading maintenance requests:', error)
+        console.error('Failed to load maintenance requests:', error)
+      } finally {
+        setIsLoading(false)
       }
-    } else {
-      // Initialize with some sample data if none exists
-      const initialRequests: MaintenanceRequest[] = [
-        {
-          id: "MR-001",
-          status: "Pending",
-          requestor: "John Smith",
-          category: "Preventive",
-          priority: "High",
-          urgency: "Urgent",
-          department: "Operations",
-          description: "Regular maintenance check for infusion pump",
-          maintenanceDate: "2025-02-15",
-          businessCriticality: "Critical",
-          lastModified: "2025-02-10",
-          assetName: "Infusion Pump #0001",
-          estimatedCost: 250
+    }
+
+    loadRequests()
+  }, [searchTerm, statusFilter, priorityFilter, departmentFilter])
+
+  const handleCreateRequest = async (newRequestData: Omit<MaintenanceRequest, 'id' | 'lastModified'>) => {
+    try {
+      const response = await fetch('/api/preventative-maintenance/requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          id: "MR-002",
-          status: "In Progress",
-          requestor: "Jane Doe",
-          category: "Corrective",
-          priority: "Medium",
-          urgency: "Normal",
-          department: "Engineering",
-          description: "Equipment repair needed for ECG monitor",
-          maintenanceDate: "2025-02-20",
-          businessCriticality: "High",
-          lastModified: "2025-02-11",
-          assetName: "ECG Monitor #0045",
-          estimatedCost: 450
-        }
-      ]
-      setRequests(initialRequests)
-      localStorage.setItem('maintenanceRequests', JSON.stringify(initialRequests))
-    }
-  }, [])
+        body: JSON.stringify(newRequestData),
+      })
 
-  // Save requests to localStorage whenever requests change
-  useEffect(() => {
-    if (requests.length > 0) {
-      localStorage.setItem('maintenanceRequests', JSON.stringify(requests))
-    }
-  }, [requests])
+      if (response.ok) {
+        // Refresh the data
+        const params = new URLSearchParams({
+          page: "1",
+          limit: "100",
+          ...(searchTerm && { search: searchTerm }),
+          ...(statusFilter && { status: statusFilter }),
+          ...(priorityFilter && { priority: priorityFilter }),
+          ...(departmentFilter && { department: departmentFilter })
+        })
 
-  const handleCreateRequest = (newRequestData: Omit<MaintenanceRequest, 'id' | 'lastModified'>) => {
-    const newRequest: MaintenanceRequest = {
-      ...newRequestData,
-      id: `MR-${(requests.length + 1).toString().padStart(3, '0')}`,
-      lastModified: new Date().toISOString().split('T')[0]
+        const refreshedData = await apiGet(`/api/preventative-maintenance/requests?${params}`)
+        setData(refreshedData)
+      }
+    } catch (error) {
+      console.error('Failed to create maintenance request:', error)
     }
-    
-    setRequests(prev => [newRequest, ...prev])
   }
 
   const handleDownload = () => {
+    if (!data?.requests) return
+
     const csvContent = [
       ["ID", "Status", "Requestor", "Asset", "Category", "Priority", "Department", "Maintenance Date", "Cost"],
-      ...requests.map(req => [
+      ...data.requests.map(req => [
         req.id,
         req.status,
         req.requestor,
@@ -384,7 +387,7 @@ export default function MaintenanceRequestContent() {
   }
 
   // Filter requests based on search and status
-  const filteredRequests = requests.filter(request => {
+  const filteredRequests = data?.requests.filter(request => {
     const matchesSearch = !searchTerm || 
       request.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.requestor.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -394,24 +397,24 @@ export default function MaintenanceRequestContent() {
     const matchesStatus = !statusFilter || request.status === statusFilter
     
     return matchesSearch && matchesStatus
-  })
+  }) || []
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed': return 'text-green-700 bg-green-100'
-      case 'in progress': return 'text-blue-700 bg-blue-100'
-      case 'overdue': return 'text-red-700 bg-red-100'
-      default: return 'text-orange-700 bg-orange-100'
-    }
-  }
+  const summary = data?.summary || {}
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority.toLowerCase()) {
-      case 'critical': return 'text-red-700 bg-red-100'
-      case 'high': return 'text-orange-700 bg-orange-100'
-      case 'medium': return 'text-blue-700 bg-blue-100'
-      default: return 'text-gray-700 bg-gray-100'
-    }
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6" style={{ backgroundColor: "#f0f4f8" }}>
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-64 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -449,7 +452,7 @@ export default function MaintenanceRequestContent() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Requests</p>
-              <p className="text-xl font-semibold" style={{ color: "#001f3f" }}>{requests.length}</p>
+              <p className="text-xl font-semibold" style={{ color: "#001f3f" }}>{summary.total || 0}</p>
             </div>
           </div>
         </div>
@@ -462,7 +465,7 @@ export default function MaintenanceRequestContent() {
             <div>
               <p className="text-sm text-gray-600">Pending</p>
               <p className="text-xl font-semibold" style={{ color: "#001f3f" }}>
-                {requests.filter(r => r.status === 'Pending').length}
+                {summary.pending || 0}
               </p>
             </div>
           </div>
@@ -476,7 +479,7 @@ export default function MaintenanceRequestContent() {
             <div>
               <p className="text-sm text-gray-600">Completed</p>
               <p className="text-xl font-semibold" style={{ color: "#001f3f" }}>
-                {requests.filter(r => r.status === 'Completed').length}
+                {summary.completed || 0}
               </p>
             </div>
           </div>
@@ -490,30 +493,35 @@ export default function MaintenanceRequestContent() {
             <div>
               <p className="text-sm text-gray-600">High Priority</p>
               <p className="text-xl font-semibold" style={{ color: "#001f3f" }}>
-                {requests.filter(r => r.priority === 'High' || r.priority === 'Critical').length}
+                {summary.highPriority || 0}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Enhanced Filters */}
       <div className="bg-white rounded-lg p-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search requests..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search requests..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
               <option value="">All Status</option>
               <option value="Pending">Pending</option>
@@ -521,6 +529,30 @@ export default function MaintenanceRequestContent() {
               <option value="Completed">Completed</option>
               <option value="Overdue">Overdue</option>
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            >
+              <option value="">All Priority</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+            <input
+              type="text"
+              placeholder="Filter by department..."
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
           </div>
         </div>
       </div>
@@ -593,7 +625,10 @@ export default function MaintenanceRequestContent() {
           style={{ backgroundColor: "#f5f5f5", borderTop: "1px solid #e0e0e0" }}
         >
           <span className="text-sm" style={{ color: "#666" }}>
-            Showing {filteredRequests.length} of {requests.length} requests
+            Showing {filteredRequests.length} requests
+          </span>
+          <span className="text-sm" style={{ color: "#666" }}>
+            Total Cost: ${summary.totalCost?.toLocaleString() || 0}
           </span>
         </div>
       </div>
@@ -605,4 +640,22 @@ export default function MaintenanceRequestContent() {
       />
     </div>
   )
+
+  function getStatusColor(status: string) {
+    switch (status.toLowerCase()) {
+      case 'completed': return 'text-green-700 bg-green-100'
+      case 'in progress': return 'text-blue-700 bg-blue-100'
+      case 'overdue': return 'text-red-700 bg-red-100'
+      default: return 'text-orange-700 bg-orange-100'
+    }
+  }
+
+  function getPriorityColor(priority: string) {
+    switch (priority.toLowerCase()) {
+      case 'critical': return 'text-red-700 bg-red-100'
+      case 'high': return 'text-orange-700 bg-orange-100'
+      case 'medium': return 'text-blue-700 bg-blue-100'
+      default: return 'text-gray-700 bg-gray-100'
+    }
+  }
 }

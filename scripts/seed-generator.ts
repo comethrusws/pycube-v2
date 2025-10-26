@@ -18,6 +18,7 @@ import type {
   UserLog,
   MovementLog,
   MaintenanceTask,
+  MaintenanceRequest,
   Alert,
   UserUtilization,
   Status,
@@ -287,6 +288,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   const userLogs: UserLog[] = []
   const movementLogs: MovementLog[] = []
   const maintenanceTasks: MaintenanceTask[] = []
+  const maintenanceRequests: MaintenanceRequest[] = []
   const alerts: Alert[] = []
   const userUtilizations: UserUtilization[] = []
   const locationLists: LocationList[] = []
@@ -546,7 +548,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
     }
   }
 
-  // Enhanced user utilization data
+ // Enhanced user utilization data
   for (const user of users) {
     userUtilizations.push({
       userId: user.id,
@@ -579,6 +581,107 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
       })
     }
   }
+
+
+  // Generate realistic maintenance requests
+  const requestStatuses = ["Pending", "In Progress", "Completed", "Overdue"]
+  const requestCategories = ["Preventive", "Corrective", "Emergency", "Calibration", "Inspection"]
+  const priorities = ["Low", "Medium", "High", "Critical"]
+  const urgencies = ["Low", "Normal", "High", "Urgent"]
+  const criticalities = ["Low", "Medium", "High", "Critical"]
+
+  const requestDescriptions = [
+    "Regular maintenance check required",
+    "Equipment showing performance issues",
+    "Calibration required as per schedule",
+    "Emergency repair needed",
+    "Preventive maintenance overdue",
+    "Safety inspection required",
+    "Component replacement needed",
+    "Performance optimization required",
+    "Compliance check needed",
+    "Annual maintenance service",
+    "Battery replacement required",
+    "Software update and calibration",
+    "Cleaning and sanitization",
+    "Sensor alignment check",
+    "Firmware update required"
+  ]
+
+  // Generate 50-80 maintenance requests
+  const requestCount = randomInt(50, 80)
+  for (let i = 0; i < requestCount; i++) {
+    const asset = randomChoice(assets)
+    const zone = zones.find(z => z.id === asset.location.zoneId)
+    const department = departments.find(d => d.id === asset.departmentId)
+    const requestor = randomChoice(users.filter(u => u.departmentId === asset.departmentId))
+    const assignedUser = randomChoice(users.filter(u => 
+      u.role === "biomedical" || u.role === "technician" || u.role === "admin"
+    ))
+
+    const status = randomChoice(requestStatuses)
+    const category = randomChoice(requestCategories)
+    const priority = randomChoice(priorities)
+    const urgency = randomChoice(urgencies)
+    const criticality = randomChoice(criticalities)
+
+    // Generate realistic maintenance dates based on status
+    let maintenanceDate: string
+    let createdDaysAgo: number
+    
+    if (status === "Completed") {
+      createdDaysAgo = randomInt(7, 60)
+      maintenanceDate = new Date(Date.now() - randomInt(1, createdDaysAgo) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    } else if (status === "Overdue") {
+      createdDaysAgo = randomInt(30, 90)
+      maintenanceDate = new Date(Date.now() - randomInt(1, 15) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    } else {
+      createdDaysAgo = randomInt(1, 30)
+      maintenanceDate = new Date(Date.now() + randomInt(1, 45) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    }
+
+    const createdDate = new Date(Date.now() - createdDaysAgo * 24 * 60 * 60 * 1000)
+    const lastModified = new Date(createdDate.getTime() + randomInt(0, createdDaysAgo) * 24 * 60 * 60 * 1000)
+
+    // Generate cost based on asset type and category
+    let baseCost = 100
+    if (asset.type.includes("MRI") || asset.type.includes("CT")) baseCost = 2000
+    else if (asset.type.includes("Ventilator") || asset.type.includes("Monitor")) baseCost = 500
+    else if (asset.type.includes("Pump") || asset.type.includes("ECG")) baseCost = 300
+    else if (asset.type.includes("Wheelchair") || asset.type.includes("Bed")) baseCost = 150
+
+    if (category === "Emergency") baseCost *= 2
+    else if (category === "Preventive") baseCost *= 0.7
+    else if (category === "Calibration") baseCost *= 1.5
+
+    const estimatedCost = Math.round(baseCost * (0.5 + Math.random()))
+
+    const maintenanceRequest: MaintenanceRequest = {
+      id: `MR-${(i + 1).toString().padStart(3, '0')}`,
+      status,
+      requestor: requestor.name,
+      category,
+      priority,
+      urgency,
+      department: department?.name || `Department ${asset.departmentId.slice(-3)}`,
+      description: `${randomChoice(requestDescriptions)} for ${asset.name}`,
+      maintenanceDate,
+      businessCriticality: criticality,
+      lastModified: lastModified.toISOString().split('T')[0],
+      assetName: asset.name,
+      assetId: asset.id,
+      estimatedCost,
+      createdBy: requestor.name,
+      assignedTo: status !== "Pending" ? assignedUser.name : undefined
+    }
+
+    maintenanceRequests.push(maintenanceRequest)
+  }
+
+  // Sort by creation date (most recent first)
+  maintenanceRequests.sort((a, b) => 
+    new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime()
+  )
 
   // Link assets to departments
   const deptById = new Map(departments.map((d) => [d.id, d]))
@@ -731,6 +834,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
     userLogs,
     movementLogs,
     maintenanceTasks,
+    maintenanceRequests,
     alerts,
     userUtilizations,
     locationLists,
