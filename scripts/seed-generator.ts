@@ -1083,14 +1083,14 @@ function generateAssetLocatorData(
     const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000)
     const dateStr = date.toISOString().split('T')[0]
     
-    // Create more realistic utilization patterns
-    const baseUtilization = avgUtilization
+    // Create more realistic utilization patterns with better bounds
+    const baseUtilization = Math.max(40, Math.min(85, avgUtilization))
     
     // Multi-layered variation for realistic data
-    const weeklyPattern = Math.sin((i / 7) * 2 * Math.PI) * 8 // 7-day cycle
-    const monthlyTrend = Math.sin((i / 30) * Math.PI) * 5 // Monthly trend
-    const weekdayEffect = date.getDay() === 0 || date.getDay() === 6 ? -8 : 2 // Weekend vs weekday
-    const randomNoise = (Math.random() - 0.5) * 12 // Daily random variation
+    const weeklyPattern = Math.sin((i / 7) * 2 * Math.PI) * 12 // 7-day cycle
+    const monthlyTrend = Math.sin((i / 30) * Math.PI) * 8 // Monthly trend
+    const weekdayEffect = date.getDay() === 0 || date.getDay() === 6 ? -15 : 5 // Weekend vs weekday
+    const randomNoise = (Math.random() - 0.5) * 8 // Daily random variation
     
     let utilization = baseUtilization + weeklyPattern + monthlyTrend + weekdayEffect + randomNoise
     
@@ -1101,13 +1101,11 @@ function generateAssetLocatorData(
     ).length
     
     // Apply maintenance impact more realistically
-    const maintenanceImpact = Math.min(20, maintenanceEvents * 3)
+    const maintenanceImpact = Math.min(25, maintenanceEvents * 4)
     utilization -= maintenanceImpact
     
-    // Ensure realistic bounds with some variety
-    const minUtil = Math.max(20, avgUtilization - 35)
-    const maxUtil = Math.min(95, avgUtilization + 25)
-    utilization = Math.max(minUtil, Math.min(maxUtil, utilization))
+    // Ensure realistic bounds (30-95%)
+    utilization = Math.max(30, Math.min(95, utilization))
     
     return {
       date: dateStr,
