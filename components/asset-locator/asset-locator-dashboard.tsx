@@ -36,6 +36,10 @@ export default function AssetLocatorDashboard() {
       assetTypeUtilization: any[]
       redistributionSuggestions: any[]
       idleAssets: any[]
+      top10IdleAssets: any[]
+      utilizationTrend: any[]
+      maintenanceImpact: any[]
+      movementAlerts: any[]
     }
     monitoredCategories: { name: string; value: number; color: string }[]
     locationTrends: { date: string; located: number; unlocated: number }[]
@@ -44,11 +48,12 @@ export default function AssetLocatorDashboard() {
   }>()
 
   const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<"overview" | "utilization">("overview")
+  const [activeTab, setActiveTab] = useState<"overview" | "utilization">("utilization") // Default to utilization tab
   const [filters, setFilters] = useState({
     department: "all",
     assetType: "all",
-    utilizationThreshold: 40
+    utilizationThreshold: 40,
+    dateRange: "30days"
   })
 
   useEffect(() => {
@@ -123,16 +128,6 @@ export default function AssetLocatorDashboard() {
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8 justify-center">
             <button
-              onClick={() => setActiveTab("overview")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "overview"
-                  ? "border-teal-500 text-teal-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Location Overview
-            </button>
-            <button
               onClick={() => setActiveTab("utilization")}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "utilization"
@@ -142,11 +137,352 @@ export default function AssetLocatorDashboard() {
             >
               Utilization Analytics
             </button>
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "overview"
+                  ? "border-teal-500 text-teal-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Location Overview
+            </button>
           </nav>
         </div>
 
-        {activeTab === "overview" ? (
+        {activeTab === "utilization" ? (
           <>
+            {/* Enhanced Utilization Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <StatCard 
+                label="Average Utilization" 
+                value={`${data?.stats.avgUtilization ?? 0}%`}
+                bgColor="bg-gradient-to-br from-blue-600 to-blue-700" 
+              />
+              <StatCard 
+                label="Underutilized Assets" 
+                value={data?.stats.underutilized ?? 0} 
+                bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
+                trend="< 40% utilization"
+              />
+              <StatCard 
+                label="Movement Alerts" 
+                value={utilization?.movementAlerts?.length ?? 0} 
+                bgColor="bg-gradient-to-br from-red-500 to-red-600"
+                trend="Last 48 hours"
+              />
+              <StatCard 
+                label="Idle Assets (Critical)" 
+                value={utilization?.top10IdleAssets?.filter(a => a.idleDuration > 30).length ?? 0} 
+                bgColor="bg-gradient-to-br from-purple-500 to-purple-600"
+                trend="> 30 days idle"
+              />
+            </div>
+
+            {/* Filters */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+              <h3 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: "#001f3f" }}>
+                Filter & Analysis Controls
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                  <select 
+                    value={filters.department}
+                    onChange={(e) => setFilters({...filters, department: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="all">All Departments</option>
+                    {utilization?.departmentUtilization?.map(dept => (
+                      <option key={dept.departmentId} value={dept.departmentId}>
+                        {dept.departmentName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Asset Type</label>
+                  <select 
+                    value={filters.assetType}
+                    onChange={(e) => setFilters({...filters, assetType: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="all">All Asset Types</option>
+                    {utilization?.assetTypeUtilization?.map(type => (
+                      <option key={type.type} value={type.type}>
+                        {type.type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Utilization Threshold</label>
+                  <select 
+                    value={filters.utilizationThreshold}
+                    onChange={(e) => setFilters({...filters, utilizationThreshold: Number(e.target.value)})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value={20}>Under 20%</option>
+                    <option value={40}>Under 40%</option>
+                    <option value={60}>Under 60%</option>
+                    <option value={80}>Under 80%</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+                  <select 
+                    value={filters.dateRange}
+                    onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="7days">Last 7 Days</option>
+                    <option value="30days">Last 30 Days</option>
+                    <option value="90days">Last 90 Days</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Department Utilization Overview (Bar Graph) */}
+            <ChartCard title="Department Utilization Overview">
+              <div className="h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={filteredDepartments} 
+                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis 
+                      dataKey="departmentName" 
+                      stroke="#9ca3af" 
+                      style={{ fontSize: "10px" }}
+                      tick={{ fill: '#6b7280' }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis 
+                      stroke="#9ca3af" 
+                      style={{ fontSize: "12px" }}
+                      tick={{ fill: '#6b7280' }}
+                      label={{ value: 'Utilization %', angle: -90, position: 'insideLeft' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#fff', 
+                        border: '1px solid #e5e7eb', 
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                      formatter={(value, name) => [
+                        typeof value === 'number' ? `${value} assets` : value,
+                        name === 'active' ? 'Active' : name === 'idle' ? 'Idle' : 'In Maintenance'
+                      ]}
+                    />
+                    <Legend />
+                    <Bar dataKey="active" stackId="a" fill="#059669" name="Active" />
+                    <Bar dataKey="idle" stackId="a" fill="#dc2626" name="Idle" />
+                    <Bar dataKey="inMaintenance" stackId="a" fill="#d97706" name="In Maintenance" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            {/* Top 10 Idle Assets (Table) and Utilization Trend */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Top 10 Idle Assets Table */}
+              <ChartCard title="Top 10 Idle Assets">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-2 font-medium text-gray-900">Asset Name</th>
+                        <th className="text-left py-3 px-2 font-medium text-gray-900">Department</th>
+                        <th className="text-left py-3 px-2 font-medium text-gray-900">Last Used</th>
+                        <th className="text-left py-3 px-2 font-medium text-gray-900">Idle Duration</th>
+                        <th className="text-left py-3 px-2 font-medium text-gray-900">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {utilization?.top10IdleAssets?.map((asset, idx) => (
+                        <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
+                          <td className="py-3 px-2">
+                            <div>
+                              <p className="font-medium text-gray-900">{asset.name}</p>
+                              <p className="text-xs text-gray-500">{asset.type}</p>
+                            </div>
+                          </td>
+                          <td className="py-3 px-2 text-gray-700">{asset.department}</td>
+                          <td className="py-3 px-2 text-gray-700">
+                            {new Date(asset.lastUsed).toLocaleDateString()}
+                          </td>
+                          <td className="py-3 px-2">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              asset.idleDuration > 30 ? 'bg-red-100 text-red-700' :
+                              asset.idleDuration > 14 ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-green-100 text-green-700'
+                            }`}>
+                              {asset.idleDuration} days
+                            </span>
+                          </td>
+                          <td className="py-3 px-2">
+                            <button className="text-xs px-3 py-1 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">
+                              {asset.recommendedAction.split(' ')[0]}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </ChartCard>
+
+              {/* Utilization Trend Over Time */}
+              <ChartCard title="Utilization Trend Over Time">
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={utilization?.utilizationTrend} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="displayDate" 
+                        stroke="#9ca3af" 
+                        style={{ fontSize: "10px" }}
+                        tick={{ fill: '#6b7280' }}
+                      />
+                      <YAxis 
+                        stroke="#9ca3af" 
+                        style={{ fontSize: "12px" }}
+                        tick={{ fill: '#6b7280' }}
+                        label={{ value: 'Utilization %', angle: -90, position: 'insideLeft' }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#fff', 
+                          border: '1px solid #e5e7eb', 
+                          borderRadius: '8px',
+                          fontSize: '12px'
+                        }}
+                        formatter={(value, name) => [`${value}%`, 'Utilization Rate']}
+                        labelFormatter={(label) => `Date: ${label}`}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="utilization" 
+                        stroke="#0d7a8c" 
+                        strokeWidth={3} 
+                        dot={{ fill: "#0d7a8c", r: 3 }}
+                        activeDot={{ r: 6, fill: "#0d7a8c" }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </ChartCard>
+            </div>
+
+            {/* Maintenance Impact and Movement Alerts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Maintenance Impact on Availability (Pie Chart) */}
+              <ChartCard title="Maintenance Impact on Availability">
+                <div className="flex flex-col lg:flex-row items-center">
+                  <div className="flex-1 min-h-[300px]">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie 
+                          data={utilization?.maintenanceImpact} 
+                          cx="50%" 
+                          cy="50%" 
+                          innerRadius={60}
+                          outerRadius={100} 
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {utilization?.maintenanceImpact?.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value, name, props) => [
+                            `${value}% (${props.payload.count} assets)`, 
+                            name
+                          ]}
+                          contentStyle={{
+                            backgroundColor: '#fff',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            fontSize: '12px'
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="lg:ml-6 mt-4 lg:mt-0 space-y-3">
+                    {utilization?.maintenanceImpact?.map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-3 text-sm">
+                        <div 
+                          className="w-4 h-4 rounded-full flex-shrink-0" 
+                          style={{ backgroundColor: item.color }}
+                        ></div>
+                        <span className="text-gray-700 flex-1">{item.name}</span>
+                        <div className="text-right">
+                          <span className="font-medium text-gray-900">{item.value}%</span>
+                          <p className="text-xs text-gray-500">({item.count} assets)</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </ChartCard>
+
+              {/* Asset Movement Alerts (List View) */}
+              <ChartCard title="Recent Movement Alerts">
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {utilization?.movementAlerts?.slice(0, 8).map((alert, idx) => (
+                    <div key={idx} className={`p-4 rounded-xl border ${
+                      alert.severity === 'high' ? 'bg-red-50 border-red-200' :
+                      alert.severity === 'medium' ? 'bg-yellow-50 border-yellow-200' :
+                      'bg-blue-50 border-blue-200'
+                    }`}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium text-gray-900 text-sm">{alert.assetName}</h4>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              alert.severity === 'high' ? 'bg-red-100 text-red-700' :
+                              alert.severity === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-blue-100 text-blue-700'
+                            }`}>
+                              {alert.alertType}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-600 mb-1">
+                            {alert.fromLocation} → {alert.toLocation}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(alert.timestamp).toLocaleString()} • {alert.movedBy}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            alert.status === 'resolved' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                          }`}>
+                            {alert.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!utilization?.movementAlerts || utilization.movementAlerts.length === 0) && (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No recent movement alerts</p>
+                    </div>
+                  )}
+                </div>
+              </ChartCard>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Location Overview Tab - existing content */}
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <StatCard 
@@ -398,224 +734,6 @@ export default function AssetLocatorDashboard() {
                 </div>
               </ChartCard>
             </div>
-          </>
-        ) : (
-          <>
-            {/* Utilization Analytics Tab */}
-            {/* Enhanced Utilization Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard 
-                label="Average Utilization" 
-                value={`${data?.stats.avgUtilization ?? 0}%`}
-                bgColor="bg-gradient-to-br from-blue-600 to-blue-700" 
-              />
-              <StatCard 
-                label="Underutilized Assets" 
-                value={data?.stats.underutilized ?? 0} 
-                bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
-                trend="< 40% utilization"
-              />
-              <StatCard 
-                label="Redistribution Opportunities" 
-                value={utilization?.redistributionSuggestions?.length ?? 0} 
-                bgColor="bg-gradient-to-br from-purple-500 to-purple-600" 
-              />
-              <StatCard 
-                label="Idle Assets" 
-                value={filteredIdleAssets.length} 
-                bgColor="bg-gradient-to-br from-red-500 to-red-600"
-                trend="< 20% utilization"
-              />
-            </div>
-
-            {/* Filters */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-              <h3 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: "#001f3f" }}>
-                Filter & Analysis
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                  <select 
-                    value={filters.department}
-                    onChange={(e) => setFilters({...filters, department: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  >
-                    <option value="all">All Departments</option>
-                    {utilization?.departmentUtilization?.map(dept => (
-                      <option key={dept.departmentId} value={dept.departmentId}>
-                        {dept.departmentName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Asset Type</label>
-                  <select 
-                    value={filters.assetType}
-                    onChange={(e) => setFilters({...filters, assetType: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  >
-                    <option value="all">All Asset Types</option>
-                    {utilization?.assetTypeUtilization?.map(type => (
-                      <option key={type.type} value={type.type}>
-                        {type.type}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Utilization Threshold</label>
-                  <select 
-                    value={filters.utilizationThreshold}
-                    onChange={(e) => setFilters({...filters, utilizationThreshold: Number(e.target.value)})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  >
-                    <option value={20}>Under 20%</option>
-                    <option value={40}>Under 40%</option>
-                    <option value={60}>Under 60%</option>
-                    <option value={80}>Under 80%</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Department Utilization Analysis */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <ChartCard title="Department Utilization Analysis">
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={filteredDepartments} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis 
-                        dataKey="departmentName" 
-                        stroke="#9ca3af" 
-                        style={{ fontSize: "10px" }}
-                        tick={{ fill: '#6b7280' }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis 
-                        stroke="#9ca3af" 
-                        style={{ fontSize: "12px" }}
-                        tick={{ fill: '#6b7280' }}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#fff', 
-                          border: '1px solid #e5e7eb', 
-                          borderRadius: '8px',
-                          fontSize: '12px'
-                        }}
-                      />
-                      <Bar dataKey="avgUtilization" fill="#0d7a8c" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </ChartCard>
-
-              <ChartCard title="Asset Type Performance">
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={filteredAssetTypes} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis 
-                        dataKey="type" 
-                        stroke="#9ca3af" 
-                        style={{ fontSize: "10px" }}
-                        tick={{ fill: '#6b7280' }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis 
-                        stroke="#9ca3af" 
-                        style={{ fontSize: "12px" }}
-                        tick={{ fill: '#6b7280' }}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#fff', 
-                          border: '1px solid #e5e7eb', 
-                          borderRadius: '8px',
-                          fontSize: '12px'
-                        }}
-                      />
-                      <Bar dataKey="avgUtilization" fill="#7c3aed" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </ChartCard>
-            </div>
-
-            {/* Redistribution Suggestions */}
-            <ChartCard title="AI-Powered Redistribution Recommendations">
-              <div className="space-y-4">
-                {utilization?.redistributionSuggestions?.slice(0, 5).map((suggestion, idx) => (
-                  <div key={idx} className="bg-gradient-to-r from-blue-50 to-teal-50 rounded-xl p-6 border border-blue-100">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-3">
-                          <h4 className="font-semibold text-gray-900">{suggestion.assetName}</h4>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            suggestion.priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
-                          }`}>
-                            {suggestion.priority} priority
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-2">
-                          Current utilization: <span className="font-medium text-red-600">{suggestion.currentUtilization}%</span>
-                        </p>
-                        <p className="text-sm text-gray-700">
-                          Move from <span className="font-medium">{suggestion.fromDepartment}</span> to{' '}
-                          <span className="font-medium">{suggestion.toDepartment}</span>
-                        </p>
-                        <p className="text-xs text-gray-500 mt-2">{suggestion.reason}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-green-600">{suggestion.potentialImpact}</p>
-                        <p className="text-xs text-gray-500">Potential savings: ${suggestion.estimatedSavings}</p>
-                        <button className="mt-3 px-4 py-2 bg-teal-600 text-white rounded-lg text-sm hover:bg-teal-700 transition-colors">
-                          Initiate Transfer
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {(!utilization?.redistributionSuggestions || utilization.redistributionSuggestions.length === 0) && (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>No redistribution opportunities identified at this time.</p>
-                  </div>
-                )}
-              </div>
-            </ChartCard>
-
-            {/* Idle Assets Alert */}
-            <ChartCard title="Idle Assets Requiring Attention">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredIdleAssets.slice(0, 6).map((asset, idx) => (
-                  <div key={idx} className="bg-red-50 rounded-xl p-4 border border-red-100">
-                    <h4 className="font-semibold text-gray-900 mb-2">{asset.name}</h4>
-                    <div className="space-y-1 text-sm">
-                      <p className="text-gray-600">
-                        Utilization: <span className="font-medium text-red-600">{asset.utilization}%</span>
-                      </p>
-                      <p className="text-gray-600">Location: {asset.location}</p>
-                      <p className="text-gray-600">Idle for: {asset.idleDays} days</p>
-                    </div>
-                    <button className="mt-3 w-full px-3 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors">
-                      Schedule Review
-                    </button>
-                  </div>
-                ))}
-                {filteredIdleAssets.length === 0 && (
-                  <div className="col-span-full text-center py-8 text-gray-500">
-                    <p>No idle assets found with current filters.</p>
-                  </div>
-                )}
-              </div>
-            </ChartCard>
           </>
         )}
       </div>

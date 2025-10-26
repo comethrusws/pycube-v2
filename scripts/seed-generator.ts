@@ -717,22 +717,38 @@ function generateAssetLocatorData(
   const underutilizedCount = underutilizedAssets.length
   const avgUtilization = Math.round(assets.reduce((sum, a) => sum + a.utilization, 0) / assets.length)
 
-  // Department-level utilization analysis
+  // Department-level utilization analysis with enhanced data
   const deptUtilization = assets.reduce((acc, asset) => {
     if (!acc[asset.departmentId]) {
       acc[asset.departmentId] = {
         assets: [],
         totalUtilization: 0,
-        underutilized: 0
+        underutilized: 0,
+        active: 0,
+        idle: 0,
+        inMaintenance: 0
       }
     }
     acc[asset.departmentId].assets.push(asset)
     acc[asset.departmentId].totalUtilization += asset.utilization
     if (asset.utilization < 40) {
       acc[asset.departmentId].underutilized++
+      acc[asset.departmentId].idle++
+    } else {
+      acc[asset.departmentId].active++
+    }
+    if (asset.status === "maintenance") {
+      acc[asset.departmentId].inMaintenance++
     }
     return acc
-  }, {} as Record<string, { assets: Asset[], totalUtilization: number, underutilized: number }>)
+  }, {} as Record<string, { 
+    assets: Asset[], 
+    totalUtilization: number, 
+    underutilized: number,
+    active: number,
+    idle: number,
+    inMaintenance: number
+  }>)
 
   const departmentUtilization = Object.entries(deptUtilization).map(([deptId, data]) => ({
     departmentId: deptId,
@@ -740,188 +756,126 @@ function generateAssetLocatorData(
     avgUtilization: Math.round(data.totalUtilization / data.assets.length),
     totalAssets: data.assets.length,
     underutilized: data.underutilized,
+    active: data.active,
+    idle: data.idle,
+    inMaintenance: data.inMaintenance,
     utilizationTrend: Array.from({ length: 7 }, (_, i) => ({
       date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       utilization: Math.max(20, Math.min(95, data.totalUtilization / data.assets.length + randomInt(-15, 15)))
     }))
-  })).sort((a, b) => a.avgUtilization - b.avgUtilization)
+  })).sort((a, b) => b.avgUtilization - a.avgUtilization)
 
-  // Asset type utilization breakdown
-  const typeUtilization = assets.reduce((acc, asset) => {
-    if (!acc[asset.type]) {
-      acc[asset.type] = { total: 0, utilization: 0, underutilized: 0 }
-    }
-    acc[asset.type].total++
-    acc[asset.type].utilization += asset.utilization
-    if (asset.utilization < 40) acc[asset.type].underutilized++
-    return acc
-  }, {} as Record<string, { total: number, utilization: number, underutilized: number }>)
-
-  const assetTypeUtilization = Object.entries(typeUtilization)
-    .map(([type, data]) => ({
-      type,
-      avgUtilization: Math.round(data.utilization / data.total),
-      totalAssets: data.total,
-      underutilized: data.underutilized,
-      utilizationRate: Math.round((data.total - data.underutilized) / data.total * 100)
-    }))
-    .sort((a, b) => a.avgUtilization - b.avgUtilization)
-
-  // Redistribution suggestions based on utilization imbalance
-  const redistributionSuggestions = []
-  const lowUtilDepts = departmentUtilization.filter(d => d.avgUtilization < 50).slice(0, 3)
-  const highUtilDepts = departmentUtilization.filter(d => d.avgUtilization > 80).slice(0, 3)
-
-  for (const lowDept of lowUtilDepts) {
-    for (const highDept of highUtilDepts) {
-      // Find underutilized assets that could benefit from redistribution
-      const lowDeptAssets = assets.filter(a => 
-        a.departmentId === lowDept.departmentId && 
-        a.utilization < 30 &&
-        a.status === "available"
-      )
-      
-      // Find what types are in demand in high-utilization departments
-      const highDeptAssets = assets.filter(a => a.departmentId === highDept.departmentId)
-      const highDemandTypes = [...new Set(highDeptAssets.filter(a => a.utilization > 70).map(a => a.type))]
-      
-      // Find matching assets that could be redistributed
-      const redistributableAssets = lowDeptAssets.filter(a => 
-        highDemandTypes.includes(a.type) || 
-        a.type.includes("Monitor") || 
-        a.type.includes("Pump") || 
-        a.type.includes("Bed") ||
-        a.type.includes("Wheelchair")
-      )
-      
-      if (redistributableAssets.length > 0) {
-        const suggestedAsset = randomChoice(redistributableAssets)
-        const potentialGain = randomInt(25, 45)
-        const currentCost = (suggestedAsset.value || 5000) * 0.1  // 10% of asset value annually for underutilization
-        const projectedSavings = Math.floor(currentCost * (potentialGain / 100))
-        
-        redistributionSuggestions.push({
-          id: randomUUID(),
-          assetId: suggestedAsset.id,
-          assetName: suggestedAsset.name,
-          assetType: suggestedAsset.type,
-          currentUtilization: suggestedAsset.utilization,
-          fromDepartment: lowDept.departmentName,
-          fromDepartmentId: lowDept.departmentId,
-          toDepartment: highDept.departmentName,
-          toDepartmentId: highDept.departmentId,
-          potentialImpact: `+${potentialGain}% utilization`,
-          priority: suggestedAsset.utilization < 15 ? "high" : 
-                   suggestedAsset.utilization < 25 ? "medium" : "low",
-          estimatedSavings: projectedSavings,
-          reason: `${suggestedAsset.type} shows ${suggestedAsset.utilization}% utilization in ${lowDept.departmentName}, while ${highDept.departmentName} has high demand for similar equipment`
-        })
-        
-        // Limit to avoid too many suggestions
-        if (redistributionSuggestions.length >= 8) break
-      }
-    }
-    if (redistributionSuggestions.length >= 8) break
-  }
-
-  // Idle asset alerts
-  const idleAssets = assets
-    .filter(a => a.utilization < 20 && a.status === "available")
+  // Top 10 Idle Assets with enhanced details
+  const top10IdleAssets = assets
+    .filter(a => a.utilization < 30 && a.status === "available")
     .sort((a, b) => a.utilization - b.utilization)
     .slice(0, 10)
     .map(asset => {
       const zone = zones.find(z => z.id === asset.location.zoneId)
+      const department = departmentUtilization.find(d => d.departmentId === asset.departmentId)
+      const idleDays = Math.floor((Date.now() - new Date(asset.lastActive).getTime()) / (24 * 60 * 60 * 1000))
+      
       return {
         id: asset.id,
         name: asset.name,
         type: asset.type,
+        department: department?.departmentName || "Unknown Department",
+        departmentId: asset.departmentId,
         utilization: asset.utilization,
         location: zone?.name || "Unknown",
-        departmentId: asset.departmentId,
-        lastActive: asset.lastActive,
-        idleDays: Math.floor((Date.now() - new Date(asset.lastActive).getTime()) / (24 * 60 * 60 * 1000))
+        lastUsed: asset.lastActive,
+        idleDuration: idleDays,
+        recommendedAction: idleDays > 30 ? "Consider Redistribution" : 
+                          idleDays > 14 ? "Schedule Utilization Review" : 
+                          "Monitor Usage Pattern",
+        value: asset.value || 0,
+        status: asset.status
       }
     })
 
-  // Monitored product categories with realistic distribution
-  const categoryCounts = assets.reduce((acc, asset) => {
-    const category = asset.category || asset.type
-    acc[category] = (acc[category] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
-
-  const totalCategoryAssets = Object.values(categoryCounts).reduce((sum, count) => sum + count, 0)
-  const monitoredCategories = Object.entries(categoryCounts)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 6)
-    .map(([name, count], index) => ({
-      name,
-      value: Math.round((count / totalCategoryAssets) * 100),
-      color: [
-        "#0d7a8c", "#1e40af", "#7c3aed", "#dc2626", 
-        "#059669", "#d97706", "#be123c", "#4338f5"
-      ][index % 8]
-    }))
-
-  // Location trends (last 30 days)
-  const locationTrends = []
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-    const dateStr = `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
+  // Utilization Trend Over Time (last 30 days)
+  const utilizationTrend = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000)
+    const dateStr = date.toISOString().split('T')[0]
     
-    const dayMovements = movementLogs.filter(log => {
-      const logDate = new Date(log.timestamp)
-      return logDate.toDateString() === date.toDateString()
-    })
+    // Simulate utilization rate with realistic variations
+    const baseUtilization = avgUtilization
+    const dailyVariation = Math.sin((i / 7) * Math.PI) * 10 // Weekly pattern
+    const randomVariation = randomInt(-8, 8)
+    const utilization = Math.max(40, Math.min(95, baseUtilization + dailyVariation + randomVariation))
     
-    const locatedCount = new Set(dayMovements.map(log => log.assetId)).size
-    const unlocatedCount = Math.max(0, Math.floor(totalAssets * 0.15) - locatedCount + randomInt(-5, 5))
+    // Check for maintenance events that might cause drops
+    const maintenanceEvents = maintenanceTasks.filter(task => 
+      task.scheduledDate.startsWith(dateStr) || 
+      (task.completedDate && task.completedDate.startsWith(dateStr))
+    ).length
     
-    locationTrends.push({
+    const adjustedUtilization = maintenanceEvents > 5 ? utilization - 15 : utilization
+    
+    return {
       date: dateStr,
-      located: locatedCount + randomInt(50, 150),
-      unlocated: Math.max(0, unlocatedCount)
-    })
-  }
+      displayDate: `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`,
+      utilization: Math.round(adjustedUtilization),
+      maintenanceEvents,
+      tooltip: maintenanceEvents > 5 ? `${maintenanceEvents} maintenance tasks scheduled` : null
+    }
+  })
 
-  // Recorded asset locations distribution
-  const zoneCounts = assets.reduce((acc, asset) => {
-    const zone = zones.find(z => z.id === asset.location.zoneId)
-    const zoneName = zone?.name || "Unknown"
-    acc[zoneName] = (acc[zoneName] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
-
-  const totalZoneAssets = Object.values(zoneCounts).reduce((sum, count) => sum + count, 0)
-  const recordedLocations = Object.entries(zoneCounts)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 8)
-    .map(([name, count], index) => ({
-      name,
-      value: Math.round((count / totalZoneAssets) * 100),
-      color: [
-        "#0d7a8c", "#1e40af", "#7c3aed", "#dc2626", 
-        "#059669", "#d97706", "#be123c", "#4338f5"
-      ][index % 8]
-    }))
-
-  // Flagged reasons distribution
-  const flaggedReasons = [
-    { name: "Asset Lost", value: 35, color: "#dc2626" },
-    { name: "Maintenance Overdue", value: 25, color: "#d97706" },
-    { name: "Unauthorized Movement", value: 20, color: "#7c3aed" },
-    { name: "Low Battery", value: 12, color: "#059669" },
-    { name: "Geofence Violation", value: 8, color: "#1e40af" }
+  // Maintenance Impact on Availability
+  const availableAssets = assets.filter(a => a.status === "available").length
+  const underMaintenanceAssets = assets.filter(a => a.status === "maintenance").length
+  const pendingMaintenanceAssets = maintenanceTasks.filter(t => t.status === "pending").length
+  
+  const maintenanceImpact = [
+    { 
+      name: "Available", 
+      value: Math.round((availableAssets / totalAssets) * 100),
+      count: availableAssets,
+      color: "#059669" 
+    },
+    { 
+      name: "Under Maintenance", 
+      value: Math.round((underMaintenanceAssets / totalAssets) * 100),
+      count: underMaintenanceAssets,
+      color: "#dc2626" 
+    },
+    { 
+      name: "Pending Maintenance", 
+      value: Math.round((pendingMaintenanceAssets / totalAssets) * 100),
+      count: pendingMaintenanceAssets,
+      color: "#d97706" 
+    }
   ]
 
-  // Add location list statistics
-  const completedLists = locationLists.filter(l => l.status === "completed").length
-  const pendingLists = locationLists.filter(l => l.status === "pending").length
-  const overdueLists = locationLists.filter(l => l.status === "overdue").length
-  
-  const avgCompletionRate = locationLists.length > 0 
-    ? Math.round(locationLists.reduce((sum, list) => sum + list.completionPercentage, 0) / locationLists.length)
-    : 0
+  // Asset Movement Alerts (from recent movement logs)
+  const recentMovements = movementLogs
+    .filter(log => {
+      const logDate = new Date(log.timestamp)
+      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+      return logDate > twoDaysAgo && (!log.authorized || Math.random() < 0.15) // 15% are flagged as abnormal
+    })
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 15)
+    .map(log => {
+      const asset = assets.find(a => a.id === log.assetId)
+      const fromZone = zones.find(z => z.id === log.fromZoneId)
+      const toZone = zones.find(z => z.id === log.toZoneId)
+      
+      return {
+        id: log.id,
+        assetId: log.assetId,
+        assetName: asset?.name || "Unknown Asset",
+        assetType: asset?.type || "Unknown",
+        fromLocation: fromZone?.name || "Unknown",
+        toLocation: toZone?.name || "Unknown",
+        timestamp: log.timestamp,
+        alertType: !log.authorized ? "Unauthorized Movement" : 
+                  Math.random() < 0.6 ? "Out-of-Zone Event" : "Abnormal Movement Pattern",
+        severity: !log.authorized ? "high" : "medium",
+        status: Math.random() < 0.3 ? "resolved" : "pending",
+        movedBy: log.movedBy || "Unknown User"
+      }
+    })
 
   return {
     stats: {
@@ -929,22 +883,25 @@ function generateAssetLocatorData(
       toLocate: assetsToLocate,
       located: locatedAssets,
       flagged: flaggedAssets,
-      // Enhanced utilization stats
       underutilized: underutilizedCount,
       avgUtilization,
-      // Add location list stats
       totalLists: locationLists.length,
-      completedLists,
-      pendingLists,
-      overdueLists,
-      avgCompletionRate
+      completedLists: locationLists.filter(l => l.status === "completed").length,
+      pendingLists: locationLists.filter(l => l.status === "pending").length,
+      overdueLists: locationLists.filter(l => l.status === "overdue").length,
+      avgCompletionRate: locationLists.length > 0 
+        ? Math.round(locationLists.reduce((sum, list) => sum + list.completionPercentage, 0) / locationLists.length)
+        : 0
     },
-    // Enhanced utilization analytics
     utilization: {
       departmentUtilization,
       assetTypeUtilization,
       redistributionSuggestions,
-      idleAssets
+      idleAssets,
+      top10IdleAssets,
+      utilizationTrend,
+      maintenanceImpact,
+      movementAlerts: recentMovements
     },
     monitoredCategories,
     locationTrends,

@@ -247,6 +247,9 @@ export interface DepartmentUtilization {
   avgUtilization: number
   totalAssets: number
   underutilized: number
+  active: number
+  idle: number
+  inMaintenance: number
   utilizationTrend: { date: string; utilization: number }[]
 }
 
@@ -285,11 +288,59 @@ export interface IdleAsset {
   idleDays: number
 }
 
+export interface Top10IdleAsset {
+  id: string
+  name: string
+  type: string
+  department: string
+  departmentId: string
+  utilization: number
+  location: string
+  lastUsed: string
+  idleDuration: number
+  recommendedAction: string
+  value: number
+  status: string
+}
+
+export interface UtilizationTrendPoint {
+  date: string
+  displayDate: string
+  utilization: number
+  maintenanceEvents: number
+  tooltip: string | null
+}
+
+export interface MaintenanceImpactData {
+  name: string
+  value: number
+  count: number
+  color: string
+}
+
+export interface MovementAlert {
+  id: string
+  assetId: string
+  assetName: string
+  assetType: string
+  fromLocation: string
+  toLocation: string
+  timestamp: string
+  alertType: string
+  severity: "low" | "medium" | "high"
+  status: "pending" | "resolved"
+  movedBy: string
+}
+
 export interface UtilizationAnalytics {
   departmentUtilization: DepartmentUtilization[]
   assetTypeUtilization: AssetTypeUtilization[]
   redistributionSuggestions: RedistributionSuggestion[]
   idleAssets: IdleAsset[]
+  top10IdleAssets: Top10IdleAsset[]
+  utilizationTrend: UtilizationTrendPoint[]
+  maintenanceImpact: MaintenanceImpactData[]
+  movementAlerts: MovementAlert[]
 }
 
 export interface GeneratorConfig {
