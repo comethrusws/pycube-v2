@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Download, Plus, X, Calendar, AlertCircle, Search } from "lucide-react"
+import { Download, Plus, X, Calendar, AlertCircle, Search, Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { apiGet } from "@/lib/fetcher"
 
 interface MaintenanceRequest {
@@ -337,40 +337,136 @@ const CreateRequestDialog = ({ isOpen, onClose, onSubmit }: {
   )
 }
 
+const StatusBadge = ({ status }: { status: string }) => {
+  const getStatusStyle = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "completed":
+        return "bg-green-100 text-green-800 border-green-200"
+      case "in progress":
+        return "bg-blue-100 text-blue-800 border-blue-200"
+      case "overdue":
+        return "bg-red-100 text-red-800 border-red-200"
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200"
+    }
+  }
+
+  const formatStatus = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "in progress":
+        return "In Progress"
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1)
+    }
+  }
+
+  return (
+    <span className={`inline-block items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyle(status)}`}>
+      {formatStatus(status)}
+    </span>
+  )
+}
+
+const PriorityBadge = ({ priority }: { priority: string }) => {
+  const getPriorityStyle = (priority: string) => {
+    switch (priority.toLowerCase()) {
+      case "critical":
+        return "bg-red-600 text-white"
+      case "high":
+        return "bg-orange-500 text-white"
+      case "medium":
+        return "bg-yellow-500 text-white"
+      case "low":
+        return "bg-green-500 text-white"
+      default:
+        return "bg-gray-400 text-white"
+    }
+  }
+
+  return (
+    <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${getPriorityStyle(priority)}`}>
+      {priority.toUpperCase()}
+    </span>
+  )
+}
+
 export default function MaintenanceRequestContent() {
-  const [data, setData] = useState<ApiResponse>()
+  const [data, setData] = useState<MaintenanceRequest[]>([])
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false
+  })
+  const [summary, setSummary] = useState({
+    total: 0,
+    pending: 0,
+    completed: 0,
+    highPriority: 0,
+    totalCost: 0
+  })
   const [isLoading, setIsLoading] = useState(true)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("")
-  const [priorityFilter, setPriorityFilter] = useState("")
-  const [departmentFilter, setDepartmentFilter] = useState("")
+  const [showFilters, setShowFilters] = useState(false)
+  
+  const [filters, setFilters] = useState({
+    search: "",
+    status: "",
+    priority: "",
+    department: "",
+    category: ""
+  })
 
-  // Load maintenance requests from API
-  useEffect(() => {
-    const loadRequests = async () => {
-      try {
-        setIsLoading(true)
-        const params = new URLSearchParams({
-          page: "1",
-          limit: "100",
-          ...(searchTerm && { search: searchTerm }),
-          ...(statusFilter && { status: statusFilter }),
-          ...(priorityFilter && { priority: priorityFilter }),
-          ...(departmentFilter && { department: departmentFilter })
-        })
+  const fetchData = async (page: number = 1) => {
+    setIsLoading(true)
+    try {
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: pagination.limit.toString(),
+        ...Object.fromEntries(Object.entries(filters).filter(([_, value]) => value))
+      })
 
-        const response = await apiGet(`/api/preventative-maintenance/requests?${params}`) as ApiResponse
-        setData(response)
-      } catch (error) {
-        console.error('Failed to load maintenance requests:', error)
-      } finally {
-        setIsLoading(false)
-      }
+      const response = await apiGet(`/api/preventative-maintenance/requests?${queryParams}`) as ApiResponse
+      setData(response.requests)
+      setPagination(response.pagination)
+      setSummary(response.summary)
+    } catch (error) {
+      console.error("Failed to fetch maintenance requests:", error)
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    loadRequests()
-  }, [searchTerm, statusFilter, priorityFilter, departmentFilter])
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const handlePageChange = (newPage: number) => {
+    fetchData(newPage)
+  }
+
+  const handleFilterChange = (key: keyof typeof filters, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const applyFilters = () => {
+    fetchData(1)
+  }
+
+  const clearFilters = () => {
+    setFilters({
+      search: "",
+      status: "",
+      priority: "",
+      department: "",
+      category: ""
+    })
+    setTimeout(() => fetchData(1), 100)
+  }
 
   const handleCreateRequest = async (newRequestData: Omit<MaintenanceRequest, 'id' | 'lastModified'>) => {
     try {
@@ -383,307 +479,360 @@ export default function MaintenanceRequestContent() {
       })
 
       if (response.ok) {
-        // Refresh the data
-        const params = new URLSearchParams({
-          page: "1",
-          limit: "100",
-          ...(searchTerm && { search: searchTerm }),
-          ...(statusFilter && { status: statusFilter }),
-          ...(priorityFilter && { priority: priorityFilter }),
-          ...(departmentFilter && { department: departmentFilter })
-        })
-
-        const refreshedData = await apiGet(`/api/preventative-maintenance/requests?${params}`) as ApiResponse
-        setData(refreshedData)
+        fetchData(pagination.page)
       }
     } catch (error) {
       console.error('Failed to create maintenance request:', error)
     }
   }
 
-  const handleDownload = () => {
-    if (!data?.requests) return
-
-    const csvContent = [
-      ["ID", "Status", "Requestor", "Asset", "Category", "Priority", "Department", "Maintenance Date", "Cost"],
-      ...data.requests.map(req => [
-        req.id,
-        req.status,
-        req.requestor,
-        req.assetName || "N/A",
-        req.category,
-        req.priority,
-        req.department,
-        req.maintenanceDate,
-        req.estimatedCost || "N/A"
-      ])
-    ].map(row => row.join(",")).join("\n")
-
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
+  const exportData = () => {
+    const csv = [
+      "ID,Status,Requestor,Asset,Category,Priority,Department,Maintenance Date,Cost",
+      ...data.map(req => 
+        `${req.id},"${req.status}","${req.requestor}","${req.assetName || "N/A"}","${req.category}","${req.priority}","${req.department}","${req.maintenanceDate}","${req.estimatedCost || "N/A"}"`
+      )
+    ].join("\n")
+    
+    const blob = new Blob([csv], { type: "text/csv" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
     a.href = url
     a.download = `maintenance-requests-${new Date().toISOString().split('T')[0]}.csv`
     a.click()
-    window.URL.revokeObjectURL(url)
+    URL.revokeObjectURL(url)
   }
 
-  // Filter requests based on search and status
-  const filteredRequests = data?.requests.filter(request => {
-    const matchesSearch = !searchTerm || 
-      request.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.requestor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (request.assetName && request.assetName.toLowerCase().includes(searchTerm.toLowerCase()))
-    
-    const matchesStatus = !statusFilter || request.status === statusFilter
-    
-    return matchesSearch && matchesStatus
-  }) || []
-
-  const summary = data?.summary || {
-    total: 0,
-    pending: 0,
-    completed: 0,
-    highPriority: 0,
-    totalCost: 0
-  }
-
-  if (isLoading) {
+  if (isLoading && data.length === 0) {
     return (
-      <div className="p-6 space-y-6" style={{ backgroundColor: "#f0f4f8" }}>
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-64 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
-            ))}
+      <div className="p-8 bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-200 rounded w-64"></div>
+            <div className="h-10 bg-gray-200 rounded w-96"></div>
+            <div className="bg-white rounded-lg p-6">
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-16 bg-gray-100 rounded"></div>
+                ))}
+              </div>
+            </div>
           </div>
-          <div className="h-64 bg-gray-200 rounded"></div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-8" style={{ backgroundColor: "#f0f4f8" }}>
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-light" style={{ color: "#001f3f" }}>
-          Maintenance Requests
-        </h1>
-        <div className="flex gap-3">
-          <button
-            onClick={handleDownload}
-            className="px-4 py-2 rounded-lg text-white text-sm font-medium flex items-center gap-2 transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "#0d7a8c" }}
-          >
-            <Download className="w-4 h-4" />
-            Download
-          </button>
-          <button
+    <div className="p-8 bg-gray-50 min-h-screen">
+      <div className="max-w-full mx-auto space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-light mb-2" style={{ color: "#001f3f" }}>
+            Maintenance Requests
+          </h1>
+          <p className="text-gray-600">Create and track equipment maintenance requests</p>
+        </div>
+
+        {/* Action Bar */}
+        <div className="flex flex-wrap gap-3 items-center justify-between">
+          <div className="flex gap-3">
+            <button 
+              onClick={clearFilters}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-sm transition-colors duration-200"
+            >
+              Clear Filters
+            </button>
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-sm transition-colors duration-200 flex items-center gap-2"
+            >
+              <Filter size={16} />
+              {showFilters ? "Hide Filters" : "Show Filters"}
+            </button>
+            <button 
+              onClick={exportData}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-sm transition-colors duration-200 flex items-center gap-2"
+            >
+              <Download size={16} />
+              Export CSV
+            </button>
+          </div>
+          <button 
             onClick={() => setIsCreateDialogOpen(true)}
-            className="px-4 py-2 rounded-lg text-white text-sm font-medium flex items-center gap-2 transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "#0d7a8c" }}
+            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm transition-colors duration-200 flex items-center gap-2"
           >
-            <Plus className="w-4 h-4" />
+            <Plus size={16} />
             Create Request
           </button>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#e0f2f1" }}>
-              <Calendar className="w-6 h-6" style={{ color: "#0d7a8c" }} />
+        {/* Filters Panel */}
+        {showFilters && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input
+                  type="text"
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange("search", e.target.value)}
+                  placeholder="Search requests..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange("status", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="">All Status</option>
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Overdue">Overdue</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                <select
+                  value={filters.priority}
+                  onChange={(e) => handleFilterChange("priority", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="">All Priority</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Critical">Critical</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select
+                  value={filters.category}
+                  onChange={(e) => handleFilterChange("category", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="">All Categories</option>
+                  <option value="Preventive">Preventive</option>
+                  <option value="Corrective">Corrective</option>
+                  <option value="Emergency">Emergency</option>
+                  <option value="Calibration">Calibration</option>
+                  <option value="Inspection">Inspection</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <input
+                  type="text"
+                  value={filters.department}
+                  onChange={(e) => handleFilterChange("department", e.target.value)}
+                  placeholder="Filter by department..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>Total Requests</p>
-              <p className="text-3xl font-light" style={{ color: "#001f3f" }}>{summary.total || 0}</p>
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={applyFilters}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm transition-colors duration-200"
+              >
+                Apply Filters
+              </button>
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium text-sm transition-colors duration-200"
+              >
+                Clear All
+              </button>
             </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-orange-100">
-              <AlertCircle className="w-6 h-6 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>Pending</p>
-              <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                {summary.pending || 0}
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-green-100">
-              <Calendar className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>Completed</p>
-              <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                {summary.completed || 0}
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-red-100">
-              <AlertCircle className="w-6 h-6 text-red-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>High Priority</p>
-              <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                {summary.highPriority || 0}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Enhanced Filters */}
-      <div className="bg-white rounded-xl p-6 border border-gray-200">
-        <h3 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: "#001f3f" }}>
-          Filter Requests
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search requests..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
-                style={{ "--tw-ring-color": "#0d7a8c" } as React.CSSProperties}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
-              style={{ "--tw-ring-color": "#0d7a8c" } as React.CSSProperties}
-            >
-              <option value="">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-              <option value="Overdue">Overdue</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
-              style={{ "--tw-ring-color": "#0d7a8c" } as React.CSSProperties}
-            >
-              <option value="">All Priority</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Critical">Critical</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-            <input
-              type="text"
-              placeholder="Filter by department..."
-              value={departmentFilter}
-              onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
-              style={{ "--tw-ring-color": "#0d7a8c" } as React.CSSProperties}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Requests Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Requestor</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Priority</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Department</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Due Date</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Cost</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRequests.map((request, index) => (
-                <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-sm font-medium" style={{ color: "#0d7a8c" }}>
-                    {request.id}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
-                      {request.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm" style={{ color: "#001f3f" }}>
-                    {request.assetName || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 text-sm" style={{ color: "#001f3f" }}>
-                    {request.requestor}
-                  </td>
-                  <td className="px-6 py-4 text-sm" style={{ color: "#001f3f" }}>
-                    {request.category}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(request.priority)}`}>
-                      {request.priority}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm" style={{ color: "#001f3f" }}>
-                    {request.department}
-                  </td>
-                  <td className="px-6 py-4 text-sm" style={{ color: "#001f3f" }}>
-                    {new Date(request.maintenanceDate).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-sm" style={{ color: "#001f3f" }}>
-                    {request.estimatedCost ? `$${request.estimatedCost}` : "N/A"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {filteredRequests.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p className="text-lg mb-2">No maintenance requests found</p>
-            <p className="text-sm">Try adjusting your search or filter criteria</p>
           </div>
         )}
 
-        <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-          <span className="text-sm text-gray-600">
-            Showing {filteredRequests.length} of {summary.total || 0} requests
-          </span>
-          <span className="text-sm font-medium" style={{ color: "#0d7a8c" }}>
-            Total Cost: ${summary.totalCost?.toLocaleString() || 0}
-          </span>
+        {/* Statistics Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <p className="text-sm text-gray-600">Total Requests</p>
+            <p className="text-2xl font-light" style={{ color: "#001f3f" }}>{summary.total}</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <p className="text-sm text-gray-600">Pending</p>
+            <p className="text-2xl font-light text-orange-600">{summary.pending}</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <p className="text-sm text-gray-600">Completed</p>
+            <p className="text-2xl font-light text-green-600">{summary.completed}</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <p className="text-sm text-gray-600">High Priority</p>
+            <p className="text-2xl font-light text-red-600">{summary.highPriority}</p>
+          </div>
+        </div>
+
+        {/* Data Table */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Actions
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-32">
+                    ID
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-32">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider min-w-48">
+                    Asset Name
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Requestor
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-24">
+                    Priority
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Department
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Due Date
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Cost
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  [...Array(pagination.limit)].map((_, i) => (
+                    <tr key={i} className="border-b border-gray-200">
+                      <td colSpan={10} className="px-4 py-3">
+                        <div className="h-4 bg-gray-100 rounded animate-pulse"></div>
+                      </td>
+                    </tr>
+                  ))
+                ) : data.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                      No maintenance requests found
+                    </td>
+                  </tr>
+                ) : (
+                  data.map((request) => (
+                    <tr key={request.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150">
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        <button className="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                          <span className="text-lg">⋯</span>
+                        </button>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-medium text-teal-600">{request.id}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={request.status} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-gray-900 font-medium">{request.assetName || "N/A"}</span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{request.requestor}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{request.category}</td>
+                      <td className="px-4 py-3">
+                        <PriorityBadge priority={request.priority} />
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{request.department}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {new Date(request.maintenanceDate).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {request.estimatedCost ? `$${request.estimatedCost}` : "N/A"}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between bg-gray-50">
+            <span className="text-sm text-gray-600">
+              Showing {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)} to{" "}
+              {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} entries
+            </span>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => handlePageChange(1)}
+                disabled={!pagination.hasPrev || isLoading}
+                className="p-1 hover:bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                <ChevronsLeft size={18} className="text-gray-600" />
+              </button>
+              <button 
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={!pagination.hasPrev || isLoading}
+                className="p-1 hover:bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                <ChevronLeft size={18} className="text-gray-600" />
+              </button>
+              
+              {/* Page numbers */}
+              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                const pageNum = Math.max(1, pagination.page - 2) + i
+                if (pageNum > pagination.totalPages) return null
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    disabled={isLoading}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-colors duration-200 ${
+                      pageNum === pagination.page
+                        ? "bg-teal-600 text-white"
+                        : "hover:bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                )
+              })}
+              
+              <button 
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={!pagination.hasNext || isLoading}
+                className="p-1 hover:bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                <ChevronRight size={18} className="text-gray-600" />
+              </button>
+              <button 
+                onClick={() => handlePageChange(pagination.totalPages)}
+                disabled={!pagination.hasNext || isLoading}
+                className="p-1 hover:bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                <ChevronsRight size={18} className="text-gray-600" />
+              </button>
+              
+              <select 
+                value={pagination.limit}
+                onChange={(e) => {
+                  setPagination(prev => ({ ...prev, limit: parseInt(e.target.value) }))
+                  fetchData(1)
+                }}
+                className="ml-4 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -694,22 +843,4 @@ export default function MaintenanceRequestContent() {
       />
     </div>
   )
-
-  function getStatusColor(status: string) {
-    switch (status.toLowerCase()) {
-      case 'completed': return 'text-green-800 bg-green-100 border-green-200'
-      case 'in progress': return 'text-blue-800 bg-blue-100 border-blue-200'
-      case 'overdue': return 'text-red-800 bg-red-100 border-red-200'
-      default: return 'text-orange-800 bg-orange-100 border-orange-200'
-    }
-  }
-
-  function getPriorityColor(priority: string) {
-    switch (priority.toLowerCase()) {
-      case 'critical': return 'text-red-800 bg-red-100 border-red-200'
-      case 'high': return 'text-orange-800 bg-orange-100 border-orange-200'
-      case 'medium': return 'text-blue-800 bg-blue-100 border-blue-200'
-      default: return 'text-gray-800 bg-gray-100 border-gray-200'
-    }
-  }
 }
