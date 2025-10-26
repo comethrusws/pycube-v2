@@ -367,17 +367,17 @@ export default function PredictiveInsightsTab() {
 
         {/* Risk Distribution */}
         <ChartCard title="Risk Distribution Overview">
-          <div className="flex items-center justify-center">
-            <div className="w-80 h-80">
-              <ResponsiveContainer width="100%" height="100%">
+          <div className="flex flex-col lg:flex-row items-center">
+            <div className="flex-1 min-h-[300px]">
+              <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
                     data={data?.riskDistribution || []}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
-                    outerRadius={120}
-                    paddingAngle={4}
+                    outerRadius={100}
+                    paddingAngle={3}
                     dataKey="count"
                   >
                     {(data?.riskDistribution || []).map((entry: any, index: number) => (
@@ -386,11 +386,12 @@ export default function PredictiveInsightsTab() {
                   </Pie>
                   <Tooltip 
                     contentStyle={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                      border: 'none',
-                      borderRadius: '16px',
-                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
-                      fontSize: '12px'
+                      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)',
+                      fontSize: '13px',
+                      padding: '12px'
                     }}
                     formatter={(value, name, props) => [
                       `${value} assets (${props.payload.value}%)`,
@@ -400,19 +401,63 @@ export default function PredictiveInsightsTab() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="ml-8 space-y-4">
+            
+            <div className="lg:ml-8 mt-6 lg:mt-0 space-y-4 min-w-[200px]">
               {(data?.riskDistribution || []).map((item: any, idx: number) => (
-                <div key={idx} className="flex items-center gap-3">
-                  <div 
-                    className="w-4 h-4 rounded-full" 
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{item.name}</p>
-                    <p className="text-xs text-gray-500">{item.count} assets</p>
+                <div key={idx} className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
+                  item.name === "High Risk" ? "bg-red-50 border-red-200 hover:border-red-300" :
+                  item.name === "Medium Risk" ? "bg-orange-50 border-orange-200 hover:border-orange-300" :
+                  "bg-green-50 border-green-200 hover:border-green-300"
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-5 h-5 rounded-full shadow-sm" 
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <div>
+                      <p className={`text-sm font-semibold ${
+                        item.name === "High Risk" ? "text-red-900" :
+                        item.name === "Medium Risk" ? "text-orange-900" :
+                        "text-green-900"
+                      }`}>{item.name}</p>
+                      <p className={`text-xs ${
+                        item.name === "High Risk" ? "text-red-600" :
+                        item.name === "Medium Risk" ? "text-orange-600" :
+                        "text-green-600"
+                      }`}>
+                        {item.name === "High Risk" ? "Critical attention needed" :
+                         item.name === "Medium Risk" ? "Regular monitoring" :
+                         "Normal operation"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-lg font-bold ${
+                      item.name === "High Risk" ? "text-red-900" :
+                      item.name === "Medium Risk" ? "text-orange-900" :
+                      "text-green-900"
+                    }`}>{item.count}</p>
+                    <p className={`text-xs ${
+                      item.name === "High Risk" ? "text-red-600" :
+                      item.name === "Medium Risk" ? "text-orange-600" :
+                      "text-green-600"
+                    }`}>{item.value}%</p>
                   </div>
                 </div>
               ))}
+              
+              {/* Summary Statistics */}
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="text-center">
+                  <p className="text-xs text-gray-500 mb-1">Total Monitored</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {(data?.riskDistribution || []).reduce((sum: number, item: any) => sum + item.count, 0)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Assets under predictive monitoring
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </ChartCard>

@@ -7,24 +7,87 @@ export async function GET() {
     
     if (data.predictiveMaintenanceData) {
       // Use pre-computed predictive maintenance data if available
-      return NextResponse.json(data.predictiveMaintenanceData)
+      const pmData = data.predictiveMaintenanceData
+      
+      // Calculate collection status based on predictive insights and maintenance tasks
+      const totalTasks = data.maintenanceTasks.length
+      const completedTasks = data.maintenanceTasks.filter(t => t.status === "completed").length
+      const pendingTasks = data.maintenanceTasks.filter(t => 
+        t.status === "pending" || t.status === "in-progress"
+      ).length
+      const overdueTasks = data.maintenanceTasks.filter(t => t.status === "overdue").length
+      
+      // Enhanced collection status with proper percentages
+      const collectionStatus = [
+        { 
+          status: "Completed", 
+          percentage: Math.round((completedTasks / totalTasks) * 100),
+          count: completedTasks,
+          color: "#059669"
+        },
+        { 
+          status: "In Progress", 
+          percentage: Math.round((pendingTasks / totalTasks) * 100),
+          count: pendingTasks,
+          color: "#0d7a8c"
+        },
+        { 
+          status: "Overdue", 
+          percentage: Math.round((overdueTasks / totalTasks) * 100),
+          count: overdueTasks,
+          color: "#dc2626"
+        }
+      ].filter(item => item.count > 0) // Only show non-zero categories
+
+      return NextResponse.json({
+        ...pmData,
+        collectionStatus,
+        stats: {
+          totalMonitoredAssets: pmData.summary.totalAssetsMonitored,
+          pmPending: pendingTasks + overdueTasks,
+          pmCollected: completedTasks,
+          assetsPendingCollection: pendingTasks,
+          pmOverdue: overdueTasks
+        },
+        charts: {
+          collectionStatus: collectionStatus.map(item => ({
+            name: item.status,
+            value: item.count,
+            percentage: item.percentage,
+            fill: item.color
+          }))
+        }
+      })
     }
 
     // Fallback: compute basic PM data on-demand
     const total = data.assets.length
     const tasks = data.maintenanceTasks
-    const collected = tasks.filter((t) => t.status === "completed").length
-    const pending = tasks.filter((t) => t.status !== "completed").length
-    const upcomingQuarter = data.assets.filter((a) => {
-      const due = new Date(a.maintenanceDue)
-      const now = new Date()
-      const in90 = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)
-      return due > now && due <= in90
-    }).length
+    const completed = tasks.filter((t) => t.status === "completed").length
+    const pending = tasks.filter((t) => t.status === "pending" || t.status === "in-progress").length
+    const overdue = tasks.filter((t) => t.status === "overdue").length
 
     // Create collection status data that matches what the component expects
-    const collectedPercentage = Math.round((collected / (collected + pending)) * 100)
-    const pendingPercentage = 100 - collectedPercentage
+    const collectionStatus = [
+      { 
+        status: "Completed", 
+        percentage: Math.round((completed / tasks.length) * 100),
+        count: completed,
+        color: "#059669"
+      },
+      { 
+        status: "Pending", 
+        percentage: Math.round((pending / tasks.length) * 100),
+        count: pending,
+        color: "#0d7a8c"
+      },
+      { 
+        status: "Overdue", 
+        percentage: Math.round((overdue / tasks.length) * 100),
+        count: overdue,
+        color: "#dc2626"
+      }
+    ].filter(item => item.count > 0)
 
     return NextResponse.json({
       summary: {
@@ -35,31 +98,22 @@ export async function GET() {
         avgConfidenceScore: 78,
         potentialCostSavings: 125000
       },
-      collectionStatus: [
-        { 
-          status: "Collected", 
-          percentage: collectedPercentage,
-          count: collected 
-        },
-        { 
-          status: "Pending", 
-          percentage: pendingPercentage,
-          count: pending 
-        }
-      ],
+      collectionStatus,
       stats: {
         totalMonitoredAssets: total,
-        pmPending: pending,
-        pmCollected: collected,
+        pmPending: pending + overdue,
+        pmCollected: completed,
         assetsPendingCollection: pending,
+        pmOverdue: overdue
       },
       charts: {
-        collectionStatus: [
-          { name: "Collected", value: collected, fill: "#0d7a8c" },
-          { name: "Pending", value: pending, fill: "#c41e3a" },
-        ],
-        upcomingQuarter,
-      },
+        collectionStatus: collectionStatus.map(item => ({
+          name: item.status,
+          value: item.count,
+          percentage: item.percentage,
+          fill: item.color
+        }))
+      }
     })
   } catch (error) {
     console.error("PM Dashboard API error:", error)
