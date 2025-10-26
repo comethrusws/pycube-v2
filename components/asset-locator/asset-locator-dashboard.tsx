@@ -279,7 +279,7 @@ export default function AssetLocatorDashboard() {
   const [filters, setFilters] = useState({
     department: "all",
     assetType: "all",
-    utilizationThreshold: 40,
+    utilizationThreshold: 80,
     dateRange: "30days"
   })
 
