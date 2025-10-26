@@ -24,6 +24,9 @@ import type {
   MaintenanceStatus,
   LocationList,
   LocationActivity,
+  PredictiveInsight,
+  PredictiveMaintenanceData,
+  DegradationTrend,
 } from "../lib/types"
 
 function randomChoice<T>(arr: T[]): T {
@@ -90,6 +93,185 @@ const ASSET_CATEGORIES = [
 ]
 
 const ROLES = ["admin", "biomedical", "nursing", "technician", "viewer"]
+
+function generatePredictiveMaintenanceData(
+  assets: Asset[],
+  maintenanceTasks: MaintenanceTask[],
+  zones: Zone[]
+): PredictiveMaintenanceData {
+  const monitoredAssets = assets.filter(a => a.status !== "lost").slice(0, Math.floor(assets.length * 0.8))
+  
+  const insights: PredictiveInsight[] = monitoredAssets.map(asset => {
+    const zone = zones.find(z => z.id === asset.location.zoneId)
+    const assetMaintenanceHistory = maintenanceTasks.filter(t => t.assetId === asset.id)
+    
+    // Calculate realistic failure prediction based on asset characteristics
+    let baseRiskScore = 50
+    
+    // Asset age influence (older assets more likely to fail)
+    const ageInDays = Math.floor((Date.now() - new Date(asset.purchaseDate || '2022-01-01').getTime()) / (24 * 60 * 60 * 1000))
+    const ageRiskMultiplier = Math.min(2, 1 + (ageInDays / 1095)) // 3 years = max multiplier
+    
+    // Utilization influence (high utilization = more wear)
+    const utilizationRisk = asset.utilization > 80 ? 1.5 : asset.utilization < 20 ? 0.7 : 1.0
+    
+    // Maintenance history influence
+    const overdueTasks = assetMaintenanceHistory.filter(t => t.status === "overdue").length
+    const maintenanceRisk = 1 + (overdueTasks * 0.3)
+    
+    // Asset type influence (some equipment more critical)
+    const criticalTypes = ["Ventilator", "MRI Scanner", "CT Scanner", "Defibrillator"]
+    const typeRisk = criticalTypes.includes(asset.type) ? 1.3 : 1.0
+    
+    const riskScore = baseRiskScore * ageRiskMultiplier * utilizationRisk * maintenanceRisk * typeRisk
+    
+    // Convert risk score to failure window (higher risk = shorter window)
+    const failureWindow = Math.max(5, Math.min(365, Math.round(180 - (riskScore - 50))))
+    
+    // Determine risk level and confidence
+    let riskLevel: "low" | "medium" | "high"
+    let confidence: number
+    
+    if (failureWindow <= 30) {
+      riskLevel = "high"
+      confidence = randomInt(75, 95)
+    } else if (failureWindow <= 90) {
+      riskLevel = "medium"  
+      confidence = randomInt(60, 85)
+    } else {
+      riskLevel = "low"
+      confidence = randomInt(45, 75)
+    }
+    
+    // Generate key indicators
+    const keyIndicators = {
+      usageHours: Math.round(asset.utilization * 24 * 365 / 100),
+      temperatureVariance: randomInt(1, 15),
+      vibrationLevels: randomInt(10, 100),
+      performanceDegradation: Math.round(Math.max(0, 100 - asset.utilization - randomInt(0, 20)))
+    }
+    
+    // Maintenance history summary
+    const lastTask = assetMaintenanceHistory
+      .filter(t => t.status === "completed")
+      .sort((a, b) => new Date(b.completedDate || b.scheduledDate).getTime() - new Date(a.completedDate || a.scheduledDate).getTime())[0]
+    
+    const nextTask = assetMaintenanceHistory
+      .filter(t => t.status === "pending")
+      .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime())[0]
+    
+    const maintenanceHistory = {
+      lastServiceDate: lastTask?.completedDate || lastTask?.scheduledDate || randomDateISO(90),
+      nextScheduledService: nextTask?.scheduledDate || randomDateISO(-30),
+      serviceCount: assetMaintenanceHistory.filter(t => t.status === "completed").length,
+      avgServiceInterval: 90 + randomInt(-20, 40)
+    }
+    
+    // Predicted issue based on risk factors
+    const possibleIssues = [
+      "Mechanical wear detected",
+      "Performance degradation trend",
+      "Temperature regulation variance", 
+      "Calibration drift detected",
+      "Component fatigue indicators",
+      "Sensor accuracy decline",
+      "Power consumption anomaly",
+      "Vibration pattern changes"
+    ]
+    
+    const predictedIssue = randomChoice(possibleIssues)
+    
+    // Recommended actions
+    const actions = {
+      high: ["Immediate inspection required", "Schedule emergency maintenance", "Consider replacement"],
+      medium: ["Schedule maintenance within 2 weeks", "Increase monitoring frequency", "Prepare replacement parts"],
+      low: ["Continue routine monitoring", "Schedule preventive maintenance", "Review usage patterns"]
+    }
+    
+    return {
+      id: randomUUID(),
+      assetId: asset.id,
+      assetName: asset.name,
+      assetType: asset.type,
+      location: zone?.name || "Unknown",
+      departmentId: asset.departmentId,
+      predictedFailureWindow: failureWindow,
+      confidenceScore: confidence,
+      riskLevel,
+      predictedIssue,
+      keyIndicators,
+      maintenanceHistory,
+      degradationScore: Math.round(100 - (failureWindow / 365) * 100),
+      recommendedAction: randomChoice(actions[riskLevel]),
+      createdAt: new Date().toISOString()
+    }
+  })
+  
+  // Sort by risk and get top 5
+  const top5AtRisk = insights
+    .filter(i => i.riskLevel === "high" || i.riskLevel === "medium")
+    .sort((a, b) => a.predictedFailureWindow - b.predictedFailureWindow)
+    .slice(0, 5)
+  
+  // Risk distribution
+  const riskCounts = insights.reduce((acc, insight) => {
+    acc[insight.riskLevel] = (acc[insight.riskLevel] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+  
+  const riskDistribution = [
+    { name: "High Risk", value: Math.round((riskCounts.high || 0) / insights.length * 100), count: riskCounts.high || 0, color: "#dc2626" },
+    { name: "Medium Risk", value: Math.round((riskCounts.medium || 0) / insights.length * 100), count: riskCounts.medium || 0, color: "#ea580c" },
+    { name: "Low Risk", value: Math.round((riskCounts.low || 0) / insights.length * 100), count: riskCounts.low || 0, color: "#059669" }
+  ]
+  
+  // Degradation trends for top assets
+  const degradationTrends = top5AtRisk.slice(0, 3).map(insight => ({
+    assetId: insight.assetId,
+    assetName: insight.assetName,
+    trend: Array.from({ length: 30 }, (_, i) => {
+      const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000)
+      const baseScore = insight.degradationScore
+      const dailyVariation = Math.sin(i / 7 * Math.PI) * 5 + (Math.random() - 0.5) * 8
+      const trendIncrease = (i / 30) * 15 // Gradual increase over time
+      
+      return {
+        date: date.toISOString().split('T')[0],
+        degradationScore: Math.max(0, Math.min(100, baseScore + dailyVariation + trendIncrease)),
+        usageHours: insight.keyIndicators.usageHours + randomInt(-50, 50),
+        performanceIndex: Math.max(0, Math.min(100, 100 - (baseScore + dailyVariation + trendIncrease)))
+      }
+    })
+  }))
+  
+  // Prediction accuracy over time
+  const predictionAccuracy = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date()
+    date.setMonth(date.getMonth() - (11 - i))
+    
+    return {
+      month: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+      accuracy: randomInt(65, 92),
+      predictionsCount: randomInt(15, 45)
+    }
+  })
+  
+  return {
+    summary: {
+      totalAssetsMonitored: insights.length,
+      highRiskAssets: riskCounts.high || 0,
+      mediumRiskAssets: riskCounts.medium || 0,
+      lowRiskAssets: riskCounts.low || 0,
+      avgConfidenceScore: Math.round(insights.reduce((sum, i) => sum + i.confidenceScore, 0) / insights.length),
+      potentialCostSavings: Math.round(insights.filter(i => i.riskLevel === "high").length * 2500 + insights.filter(i => i.riskLevel === "medium").length * 1200)
+    },
+    insights,
+    top5AtRisk,
+    riskDistribution,
+    degradationTrends,
+    predictionAccuracy
+  }
+}
 
 function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   const facilities: Facility[] = []
@@ -530,6 +712,9 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   // Generate enhanced asset-locator data with location lists
   const assetLocatorData = generateAssetLocatorData(assets, movementLogs, zones, maintenanceTasks, locationLists)
 
+  // Generate predictive maintenance data
+  const predictiveMaintenanceData = generatePredictiveMaintenanceData(assets, maintenanceTasks, zones)
+
   return {
     facilities,
     departments,
@@ -550,6 +735,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
     locationActivities,
     dashboardData,
     assetLocatorData,
+    predictiveMaintenanceData,
   }
 }
 
