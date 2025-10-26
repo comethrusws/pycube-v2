@@ -509,17 +509,19 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
       const statuses: MaintenanceStatus[] = ["pending", "in-progress", "completed", "overdue"]
       const statusWeights = [0.3, 0.2, 0.4, 0.1] // More realistic distribution
       const selectedStatus = weightedChoice(statuses, statusWeights)
+      const priorities = ["low", "medium", "high", "critical"]
+      const maintenanceTypes = ["preventive", "corrective", "calibration", "inspection"]
       
       maintenanceTasks.push({
         id: randomUUID(),
         assetId: asset.id,
-        type: randomChoice(["preventive", "corrective", "calibration", "inspection"]),
+        type: randomChoice(maintenanceTypes),
         description: `${randomChoice(["Routine", "Emergency", "Scheduled"])} maintenance for ${asset.name}`,
         scheduledDate: randomDateISO(selectedStatus === "overdue" ? 30 : -60),
         completedDate: selectedStatus === "completed" ? randomDateISO(7) : undefined,
         status: selectedStatus,
         assignedTo: randomChoice(users.filter(u => u.role === "biomedical" || u.role === "technician")).id,
-        priority: randomChoice(["low", "medium", "high", "critical"]),
+        priority: randomChoice(priorities),
         estimatedDuration: randomInt(30, 480), // 30 minutes to 8 hours
         cost: randomInt(50, 2000)
       })

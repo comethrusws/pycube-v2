@@ -90,11 +90,19 @@ In production, this would be replaced by a real database (e.g., PostgreSQL or Mo
 
 ### 4.5 Preventive Maintenance Module
 
-**Purpose:** Keeps assets operational.
+**Purpose:** Keeps assets operational with both traditional and AI-powered maintenance strategies.
 
-* Dashboard for task overview
-* Automated maintenance schedules
-* Alerts for biomedical and nursing leaders
+* **Traditional Dashboard** for task overview and scheduling
+* **Predictive Maintenance Insights** - AI-driven failure prediction system with:
+  * Risk assessment algorithms based on asset age, utilization, and maintenance history
+  * Interactive prediction timeline charts with color-coded risk levels
+  * Top 5 at-risk assets table with maintenance scheduling capabilities
+  * Degradation trend analysis and visualization
+  * Cost savings projections from prevented failures
+  * Modal-based maintenance scheduling with form validation
+* Automated maintenance schedules and alerts
+* Integration with Asset Protection module for movement-based maintenance triggers
+* Export capabilities for predictive insights and maintenance reports
 
 ### 4.6 Asset Protection Module
 

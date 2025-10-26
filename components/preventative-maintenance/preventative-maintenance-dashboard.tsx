@@ -44,48 +44,134 @@ const ChartCard = ({ title, children }: { title: string; children: React.ReactNo
   </div>
 )
 
-// Static data for now - can be replaced with API calls later
-const collectionStatusData = [
-  { name: "Collected", value: 45, fill: "#0d7a8c" },
-  { name: "Pending", value: 55, fill: "#c41e3a" },
-]
-
-const assetCategoryData = [
-  { category: "Infusion Pumps", collected: 12, pending: 8 },
-  { category: "Centrifuges", collected: 15, pending: 10 },
-  { category: "ECG Monitors", collected: 18, pending: 12 },
-  { category: "Ventilators", collected: 10, pending: 5 },
-  { category: "Ultrasound", collected: 8, pending: 3 },
-]
-
-const trendData = [
-  { date: "01/01", collected: 20, pending: 30 },
-  { date: "01/08", collected: 25, pending: 28 },
-  { date: "01/15", collected: 30, pending: 25 },
-  { date: "01/22", collected: 35, pending: 22 },
-  { date: "01/29", collected: 40, pending: 18 },
-  { date: "02/05", collected: 45, pending: 15 },
-]
-
 export default function PreventativeMaintenanceDashboard() {
   const [data, setData] = useState<{
     stats: { totalAssets: number; pending: number; collected: number; pendingCollection: number }
+    collectionStatus: Array<{ name: string; value: number; fill: string }>
+    assetCategories: Array<{ category: string; collected: number; pending: number }>
+    trendData: Array<{ date: string; collected: number; pending: number }>
+    upcomingMaintenance: Array<{ asset: string; date: string; type: string }>
+    pendingByLocation: Array<{ location: string; count: number }>
     isLoading: boolean
+    error: string | null
   }>({
-    stats: { totalAssets: 2012, pending: 340, collected: 1672, pendingCollection: 28 },
-    isLoading: false
+    stats: { totalAssets: 0, pending: 0, collected: 0, pendingCollection: 0 },
+    collectionStatus: [],
+    assetCategories: [],
+    trendData: [],
+    upcomingMaintenance: [],
+    pendingByLocation: [],
+    isLoading: true,
+    error: null
   })
 
   const [activeTab, setActiveTab] = useState<"overview" | "predictive">("overview")
 
-  // Simulate API call
   useEffect(() => {
-    // In a real implementation, this would be an API call
-    // apiGet("/api/preventative-maintenance/dashboard").then(setData)
+    const fetchData = async () => {
+      try {
+        setData(prev => ({ ...prev, isLoading: true, error: null }))
+        
+        const [
+          dashboardResponse,
+          collectionStatusResponse,
+          categoriesResponse,
+          trendResponse,
+          upcomingResponse,
+          locationResponse
+        ] = await Promise.all([
+          apiGet<{ stats: { totalMonitoredAssets: number; pmPending: number; pmCollected: number; assetsPendingCollection: number } }>("/api/preventative-maintenance/dashboard"),
+          apiGet<{ collectionStatus: Array<{ status: string; count: number; percentage: number }> }>("/api/preventative-maintenance/collection-status"),
+          apiGet<{ categories: Array<{ category: string; collected: number; pending: number }> }>("/api/preventative-maintenance/asset-categories"),
+          apiGet<{ trend: Array<{ date: string; collected: number; pending: number }> }>("/api/preventative-maintenance/trend"),
+          apiGet<{ upcoming: Array<{ asset: string; scheduledDate: string; maintenanceType: string }> }>("/api/preventative-maintenance/upcoming"),
+          apiGet<{ locations: Array<{ location: string; pendingCount: number }> }>("/api/preventative-maintenance/pending-by-location")
+        ])
+
+        const collectionStatusData = collectionStatusResponse.collectionStatus.map(item => ({
+          name: item.status,
+          value: item.percentage,
+          fill: item.status === "Collected" ? "#0d7a8c" : "#c41e3a"
+        }))
+
+        const upcomingMaintenanceData = upcomingResponse.upcoming.map(item => ({
+          asset: item.asset,
+          date: new Date(item.scheduledDate).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+          }),
+          type: item.maintenanceType
+        }))
+
+        const pendingByLocationData = locationResponse.locations.map(item => ({
+          location: item.location,
+          count: item.pendingCount
+        }))
+
+        setData({
+          stats: {
+            totalAssets: dashboardResponse.stats.totalMonitoredAssets,
+            pending: dashboardResponse.stats.pmPending,
+            collected: dashboardResponse.stats.pmCollected,
+            pendingCollection: dashboardResponse.stats.assetsPendingCollection
+          },
+          collectionStatus: collectionStatusData,
+          assetCategories: categoriesResponse.categories,
+          trendData: trendResponse.trend,
+          upcomingMaintenance: upcomingMaintenanceData,
+          pendingByLocation: pendingByLocationData,
+          isLoading: false,
+          error: null
+        })
+      } catch (error) {
+        console.error("Failed to load preventative maintenance data:", error)
+        setData(prev => ({ 
+          ...prev, 
+          isLoading: false, 
+          error: "Failed to load dashboard data. Please try again later."
+        }))
+      }
+    }
+
+    fetchData()
   }, [])
 
   if (activeTab === "predictive") {
     return <PredictiveInsightsTab />
+  }
+
+  if (data.isLoading) {
+    return (
+      <div className="p-8 bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading dashboard data...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (data.error) {
+    return (
+      <div className="p-8 bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <p className="text-red-600 mb-4">{data.error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -94,9 +180,8 @@ export default function PreventativeMaintenanceDashboard() {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-light mb-2" style={{ color: "#001f3f" }}>
-            Preventative Maintenance Dashboard
+            Preventive Maintenance Dashboard
           </h1>
-          <p className="text-gray-600">Comprehensive maintenance tracking and scheduling</p>
         </div>
 
         {/* Tab Navigation */}
@@ -159,14 +244,14 @@ export default function PreventativeMaintenanceDashboard() {
                 <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
                     <Pie 
-                      data={collectionStatusData} 
+                      data={data.collectionStatus} 
                       cx="50%" 
                       cy="50%" 
                       innerRadius={60} 
                       outerRadius={100} 
                       dataKey="value"
                     >
-                      {collectionStatusData.map((entry, index) => (
+                      {data.collectionStatus.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
                     </Pie>
@@ -184,7 +269,7 @@ export default function PreventativeMaintenanceDashboard() {
                 </ResponsiveContainer>
               </div>
               <div className="lg:ml-6 mt-4 lg:mt-0 space-y-3">
-                {collectionStatusData.map((item, idx) => (
+                {data.collectionStatus.map((item, idx) => (
                   <div key={idx} className="flex items-center gap-3 text-sm">
                     <div 
                       className="w-4 h-4 rounded-full flex-shrink-0" 
@@ -202,7 +287,7 @@ export default function PreventativeMaintenanceDashboard() {
           <ChartCard title="Asset Categories - Collected vs Pending">
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={assetCategoryData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                <BarChart data={data.assetCategories} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis 
                     dataKey="category" 
@@ -233,7 +318,7 @@ export default function PreventativeMaintenanceDashboard() {
         <ChartCard title="Asset Collected vs Pending Trend">
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <LineChart data={data.trendData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
                   dataKey="date" 
@@ -280,10 +365,21 @@ export default function PreventativeMaintenanceDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ChartCard title="Asset with Pending Collection by Location">
             <div className="space-y-4">
-              <div className="text-center py-8 text-gray-500">
-                <p className="text-lg mb-2">No pending collections</p>
-                <p className="text-sm">All scheduled maintenance tasks are up to date</p>
-              </div>
+              {data.pendingByLocation.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-lg mb-2">No pending collections</p>
+                  <p className="text-sm">All scheduled maintenance tasks are up to date</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {data.pendingByLocation.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span className="font-medium text-gray-900">{item.location}</span>
+                      <span className="text-red-600 font-semibold">{item.count} pending</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </ChartCard>
 
@@ -291,21 +387,23 @@ export default function PreventativeMaintenanceDashboard() {
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-gray-900 mb-2">Upcoming Maintenance</h4>
-                <div className="space-y-3">
-                  {[
-                    { asset: "MRI Scanner #001", date: "Mar 15, 2025", type: "Preventive" },
-                    { asset: "CT Scanner #003", date: "Mar 22, 2025", type: "Calibration" },
-                    { asset: "Ventilator #045", date: "Apr 5, 2025", type: "Inspection" },
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-sm">
-                      <div>
-                        <p className="font-medium text-gray-900">{item.asset}</p>
-                        <p className="text-gray-500">{item.type}</p>
+                {data.upcomingMaintenance.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">
+                    <p className="text-sm">No upcoming maintenance scheduled</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {data.upcomingMaintenance.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-sm">
+                        <div>
+                          <p className="font-medium text-gray-900">{item.asset}</p>
+                          <p className="text-gray-500">{item.type}</p>
+                        </div>
+                        <span className="text-gray-700">{item.date}</span>
                       </div>
-                      <span className="text-gray-700">{item.date}</span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </ChartCard>
