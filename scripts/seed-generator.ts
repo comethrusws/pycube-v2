@@ -890,16 +890,21 @@ function generateAssetLocatorData(
       }
     })
 
-  // Utilization Trend Over Time (last 30 days)
+  // Utilization Trend Over Time (last 30 days) - Enhanced for better visualization
   const utilizationTrend = Array.from({ length: 30 }, (_, i) => {
     const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000)
     const dateStr = date.toISOString().split('T')[0]
     
-    // Simulate utilization rate with realistic variations
+    // Create more realistic utilization patterns
     const baseUtilization = avgUtilization
-    const dailyVariation = Math.sin((i / 7) * Math.PI) * 10 // Weekly pattern
-    const randomVariation = randomInt(-8, 8)
-    const utilization = Math.max(40, Math.min(95, baseUtilization + dailyVariation + randomVariation))
+    
+    // Multi-layered variation for realistic data
+    const weeklyPattern = Math.sin((i / 7) * 2 * Math.PI) * 8 // 7-day cycle
+    const monthlyTrend = Math.sin((i / 30) * Math.PI) * 5 // Monthly trend
+    const weekdayEffect = date.getDay() === 0 || date.getDay() === 6 ? -8 : 2 // Weekend vs weekday
+    const randomNoise = (Math.random() - 0.5) * 12 // Daily random variation
+    
+    let utilization = baseUtilization + weeklyPattern + monthlyTrend + weekdayEffect + randomNoise
     
     // Check for maintenance events that might cause drops
     const maintenanceEvents = maintenanceTasks.filter(task => 
@@ -907,12 +912,19 @@ function generateAssetLocatorData(
       (task.completedDate && task.completedDate.startsWith(dateStr))
     ).length
     
-    const adjustedUtilization = maintenanceEvents > 5 ? utilization - 15 : utilization
+    // Apply maintenance impact more realistically
+    const maintenanceImpact = Math.min(20, maintenanceEvents * 3)
+    utilization -= maintenanceImpact
+    
+    // Ensure realistic bounds with some variety
+    const minUtil = Math.max(20, avgUtilization - 35)
+    const maxUtil = Math.min(95, avgUtilization + 25)
+    utilization = Math.max(minUtil, Math.min(maxUtil, utilization))
     
     return {
       date: dateStr,
       displayDate: `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`,
-      utilization: Math.round(adjustedUtilization),
+      utilization: Math.round(utilization),
       maintenanceEvents,
       tooltip: maintenanceEvents > 5 ? `${maintenanceEvents} maintenance tasks scheduled` : null
     }

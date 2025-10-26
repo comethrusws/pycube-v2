@@ -15,7 +15,7 @@ const Modal = ({ isOpen, onClose, title, children }: {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/30 bg-opacity-20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold" style={{ color: "#001f3f" }}>{title}</h2>
@@ -678,30 +678,40 @@ export default function AssetLocatorDashboard() {
                 </div>
               </ChartCard>
 
-              {/* Utilization Trend Over Time */}
+              {/* Utilization Trend Over Time - Enhanced Layout */}
               <ChartCard title="Utilization Trend Over Time">
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={utilization?.utilizationTrend} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                    <LineChart 
+                      data={utilization?.utilizationTrend} 
+                      margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis 
                         dataKey="displayDate" 
                         stroke="#9ca3af" 
                         style={{ fontSize: "10px" }}
                         tick={{ fill: '#6b7280' }}
+                        axisLine={false}
+                        tickLine={false}
+                        interval={Math.ceil((utilization?.utilizationTrend?.length || 30) / 6)} // Show ~6 labels
                       />
                       <YAxis 
                         stroke="#9ca3af" 
-                        style={{ fontSize: "12px" }}
+                        style={{ fontSize: "10px" }}
                         tick={{ fill: '#6b7280' }}
-                        label={{ value: 'Utilization %', angle: -90, position: 'insideLeft' }}
+                        axisLine={false}
+                        tickLine={false}
+                        domain={['dataMin - 5', 'dataMax + 5']} // Tighter Y-axis bounds
+                        width={35} // Smaller Y-axis width
                       />
                       <Tooltip 
                         contentStyle={{ 
                           backgroundColor: '#fff', 
                           border: '1px solid #e5e7eb', 
                           borderRadius: '8px',
-                          fontSize: '12px'
+                          fontSize: '11px',
+                          padding: '8px'
                         }}
                         formatter={(value, name) => [`${value}%`, 'Utilization Rate']}
                         labelFormatter={(label) => `Date: ${label}`}
@@ -710,12 +720,46 @@ export default function AssetLocatorDashboard() {
                         type="monotone" 
                         dataKey="utilization" 
                         stroke="#0d7a8c" 
-                        strokeWidth={3} 
-                        dot={{ fill: "#0d7a8c", r: 3 }}
-                        activeDot={{ r: 6, fill: "#0d7a8c" }}
+                        strokeWidth={2.5} 
+                        dot={false} // Remove dots for cleaner look
+                        activeDot={{ r: 4, fill: "#0d7a8c", strokeWidth: 2, stroke: "#fff" }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
+                </div>
+                
+                {/* Add summary stats below the chart */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Current</p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {utilization?.utilizationTrend?.[utilization.utilizationTrend.length - 1]?.utilization ?? 0}%
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Avg (30d)</p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {utilization?.utilizationTrend ? 
+                          Math.round(utilization.utilizationTrend.reduce((sum, d) => sum + d.utilization, 0) / utilization.utilizationTrend.length)
+                          : 0}%
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Trend</p>
+                      <p className={`text-sm font-semibold ${
+                        utilization?.utilizationTrend && utilization.utilizationTrend.length > 1 &&
+                        utilization.utilizationTrend[utilization.utilizationTrend.length - 1].utilization > 
+                        utilization.utilizationTrend[utilization.utilizationTrend.length - 7].utilization
+                          ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {utilization?.utilizationTrend && utilization.utilizationTrend.length > 1 &&
+                        utilization.utilizationTrend[utilization.utilizationTrend.length - 1].utilization > 
+                        utilization.utilizationTrend[utilization.utilizationTrend.length - 7].utilization
+                          ? '↗ Up' : '↘ Down'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </ChartCard>
             </div>

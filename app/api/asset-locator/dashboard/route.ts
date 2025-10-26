@@ -100,16 +100,20 @@ export async function GET() {
         }
       })
 
-    // Utilization Trend Over Time (last 30 days)
+    // Utilization Trend Over Time (last 30 days) - Enhanced data
     const utilizationTrend = Array.from({ length: 30 }, (_, i) => {
       const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000)
       const dateStr = date.toISOString().split('T')[0]
       
-      // Simulate utilization rate with realistic variations
+      // Simulate utilization rate with more realistic variations
       const baseUtilization = avgUtilization
-      const dailyVariation = Math.sin((i / 7) * Math.PI) * 10 // Weekly pattern
-      const randomVariation = Math.floor(Math.random() * 16) - 8
-      const utilization = Math.max(40, Math.min(95, baseUtilization + dailyVariation + randomVariation))
+      
+      // Create more realistic patterns
+      const weeklyPattern = Math.sin((i / 7) * 2 * Math.PI) * 8 // Weekly cyclical pattern
+      const weekdayEffect = date.getDay() === 0 || date.getDay() === 6 ? -5 : 0 // Weekend effect
+      const randomVariation = (Math.random() - 0.5) * 10 // Random daily variation
+      
+      let utilization = baseUtilization + weeklyPattern + weekdayEffect + randomVariation
       
       // Check for maintenance events that might cause drops
       const maintenanceEvents = data.maintenanceTasks.filter(task => 
@@ -117,12 +121,20 @@ export async function GET() {
         (task.completedDate && task.completedDate.startsWith(dateStr))
       ).length
       
-      const adjustedUtilization = maintenanceEvents > 5 ? utilization - 15 : utilization
+      // Apply maintenance impact
+      if (maintenanceEvents > 5) {
+        utilization -= 15
+      } else if (maintenanceEvents > 2) {
+        utilization -= 5
+      }
+      
+      // Keep utilization within realistic bounds
+      utilization = Math.max(Math.min(avgUtilization * 0.3, 25), Math.min(95, utilization))
       
       return {
         date: dateStr,
         displayDate: `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`,
-        utilization: Math.round(adjustedUtilization),
+        utilization: Math.round(utilization),
         maintenanceEvents,
         tooltip: maintenanceEvents > 5 ? `${maintenanceEvents} maintenance tasks scheduled` : null
       }
