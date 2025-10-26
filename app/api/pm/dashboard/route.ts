@@ -21,19 +21,19 @@ export async function GET() {
       const collectionStatus = [
         { 
           status: "Completed", 
-          percentage: Math.round((completedTasks / totalTasks) * 100),
+          percentage: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
           count: completedTasks,
           color: "#059669"
         },
         { 
           status: "In Progress", 
-          percentage: Math.round((pendingTasks / totalTasks) * 100),
+          percentage: totalTasks > 0 ? Math.round((pendingTasks / totalTasks) * 100) : 0,
           count: pendingTasks,
           color: "#0d7a8c"
         },
         { 
           status: "Overdue", 
-          percentage: Math.round((overdueTasks / totalTasks) * 100),
+          percentage: totalTasks > 0 ? Math.round((overdueTasks / totalTasks) * 100) : 0,
           count: overdueTasks,
           color: "#dc2626"
         }
@@ -60,43 +60,59 @@ export async function GET() {
       })
     }
 
-    // Fallback: compute basic PM data on-demand
+    // Fallback: compute basic PM data on-demand using seed data
     const total = data.assets.length
     const tasks = data.maintenanceTasks
     const completed = tasks.filter((t) => t.status === "completed").length
     const pending = tasks.filter((t) => t.status === "pending" || t.status === "in-progress").length
     const overdue = tasks.filter((t) => t.status === "overdue").length
+    const totalTasks = tasks.length
 
     // Create collection status data that matches what the component expects
     const collectionStatus = [
       { 
         status: "Completed", 
-        percentage: Math.round((completed / tasks.length) * 100),
+        percentage: totalTasks > 0 ? Math.round((completed / totalTasks) * 100) : 0,
         count: completed,
         color: "#059669"
       },
       { 
         status: "Pending", 
-        percentage: Math.round((pending / tasks.length) * 100),
+        percentage: totalTasks > 0 ? Math.round((pending / totalTasks) * 100) : 0,
         count: pending,
         color: "#0d7a8c"
       },
       { 
         status: "Overdue", 
-        percentage: Math.round((overdue / tasks.length) * 100),
+        percentage: totalTasks > 0 ? Math.round((overdue / totalTasks) * 100) : 0,
         count: overdue,
         color: "#dc2626"
       }
     ].filter(item => item.count > 0)
 
+    // Calculate risk distribution from actual asset data
+    const highRiskAssets = data.assets.filter(asset => {
+      const ageInDays = asset.purchaseDate ? 
+        Math.floor((Date.now() - new Date(asset.purchaseDate).getTime()) / (24 * 60 * 60 * 1000)) : 0
+      return ageInDays > 1095 || asset.utilization > 85 || asset.status === "maintenance"
+    }).length
+
+    const mediumRiskAssets = data.assets.filter(asset => {
+      const ageInDays = asset.purchaseDate ? 
+        Math.floor((Date.now() - new Date(asset.purchaseDate).getTime()) / (24 * 60 * 60 * 1000)) : 0
+      return (ageInDays > 730 && ageInDays <= 1095) || (asset.utilization > 60 && asset.utilization <= 85)
+    }).length
+
+    const lowRiskAssets = total - highRiskAssets - mediumRiskAssets
+
     return NextResponse.json({
       summary: {
         totalAssetsMonitored: total,
-        highRiskAssets: Math.floor(total * 0.15),
-        mediumRiskAssets: Math.floor(total * 0.25),
-        lowRiskAssets: Math.floor(total * 0.6),
+        highRiskAssets,
+        mediumRiskAssets,
+        lowRiskAssets,
         avgConfidenceScore: 78,
-        potentialCostSavings: 125000
+        potentialCostSavings: highRiskAssets * 2500 + mediumRiskAssets * 1200
       },
       collectionStatus,
       stats: {
