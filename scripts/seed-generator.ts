@@ -24,6 +24,9 @@ import type {
   MaintenanceStatus,
   LocationList,
   LocationActivity,
+  PredictiveInsight,
+  PredictiveMaintenanceData,
+  DegradationTrend,
 } from "../lib/types"
 
 function randomChoice<T>(arr: T[]): T {
@@ -90,6 +93,185 @@ const ASSET_CATEGORIES = [
 ]
 
 const ROLES = ["admin", "biomedical", "nursing", "technician", "viewer"]
+
+function generatePredictiveMaintenanceData(
+  assets: Asset[],
+  maintenanceTasks: MaintenanceTask[],
+  zones: Zone[]
+): PredictiveMaintenanceData {
+  const monitoredAssets = assets.filter(a => a.status !== "lost").slice(0, Math.floor(assets.length * 0.8))
+  
+  const insights: PredictiveInsight[] = monitoredAssets.map(asset => {
+    const zone = zones.find(z => z.id === asset.location.zoneId)
+    const assetMaintenanceHistory = maintenanceTasks.filter(t => t.assetId === asset.id)
+    
+    // Calculate realistic failure prediction based on asset characteristics
+    let baseRiskScore = 50
+    
+    // Asset age influence (older assets more likely to fail)
+    const ageInDays = Math.floor((Date.now() - new Date(asset.purchaseDate || '2022-01-01').getTime()) / (24 * 60 * 60 * 1000))
+    const ageRiskMultiplier = Math.min(2, 1 + (ageInDays / 1095)) // 3 years = max multiplier
+    
+    // Utilization influence (high utilization = more wear)
+    const utilizationRisk = asset.utilization > 80 ? 1.5 : asset.utilization < 20 ? 0.7 : 1.0
+    
+    // Maintenance history influence
+    const overdueTasks = assetMaintenanceHistory.filter(t => t.status === "overdue").length
+    const maintenanceRisk = 1 + (overdueTasks * 0.3)
+    
+    // Asset type influence (some equipment more critical)
+    const criticalTypes = ["Ventilator", "MRI Scanner", "CT Scanner", "Defibrillator"]
+    const typeRisk = criticalTypes.includes(asset.type) ? 1.3 : 1.0
+    
+    const riskScore = baseRiskScore * ageRiskMultiplier * utilizationRisk * maintenanceRisk * typeRisk
+    
+    // Convert risk score to failure window (higher risk = shorter window)
+    const failureWindow = Math.max(5, Math.min(365, Math.round(180 - (riskScore - 50))))
+    
+    // Determine risk level and confidence
+    let riskLevel: "low" | "medium" | "high"
+    let confidence: number
+    
+    if (failureWindow <= 30) {
+      riskLevel = "high"
+      confidence = randomInt(75, 95)
+    } else if (failureWindow <= 90) {
+      riskLevel = "medium"  
+      confidence = randomInt(60, 85)
+    } else {
+      riskLevel = "low"
+      confidence = randomInt(45, 75)
+    }
+    
+    // Generate key indicators
+    const keyIndicators = {
+      usageHours: Math.round(asset.utilization * 24 * 365 / 100),
+      temperatureVariance: randomInt(1, 15),
+      vibrationLevels: randomInt(10, 100),
+      performanceDegradation: Math.round(Math.max(0, 100 - asset.utilization - randomInt(0, 20)))
+    }
+    
+    // Maintenance history summary
+    const lastTask = assetMaintenanceHistory
+      .filter(t => t.status === "completed")
+      .sort((a, b) => new Date(b.completedDate || b.scheduledDate).getTime() - new Date(a.completedDate || a.scheduledDate).getTime())[0]
+    
+    const nextTask = assetMaintenanceHistory
+      .filter(t => t.status === "pending")
+      .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime())[0]
+    
+    const maintenanceHistory = {
+      lastServiceDate: lastTask?.completedDate || lastTask?.scheduledDate || randomDateISO(90),
+      nextScheduledService: nextTask?.scheduledDate || randomDateISO(-30),
+      serviceCount: assetMaintenanceHistory.filter(t => t.status === "completed").length,
+      avgServiceInterval: 90 + randomInt(-20, 40)
+    }
+    
+    // Predicted issue based on risk factors
+    const possibleIssues = [
+      "Mechanical wear detected",
+      "Performance degradation trend",
+      "Temperature regulation variance", 
+      "Calibration drift detected",
+      "Component fatigue indicators",
+      "Sensor accuracy decline",
+      "Power consumption anomaly",
+      "Vibration pattern changes"
+    ]
+    
+    const predictedIssue = randomChoice(possibleIssues)
+    
+    // Recommended actions
+    const actions = {
+      high: ["Immediate inspection required", "Schedule emergency maintenance", "Consider replacement"],
+      medium: ["Schedule maintenance within 2 weeks", "Increase monitoring frequency", "Prepare replacement parts"],
+      low: ["Continue routine monitoring", "Schedule preventive maintenance", "Review usage patterns"]
+    }
+    
+    return {
+      id: randomUUID(),
+      assetId: asset.id,
+      assetName: asset.name,
+      assetType: asset.type,
+      location: zone?.name || "Unknown",
+      departmentId: asset.departmentId,
+      predictedFailureWindow: failureWindow,
+      confidenceScore: confidence,
+      riskLevel,
+      predictedIssue,
+      keyIndicators,
+      maintenanceHistory,
+      degradationScore: Math.round(100 - (failureWindow / 365) * 100),
+      recommendedAction: randomChoice(actions[riskLevel]),
+      createdAt: new Date().toISOString()
+    }
+  })
+  
+  // Sort by risk and get top 5
+  const top5AtRisk = insights
+    .filter(i => i.riskLevel === "high" || i.riskLevel === "medium")
+    .sort((a, b) => a.predictedFailureWindow - b.predictedFailureWindow)
+    .slice(0, 5)
+  
+  // Risk distribution
+  const riskCounts = insights.reduce((acc, insight) => {
+    acc[insight.riskLevel] = (acc[insight.riskLevel] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+  
+  const riskDistribution = [
+    { name: "High Risk", value: Math.round((riskCounts.high || 0) / insights.length * 100), count: riskCounts.high || 0, color: "#dc2626" },
+    { name: "Medium Risk", value: Math.round((riskCounts.medium || 0) / insights.length * 100), count: riskCounts.medium || 0, color: "#ea580c" },
+    { name: "Low Risk", value: Math.round((riskCounts.low || 0) / insights.length * 100), count: riskCounts.low || 0, color: "#059669" }
+  ]
+  
+  // Degradation trends for top assets
+  const degradationTrends = top5AtRisk.slice(0, 3).map(insight => ({
+    assetId: insight.assetId,
+    assetName: insight.assetName,
+    trend: Array.from({ length: 30 }, (_, i) => {
+      const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000)
+      const baseScore = insight.degradationScore
+      const dailyVariation = Math.sin(i / 7 * Math.PI) * 5 + (Math.random() - 0.5) * 8
+      const trendIncrease = (i / 30) * 15 // Gradual increase over time
+      
+      return {
+        date: date.toISOString().split('T')[0],
+        degradationScore: Math.max(0, Math.min(100, baseScore + dailyVariation + trendIncrease)),
+        usageHours: insight.keyIndicators.usageHours + randomInt(-50, 50),
+        performanceIndex: Math.max(0, Math.min(100, 100 - (baseScore + dailyVariation + trendIncrease)))
+      }
+    })
+  }))
+  
+  // Prediction accuracy over time
+  const predictionAccuracy = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date()
+    date.setMonth(date.getMonth() - (11 - i))
+    
+    return {
+      month: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+      accuracy: randomInt(65, 92),
+      predictionsCount: randomInt(15, 45)
+    }
+  })
+  
+  return {
+    summary: {
+      totalAssetsMonitored: insights.length,
+      highRiskAssets: riskCounts.high || 0,
+      mediumRiskAssets: riskCounts.medium || 0,
+      lowRiskAssets: riskCounts.low || 0,
+      avgConfidenceScore: Math.round(insights.reduce((sum, i) => sum + i.confidenceScore, 0) / insights.length),
+      potentialCostSavings: Math.round(insights.filter(i => i.riskLevel === "high").length * 2500 + insights.filter(i => i.riskLevel === "medium").length * 1200)
+    },
+    insights,
+    top5AtRisk,
+    riskDistribution,
+    degradationTrends,
+    predictionAccuracy
+  }
+}
 
 function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   const facilities: Facility[] = []
@@ -264,7 +446,37 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
       departmentId,
       location: { buildingId, floorId, zoneId },
       status,
-      utilization: status === "in-use" ? randomInt(60, 95) : status === "available" ? randomInt(10, 40) : randomInt(0, 20),
+      utilization: (() => {
+        // Create more realistic utilization patterns based on asset type and department
+        let utilizationBase = 50
+        
+        // Asset type influences base utilization
+        if (type.includes("Monitor") || type.includes("Ventilator") || type.includes("Pump")) {
+          utilizationBase = 75 // High-demand equipment
+        } else if (type.includes("IV Stand") || type.includes("Wheelchair") || type.includes("Hospital Bed")) {
+          utilizationBase = 45 // Medium-demand equipment
+        } else if (type.includes("Surgical") || type.includes("MRI") || type.includes("CT") || type.includes("X-Ray")) {
+          utilizationBase = 35 // Specialized, scheduled equipment
+        }
+
+        // Department influences utilization (some departments are busier)
+        const deptIndex = parseInt(departmentId.slice(-3)) % 6
+        if (deptIndex < 2) {
+          utilizationBase += 20 // High-activity departments (ICU, Emergency)
+        } else if (deptIndex > 4) {
+          utilizationBase -= 25 // Lower-activity departments (Storage, Admin)
+        }
+
+        // Status influences utilization
+        if (status === "in-use") {
+          utilizationBase = Math.max(utilizationBase, 60)
+        } else if (status === "maintenance" || status === "lost") {
+          utilizationBase = Math.min(utilizationBase, 20)
+        }
+
+        // Add randomness but ensure realistic distribution
+        return Math.max(5, Math.min(98, utilizationBase + randomInt(-25, 25)))
+      })(),
       lastActive: randomDateISO(lastActiveDays),
       maintenanceDue: status === "maintenance" ? randomDateISO(15) : randomDateISO(180),
       serialNumber: `SN${(a + 1).toString().padStart(8, "0")}`, // Add serial number
@@ -412,7 +624,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   ]
 
   // Generate 25-30 location lists for comprehensive data
-  for (let i = 0; i < 28; i++) {
+  for (let i = 0; i < 57; i++) {
     const listId = `LOC${(i + 1).toString().padStart(4, "0")}`
     const createdDaysAgo = randomInt(1, 120)
     const targetDaysFromCreation = randomInt(7, 30)
@@ -500,6 +712,9 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   // Generate enhanced asset-locator data with location lists
   const assetLocatorData = generateAssetLocatorData(assets, movementLogs, zones, maintenanceTasks, locationLists)
 
+  // Generate predictive maintenance data
+  const predictiveMaintenanceData = generatePredictiveMaintenanceData(assets, maintenanceTasks, zones)
+
   return {
     facilities,
     departments,
@@ -520,6 +735,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
     locationActivities,
     dashboardData,
     assetLocatorData,
+    predictiveMaintenanceData,
   }
 }
 
@@ -682,6 +898,280 @@ function generateAssetLocatorData(
     maintenanceTasks.some(m => m.assetId === a.id && m.status === "overdue")
   ).length
 
+  // Enhanced utilization analytics
+  const underutilizedAssets = assets.filter(a => a.utilization < 40)
+  const underutilizedCount = underutilizedAssets.length
+  const avgUtilization = Math.round(assets.reduce((sum, a) => sum + a.utilization, 0) / assets.length)
+
+  // Department-level utilization analysis with enhanced data
+  const deptUtilization = assets.reduce((acc, asset) => {
+    if (!acc[asset.departmentId]) {
+      acc[asset.departmentId] = {
+        assets: [],
+        totalUtilization: 0,
+        underutilized: 0,
+        active: 0,
+        idle: 0,
+        inMaintenance: 0
+      }
+    }
+    acc[asset.departmentId].assets.push(asset)
+    acc[asset.departmentId].totalUtilization += asset.utilization
+    if (asset.utilization < 40) {
+      acc[asset.departmentId].underutilized++
+      acc[asset.departmentId].idle++
+    } else {
+      acc[asset.departmentId].active++
+    }
+    if (asset.status === "maintenance") {
+      acc[asset.departmentId].inMaintenance++
+    }
+    return acc
+  }, {} as Record<string, { 
+    assets: Asset[], 
+    totalUtilization: number, 
+    underutilized: number,
+    active: number,
+    idle: number,
+    inMaintenance: number
+  }>)
+
+  const departmentUtilization = Object.entries(deptUtilization).map(([deptId, data]) => ({
+    departmentId: deptId,
+    departmentName: `Department ${deptId.slice(-3)}`,
+    avgUtilization: Math.round(data.totalUtilization / data.assets.length),
+    totalAssets: data.assets.length,
+    underutilized: data.underutilized,
+    active: data.active,
+    idle: data.idle,
+    inMaintenance: data.inMaintenance,
+    utilizationTrend: Array.from({ length: 7 }, (_, i) => ({
+      date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      utilization: Math.max(20, Math.min(95, data.totalUtilization / data.assets.length + randomInt(-15, 15)))
+    }))
+  })).sort((a, b) => b.avgUtilization - a.avgUtilization)
+
+  // Asset type utilization breakdown
+  const typeUtilization = assets.reduce((acc, asset) => {
+    if (!acc[asset.type]) {
+      acc[asset.type] = { total: 0, utilization: 0, underutilized: 0 }
+    }
+    acc[asset.type].total++
+    acc[asset.type].utilization += asset.utilization
+    if (asset.utilization < 40) acc[asset.type].underutilized++
+    return acc
+  }, {} as Record<string, { total: number, utilization: number, underutilized: number }>)
+
+  const assetTypeUtilization = Object.entries(typeUtilization)
+    .map(([type, data]) => ({
+      type,
+      avgUtilization: Math.round(data.utilization / data.total),
+      totalAssets: data.total,
+      underutilized: data.underutilized,
+      utilizationRate: Math.round((data.total - data.underutilized) / data.total * 100)
+    }))
+    .sort((a, b) => a.avgUtilization - b.avgUtilization)
+
+  // Redistribution suggestions based on utilization imbalance
+  const redistributionSuggestions = []
+  const lowUtilDepts = departmentUtilization.filter(d => d.avgUtilization < 50).slice(0, 3)
+  const highUtilDepts = departmentUtilization.filter(d => d.avgUtilization > 80).slice(0, 3)
+
+  for (const lowDept of lowUtilDepts) {
+    for (const highDept of highUtilDepts) {
+      // Find underutilized assets that could benefit from redistribution
+      const lowDeptAssets = assets.filter(a => 
+        a.departmentId === lowDept.departmentId && 
+        a.utilization < 30 &&
+        a.status === "available"
+      )
+      
+      // Find what types are in demand in high-utilization departments
+      const highDeptAssets = assets.filter(a => a.departmentId === highDept.departmentId)
+      const highDemandTypes = [...new Set(highDeptAssets.filter(a => a.utilization > 70).map(a => a.type))]
+      
+      // Find matching assets that could be redistributed
+      const redistributableAssets = lowDeptAssets.filter(a => 
+        highDemandTypes.includes(a.type) || 
+        a.type.includes("Monitor") || 
+        a.type.includes("Pump") || 
+        a.type.includes("Bed") ||
+        a.type.includes("Wheelchair")
+      )
+      
+      if (redistributableAssets.length > 0) {
+        const suggestedAsset = randomChoice(redistributableAssets)
+        const potentialGain = randomInt(25, 45)
+        const currentCost = (suggestedAsset.value || 5000) * 0.1  // 10% of asset value annually for underutilization
+        const projectedSavings = Math.floor(currentCost * (potentialGain / 100))
+        
+        redistributionSuggestions.push({
+          id: randomUUID(),
+          assetId: suggestedAsset.id,
+          assetName: suggestedAsset.name,
+          assetType: suggestedAsset.type,
+          currentUtilization: suggestedAsset.utilization,
+          fromDepartment: lowDept.departmentName,
+          fromDepartmentId: lowDept.departmentId,
+          toDepartment: highDept.departmentName,
+          toDepartmentId: highDept.departmentId,
+          potentialImpact: `+${potentialGain}% utilization`,
+          priority: suggestedAsset.utilization < 15 ? "high" : 
+                   suggestedAsset.utilization < 25 ? "medium" : "low",
+          estimatedSavings: projectedSavings,
+          reason: `${suggestedAsset.type} shows ${suggestedAsset.utilization}% utilization in ${lowDept.departmentName}, while ${highDept.departmentName} has high demand for similar equipment`
+        })
+        
+        // Limit to avoid too many suggestions
+        if (redistributionSuggestions.length >= 8) break
+      }
+    }
+    if (redistributionSuggestions.length >= 8) break
+  }
+
+  // Idle asset alerts
+  const idleAssets = assets
+    .filter(a => a.utilization < 20 && a.status === "available")
+    .sort((a, b) => a.utilization - b.utilization)
+    .slice(0, 10)
+    .map(asset => {
+      const zone = zones.find(z => z.id === asset.location.zoneId)
+      return {
+        id: asset.id,
+        name: asset.name,
+        type: asset.type,
+        utilization: asset.utilization,
+        location: zone?.name || "Unknown",
+        departmentId: asset.departmentId,
+        lastActive: asset.lastActive,
+        idleDays: Math.floor((Date.now() - new Date(asset.lastActive).getTime()) / (24 * 60 * 60 * 1000))
+      }
+    })
+
+  // Top 10 Idle Assets with enhanced details
+  const top10IdleAssets = assets
+    .filter(a => a.utilization < 30 && a.status === "available")
+    .sort((a, b) => a.utilization - b.utilization)
+    .slice(0, 10)
+    .map(asset => {
+      const zone = zones.find(z => z.id === asset.location.zoneId)
+      const department = departmentUtilization.find(d => d.departmentId === asset.departmentId)
+      const idleDays = Math.floor((Date.now() - new Date(asset.lastActive).getTime()) / (24 * 60 * 60 * 1000))
+      
+      return {
+        id: asset.id,
+        name: asset.name,
+        type: asset.type,
+        department: department?.departmentName || "Unknown Department",
+        departmentId: asset.departmentId,
+        utilization: asset.utilization,
+        location: zone?.name || "Unknown",
+        lastUsed: asset.lastActive,
+        idleDuration: idleDays,
+        recommendedAction: idleDays > 30 ? "Consider Redistribution" : 
+                          idleDays > 14 ? "Schedule Utilization Review" : 
+                          "Monitor Usage Pattern",
+        value: asset.value || 0,
+        status: asset.status
+      }
+    })
+
+  // Utilization Trend Over Time (last 30 days) - Enhanced for better visualization
+  const utilizationTrend = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000)
+    const dateStr = date.toISOString().split('T')[0]
+    
+    // Create more realistic utilization patterns
+    const baseUtilization = avgUtilization
+    
+    // Multi-layered variation for realistic data
+    const weeklyPattern = Math.sin((i / 7) * 2 * Math.PI) * 8 // 7-day cycle
+    const monthlyTrend = Math.sin((i / 30) * Math.PI) * 5 // Monthly trend
+    const weekdayEffect = date.getDay() === 0 || date.getDay() === 6 ? -8 : 2 // Weekend vs weekday
+    const randomNoise = (Math.random() - 0.5) * 12 // Daily random variation
+    
+    let utilization = baseUtilization + weeklyPattern + monthlyTrend + weekdayEffect + randomNoise
+    
+    // Check for maintenance events that might cause drops
+    const maintenanceEvents = maintenanceTasks.filter(task => 
+      task.scheduledDate.startsWith(dateStr) || 
+      (task.completedDate && task.completedDate.startsWith(dateStr))
+    ).length
+    
+    // Apply maintenance impact more realistically
+    const maintenanceImpact = Math.min(20, maintenanceEvents * 3)
+    utilization -= maintenanceImpact
+    
+    // Ensure realistic bounds with some variety
+    const minUtil = Math.max(20, avgUtilization - 35)
+    const maxUtil = Math.min(95, avgUtilization + 25)
+    utilization = Math.max(minUtil, Math.min(maxUtil, utilization))
+    
+    return {
+      date: dateStr,
+      displayDate: `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`,
+      utilization: Math.round(utilization),
+      maintenanceEvents,
+      tooltip: maintenanceEvents > 5 ? `${maintenanceEvents} maintenance tasks scheduled` : null
+    }
+  })
+
+  // Maintenance Impact on Availability
+  const availableAssets = assets.filter(a => a.status === "available").length
+  const underMaintenanceAssets = assets.filter(a => a.status === "maintenance").length
+  const pendingMaintenanceAssets = maintenanceTasks.filter(t => t.status === "pending").length
+  
+  const maintenanceImpact = [
+    { 
+      name: "Available", 
+      value: Math.round((availableAssets / totalAssets) * 100),
+      count: availableAssets,
+      color: "#059669" 
+    },
+    { 
+      name: "Under Maintenance", 
+      value: Math.round((underMaintenanceAssets / totalAssets) * 100),
+      count: underMaintenanceAssets,
+      color: "#dc2626" 
+    },
+    { 
+      name: "Pending Maintenance", 
+      value: Math.round((pendingMaintenanceAssets / totalAssets) * 100),
+      count: pendingMaintenanceAssets,
+      color: "#d97706" 
+    }
+  ]
+
+  // Asset Movement Alerts (from recent movement logs)
+  const recentMovements = movementLogs
+    .filter(log => {
+      const logDate = new Date(log.timestamp)
+      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+      return logDate > twoDaysAgo && (!log.authorized || Math.random() < 0.15) // 15% are flagged as abnormal
+    })
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 15)
+    .map(log => {
+      const asset = assets.find(a => a.id === log.assetId)
+      const fromZone = zones.find(z => z.id === log.fromZoneId)
+      const toZone = zones.find(z => z.id === log.toZoneId)
+      
+      return {
+        id: log.id,
+        assetId: log.assetId,
+        assetName: asset?.name || "Unknown Asset",
+        assetType: asset?.type || "Unknown",
+        fromLocation: fromZone?.name || "Unknown",
+        toLocation: toZone?.name || "Unknown",
+        timestamp: log.timestamp,
+        alertType: !log.authorized ? "Unauthorized Movement" : 
+                  Math.random() < 0.6 ? "Out-of-Zone Event" : "Abnormal Movement Pattern",
+        severity: !log.authorized ? "high" : "medium",
+        status: Math.random() < 0.3 ? "resolved" : "pending",
+        movedBy: log.movedBy || "Unknown User"
+      }
+    })
+
   // Monitored product categories with realistic distribution
   const categoryCounts = assets.reduce((acc, asset) => {
     const category = asset.category || asset.type
@@ -753,27 +1243,31 @@ function generateAssetLocatorData(
     { name: "Geofence Violation", value: 8, color: "#1e40af" }
   ]
 
-  // Add location list statistics
-  const completedLists = locationLists.filter(l => l.status === "completed").length
-  const pendingLists = locationLists.filter(l => l.status === "pending").length
-  const overdueLists = locationLists.filter(l => l.status === "overdue").length
-  
-  const avgCompletionRate = locationLists.length > 0 
-    ? Math.round(locationLists.reduce((sum, list) => sum + list.completionPercentage, 0) / locationLists.length)
-    : 0
-
   return {
     stats: {
       total: totalAssets,
       toLocate: assetsToLocate,
       located: locatedAssets,
       flagged: flaggedAssets,
-      // Add location list stats
+      underutilized: underutilizedCount,
+      avgUtilization,
       totalLists: locationLists.length,
-      completedLists,
-      pendingLists,
-      overdueLists,
-      avgCompletionRate
+      completedLists: locationLists.filter(l => l.status === "completed").length,
+      pendingLists: locationLists.filter(l => l.status === "pending").length,
+      overdueLists: locationLists.filter(l => l.status === "overdue").length,
+      avgCompletionRate: locationLists.length > 0 
+        ? Math.round(locationLists.reduce((sum, list) => sum + list.completionPercentage, 0) / locationLists.length)
+        : 0
+    },
+    utilization: {
+      departmentUtilization,
+      assetTypeUtilization,
+      redistributionSuggestions,
+      idleAssets,
+      top10IdleAssets,
+      utilizationTrend,
+      maintenanceImpact,
+      movementAlerts: recentMovements
     },
     monitoredCategories,
     locationTrends,

@@ -17,6 +17,7 @@ import {
   Cell,
 } from "recharts"
 import { apiGet } from "@/lib/fetcher"
+import PredictiveInsightsTab from "./predictive-insights-tab"
 
 const StatCard = ({ title, value, color, textColor }: { 
   title: string; 
@@ -75,11 +76,17 @@ export default function PreventativeMaintenanceDashboard() {
     isLoading: false
   })
 
+  const [activeTab, setActiveTab] = useState<"overview" | "predictive">("overview")
+
   // Simulate API call
   useEffect(() => {
     // In a real implementation, this would be an API call
     // apiGet("/api/preventative-maintenance/dashboard").then(setData)
   }, [])
+
+  if (activeTab === "predictive") {
+    return <PredictiveInsightsTab />
+  }
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
@@ -90,6 +97,32 @@ export default function PreventativeMaintenanceDashboard() {
             Preventative Maintenance Dashboard
           </h1>
           <p className="text-gray-600">Comprehensive maintenance tracking and scheduling</p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8 justify-center">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "overview"
+                  ? "border-teal-500 text-teal-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Maintenance Overview
+            </button>
+            <button
+              onClick={() => setActiveTab("predictive")}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "predictive"
+                  ? "border-teal-500 text-teal-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Predictive Insights
+            </button>
+          </nav>
         </div>
 
         {/* Key Metrics */}

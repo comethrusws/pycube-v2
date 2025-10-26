@@ -234,12 +234,115 @@ export interface SeedData {
   maintenanceTasks: MaintenanceTask[]
   alerts: Alert[]
   userUtilizations: UserUtilization[]
-  locationLists: LocationList[] // Add location lists
-  locationActivities: LocationActivity[] // Add location activities
+  locationLists: LocationList[]
+  locationActivities: LocationActivity[]
   dashboardData?: any
   assetLocatorData?: any
+  predictiveMaintenanceData?: PredictiveMaintenanceData // Add predictive maintenance data
 }
 
+// Add new interfaces for utilization analytics
+export interface DepartmentUtilization {
+  departmentId: string
+  departmentName: string
+  avgUtilization: number
+  totalAssets: number
+  underutilized: number
+  active: number
+  idle: number
+  inMaintenance: number
+  utilizationTrend: { date: string; utilization: number }[]
+}
+
+export interface AssetTypeUtilization {
+  type: string
+  avgUtilization: number
+  totalAssets: number
+  underutilized: number
+  utilizationRate: number
+}
+
+export interface RedistributionSuggestion {
+  id: string
+  assetId: string
+  assetName: string
+  assetType: string
+  currentUtilization: number
+  fromDepartment: string
+  fromDepartmentId: string
+  toDepartment: string
+  toDepartmentId: string
+  potentialImpact: string
+  priority: "high" | "medium" | "low"
+  estimatedSavings: number
+  reason: string
+}
+
+export interface IdleAsset {
+  id: string
+  name: string
+  type: string
+  utilization: number
+  location: string
+  departmentId: string
+  lastActive: string
+  idleDays: number
+}
+
+export interface Top10IdleAsset {
+  id: string
+  name: string
+  type: string
+  department: string
+  departmentId: string
+  utilization: number
+  location: string
+  lastUsed: string
+  idleDuration: number
+  recommendedAction: string
+  value: number
+  status: string
+}
+
+export interface UtilizationTrendPoint {
+  date: string
+  displayDate: string
+  utilization: number
+  maintenanceEvents: number
+  tooltip: string | null
+}
+
+export interface MaintenanceImpactData {
+  name: string
+  value: number
+  count: number
+  color: string
+}
+
+export interface MovementAlert {
+  id: string
+  assetId: string
+  assetName: string
+  assetType: string
+  fromLocation: string
+  toLocation: string
+  timestamp: string
+  alertType: string
+  severity: "low" | "medium" | "high"
+  status: "pending" | "resolved"
+  movedBy: string
+}
+
+export interface UtilizationAnalytics {
+  departmentUtilization: DepartmentUtilization[]
+  assetTypeUtilization: AssetTypeUtilization[]
+  redistributionSuggestions: RedistributionSuggestion[]
+  idleAssets: IdleAsset[]
+  top10IdleAssets: Top10IdleAsset[]
+  utilizationTrend: UtilizationTrendPoint[]
+  maintenanceImpact: MaintenanceImpactData[]
+  movementAlerts: MovementAlert[]
+}
 export interface GeneratorConfig {
   facilityCount: number
   buildingsPerFacility: number
@@ -251,5 +354,56 @@ export interface GeneratorConfig {
   usersPerDepartment: number
   maintenanceTaskPerAssetRatio: number
   movementLogsPerAsset: number
+}
+// Add new interfaces for predictive maintenance analytics
+export interface PredictiveInsight {
+  id: string
+  assetId: string
+  assetName: string
+  assetType: string
+  location: string
+  departmentId: string
+  predictedFailureWindow: number // days remaining
+  confidenceScore: number // percentage
+  riskLevel: "low" | "medium" | "high"
+  predictedIssue: string
+  keyIndicators: {
+    usageHours: number
+    temperatureVariance: number
+    vibrationLevels: number
+    performanceDegradation: number
+  }
+  maintenanceHistory: {
+    lastServiceDate: string
+    nextScheduledService: string
+    serviceCount: number
+    avgServiceInterval: number
+  }
+  degradationScore: number
+  recommendedAction: string
+  createdAt: string
+}
+
+export interface DegradationTrend {
+  date: string
+  degradationScore: number
+  usageHours: number
+  performanceIndex: number
+}
+
+export interface PredictiveMaintenanceData {
+  summary: {
+    totalAssetsMonitored: number
+    highRiskAssets: number
+    mediumRiskAssets: number
+    lowRiskAssets: number
+    avgConfidenceScore: number
+    potentialCostSavings: number
+  }
+  insights: PredictiveInsight[]
+  top5AtRisk: PredictiveInsight[]
+  riskDistribution: { name: string; value: number; count: number; color: string }[]
+  degradationTrends: { assetId: string; assetName: string; trend: DegradationTrend[] }[]
+  predictionAccuracy: { month: string; accuracy: number; predictionsCount: number }[]
 }
 

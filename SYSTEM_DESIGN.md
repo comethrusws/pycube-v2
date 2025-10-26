@@ -76,10 +76,17 @@ In production, this would be replaced by a real database (e.g., PostgreSQL or Mo
 
 ### 4.4 Asset Locator Module
 
-**Purpose:** Enables instant asset search and retrieval.
+**Purpose:** Enables instant asset search and retrieval with advanced utilization analytics.
 
-* Live locator for real-time asset positions
-* Dashboard with search analytics
+* **Live locator** for real-time asset positions
+* **Dynamic utilization dashboard** with interactive monitoring capabilities
+* **Asset detail modals** with comprehensive information and action buttons
+* **Bulk asset management** with selection and batch operations
+* **Interactive monitoring setup** with configurable alerts and tracking
+* **Search and filtering** capabilities across all asset data
+* **Click-through navigation** from dashboard charts to detailed asset views
+* **Maintenance integration** showing impact on asset availability
+* **Movement alert system** with real-time notifications from Asset Protection module
 
 ### 4.5 Preventive Maintenance Module
 
@@ -292,3 +299,4 @@ This flow pattern is consistent across modules.
 | Basic logs          | Audit logs with Kafka/EventStream  |
 
 ---
+
