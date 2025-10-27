@@ -440,7 +440,7 @@ export default function AiAssistantPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 max-w-6xl mx-auto w-full p-6 flex gap-6">
+      <div className="flex-1 max-w-full mx-auto w-full p-6 flex gap-6">
         {/* Suggested Prompts Sidebar */}
         <div className="w-80 space-y-4">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50">
