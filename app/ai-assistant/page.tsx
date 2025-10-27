@@ -440,9 +440,9 @@ export default function AiAssistantPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-4 lg:gap-6 p-4 sm:p-6 min-h-0">
-          {/* Chat Interface - First on mobile, second on desktop */}
-          <div className="flex-1 flex flex-col bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-lg min-h-0 order-1 lg:order-2">
+        <div className="flex-1 flex gap-4 lg:gap-6 p-4 sm:p-6 min-h-0">
+          {/* Chat Interface - Full width on mobile, shared on desktop */}
+          <div className="flex-1 flex flex-col bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-lg min-h-0">
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
               {messages.map((msg, index) => (
@@ -529,18 +529,18 @@ export default function AiAssistantPage() {
             </div>
           </div>
 
-          {/* Suggested Prompts Sidebar - Second on mobile, first on desktop */}
-          <div className="w-full lg:w-80 flex-shrink-0 order-2 lg:order-1">
-            <div className="h-full lg:max-h-full lg:overflow-y-auto space-y-4">
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-gray-200/50 shadow-sm">
-                <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4">Quick Insights</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+          {/* Suggested Prompts Sidebar - Hidden on mobile, visible on desktop */}
+          <div className="hidden lg:flex lg:w-80 flex-shrink-0">
+            <div className="w-full max-h-full overflow-y-auto space-y-4">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 shadow-sm">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4">Quick Insights</h3>
+                <div className="space-y-3">
                   {suggestedPrompts.slice(0, 6).map((prompt, index) => (
                     <button
                       key={index}
                       onClick={() => handleSendMessage(prompt)}
                       disabled={isLoading}
-                      className="w-full text-left p-3 rounded-xl border border-gray-200 hover:border-teal-300 hover:bg-teal-50/50 transition-all duration-200 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
+                      className="w-full text-left p-3 rounded-xl border border-gray-200 hover:border-teal-300 hover:bg-teal-50/50 transition-all duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
                     >
                       <div className="flex items-start gap-3">
                         <Zap className="w-4 h-4 text-teal-600 opacity-75 group-hover:opacity-100 mt-0.5 flex-shrink-0" />
@@ -551,15 +551,15 @@ export default function AiAssistantPage() {
                 </div>
               </div>
 
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-gray-200/50 shadow-sm">
-                <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4">More Prompts</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 shadow-sm">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4">More Prompts</h3>
+                <div className="space-y-3">
                   {suggestedPrompts.slice(6).map((prompt, index) => (
                     <button
                       key={index + 6}
                       onClick={() => handleSendMessage(prompt)}
                       disabled={isLoading}
-                      className="w-full text-left p-3 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 transition-all duration-200 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
+                      className="w-full text-left p-3 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 transition-all duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
                     >
                       <div className="flex items-start gap-3">
                         <Bot className="w-4 h-4 text-purple-600 opacity-75 group-hover:opacity-100 mt-0.5 flex-shrink-0" />
