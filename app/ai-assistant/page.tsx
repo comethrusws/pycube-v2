@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Bot, Send, MessageCircle, Zap, BrainCog, RefreshCw, Trash2 } from "lucide-react"
 import { apiGet } from "@/lib/fetcher"
+import AILayout from "@/components/dashboard/ai-layout"
 
 const suggestedPrompts = [
   "Which assets are underutilized today?",
@@ -393,12 +394,13 @@ export default function AiAssistantPage() {
   }
 
   return (
+    <AILayout>
     <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-gray-100">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 p-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-[#0d7a8c] flex items-center justify-center">
               <BrainCog className="w-7 h-7 text-white" />
             </div>
             <div>
@@ -468,11 +470,11 @@ export default function AiAssistantPage() {
                   key={index + 6}
                   onClick={() => handleSendMessage(prompt)}
                   disabled={isLoading}
-                  className="w-full text-left p-3 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 transition-all duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
+                  className="w-full text-left p-3 rounded-xl border border-gray-200 hover:border-[#12a3bd] hover:bg-teal-50/50 transition-all duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
                 >
                   <div className="flex items-start gap-3">
-                    <Bot className="w-4 h-4 text-purple-600 opacity-75 group-hover:opacity-100 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-700 group-hover:text-purple-700 leading-relaxed">{prompt}</span>
+                    <Bot className="w-4 h-4 text-[#0d7a8c] opacity-75 group-hover:opacity-100 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700 group-hover:text-[#0d7a8c] leading-relaxed">{prompt}</span>
                   </div>
                 </button>
               ))}
@@ -488,7 +490,7 @@ export default function AiAssistantPage() {
               <div key={index} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[80%] flex items-start gap-4 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
                   {msg.role === "assistant" && (
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-1">
+                    <div className="w-10 h-10 rounded-2xl bg-[#0d7a8c] flex items-center justify-center flex-shrink-0 mt-1">
                       <Bot className="w-5 h-5 text-white" />
                     </div>
                   )}
@@ -520,7 +522,7 @@ export default function AiAssistantPage() {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-1">
+                  <div className="w-10 h-10 rounded-2xl bg-[#0d7a8c] flex items-center justify-center flex-shrink-0 mt-1">
                     <Bot className="w-5 h-5 text-white" />
                   </div>
                   <div className="bg-gray-50 border border-gray-100 p-4 rounded-2xl rounded-bl-md shadow-sm">
@@ -569,5 +571,6 @@ export default function AiAssistantPage() {
         </div>
       </div>
     </div>
+    </AILayout>
   )
 }
