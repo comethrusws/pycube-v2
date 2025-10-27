@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { X, Bot, Send, Sparkles, MessageCircle, Zap } from "lucide-react"
+import { X, Bot, Send, Sparkles, MessageCircle, Zap, BrainCog } from "lucide-react"
 import { apiGet } from "@/lib/fetcher"
 
 const suggestedPrompts = [
@@ -20,6 +20,14 @@ interface AssetData {
   zones: any[]
   assetLocatorData: any
   predictiveMaintenanceData: any
+}
+
+interface ApiResponse {
+  assets?: any[]
+  tasks?: any[]
+  departments?: any[]
+  zones?: any[]
+  [key: string]: any
 }
 
 export default function AiAssistant() {
@@ -50,8 +58,8 @@ export default function AiAssistant() {
     const loadAssetData = async () => {
       try {
         const [assetsResponse, maintenanceResponse, assetLocatorResponse, predictiveResponse] = await Promise.all([
-          apiGet("/api/assets"),
-          apiGet("/api/preventative-maintenance/tasks"),
+          apiGet("/api/assets") as Promise<ApiResponse>,
+          apiGet("/api/preventative-maintenance/tasks") as Promise<ApiResponse>,
           apiGet("/api/asset-locator/dashboard"),
           apiGet("/api/preventative-maintenance/predictive")
         ])
@@ -299,9 +307,7 @@ export default function AiAssistant() {
         style={{ backgroundColor: "#0d7a8c" }}
       >
         <div className="relative flex items-center justify-center w-full h-full">
-          <Bot className="w-8 h-8 text-white transition-transform group-hover:scale-110" />
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
-          <Sparkles className="absolute -top-2 -left-2 w-4 h-4 text-yellow-400 animate-pulse opacity-75" />
+          <BrainCog className="w-8 h-8 text-white transition-transform group-hover:scale-110" />
         </div>
       </button>
     )
