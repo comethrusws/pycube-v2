@@ -395,182 +395,184 @@ export default function AiAssistantPage() {
 
   return (
     <AILayout>
-    <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-gray-100">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 p-6">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#0d7a8c] flex items-center justify-center">
-              <BrainCog className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: "#001f3f" }}>AI Assistant</h1>
-              <p className="text-gray-600">Intelligent Asset Management Insights</p>
-              {assetData && (
-                <p className="text-sm text-green-600">
-                  ✓ Connected to {assetData.assets.length} assets across {assetData.departments.length} departments
-                </p>
-              )}
-              {isDataLoading && (
-                <p className="text-sm text-amber-600">
-                  ⏳ Loading asset data...
-                </p>
-              )}
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <button
-              onClick={refreshData}
-              disabled={isDataLoading}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors duration-200 flex items-center gap-2 disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 ${isDataLoading ? 'animate-spin' : ''}`} />
-              Refresh Data
-            </button>
-            <button
-              onClick={clearConversation}
-              className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl transition-colors duration-200 flex items-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Clear Chat
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 max-w-full mx-auto w-full p-6 flex gap-6">
-        {/* Suggested Prompts Sidebar */}
-        <div className="w-80 space-y-4">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4">Quick Insights</h3>
-            <div className="space-y-3">
-              {suggestedPrompts.slice(0, 6).map((prompt, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSendMessage(prompt)}
-                  disabled={isLoading}
-                  className="w-full text-left p-3 rounded-xl border border-gray-200 hover:border-teal-300 hover:bg-teal-50/50 transition-all duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
-                >
-                  <div className="flex items-start gap-3">
-                    <Zap className="w-4 h-4 text-teal-600 opacity-75 group-hover:opacity-100 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-700 group-hover:text-teal-700 leading-relaxed">{prompt}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4">More Prompts</h3>
-            <div className="space-y-3">
-              {suggestedPrompts.slice(6).map((prompt, index) => (
-                <button
-                  key={index + 6}
-                  onClick={() => handleSendMessage(prompt)}
-                  disabled={isLoading}
-                  className="w-full text-left p-3 rounded-xl border border-gray-200 hover:border-[#12a3bd] hover:bg-teal-50/50 transition-all duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
-                >
-                  <div className="flex items-start gap-3">
-                    <Bot className="w-4 h-4 text-[#0d7a8c] opacity-75 group-hover:opacity-100 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-700 group-hover:text-[#0d7a8c] leading-relaxed">{prompt}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Chat Interface */}
-        <div className="flex-1 flex flex-col bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 overflow-hidden">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {messages.map((msg, index) => (
-              <div key={index} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] flex items-start gap-4 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-                  {msg.role === "assistant" && (
-                    <div className="w-10 h-10 rounded-2xl bg-[#0d7a8c] flex items-center justify-center flex-shrink-0 mt-1">
-                      <Bot className="w-5 h-5 text-white" />
-                    </div>
-                  )}
-                  {msg.role === "user" && (
-                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1" style={{ backgroundColor: "#0d7a8c" }}>
-                      <span className="text-sm font-semibold text-white">You</span>
-                    </div>
-                  )}
-                  
-                  <div className="space-y-2">
-                    <div
-                      className={`p-4 rounded-2xl shadow-sm ${
-                        msg.role === "user"
-                          ? "text-white rounded-br-md"
-                          : "bg-gray-50 border border-gray-100 text-gray-800 rounded-bl-md"
-                      }`}
-                      style={msg.role === "user" ? { backgroundColor: "#0d7a8c" } : {}}
-                    >
-                      <p className="text-sm leading-relaxed whitespace-pre-line">{msg.content}</p>
-                    </div>
-                    <p className="text-xs text-gray-400 px-1">
-                      {msg.timestamp.toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-            
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-2xl bg-[#0d7a8c] flex items-center justify-center flex-shrink-0 mt-1">
-                    <Bot className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="bg-gray-50 border border-gray-100 p-4 rounded-2xl rounded-bl-md shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-                      </div>
-                      <span className="text-sm text-gray-500">Analyzing your request...</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input */}
-          <div className="p-6 border-t border-gray-200/50 bg-gray-50/50">
+      <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-gray-100">
+        {/* Header */}
+        <div className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 p-4 sm:p-6 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="flex-1 relative">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Ask me anything about your assets, utilization, maintenance, or optimization opportunities..."
-                  disabled={isLoading}
-                  className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:border-transparent text-sm disabled:opacity-50 transition-all duration-200 bg-white"
-                  style={{ "--tw-ring-color": "#0d7a8c" } as React.CSSProperties}
-                />
-                <MessageCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 flex items-center justify-center shadow-lg" style={{ backgroundColor: "#0d7a8c" }}>
+                <BrainCog className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
               </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold" style={{ color: "#001f3f" }}>AI Assistant</h1>
+                <p className="text-sm sm:text-base text-gray-600">Intelligent Asset Management Insights</p>
+                {assetData && (
+                  <p className="text-xs sm:text-sm text-green-600 mt-1">
+                    ✓ Connected to {assetData.assets.length} assets across {assetData.departments.length} departments
+                  </p>
+                )}
+                {isDataLoading && (
+                  <p className="text-xs sm:text-sm text-amber-600 mt-1">
+                    ⏳ Loading asset data...
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
-                onClick={() => handleSendMessage(inputValue)}
-                disabled={!inputValue.trim() || isLoading}
-                className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 shadow-lg"
-                style={{ backgroundColor: "#0d7a8c" }}
+                onClick={refreshData}
+                disabled={isDataLoading}
+                className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors duration-200 flex items-center gap-2 disabled:opacity-50 text-sm"
               >
-                <Send className="w-6 h-6 text-white" />
+                <RefreshCw className={`w-4 h-4 ${isDataLoading ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh Data</span>
+              </button>
+              <button
+                onClick={clearConversation}
+                className="px-3 py-2 sm:px-4 sm:py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl transition-colors duration-200 flex items-center gap-2 text-sm"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Clear Chat</span>
               </button>
             </div>
           </div>
         </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col lg:flex-row gap-4 lg:gap-6 p-4 sm:p-6 min-h-0">
+          {/* Chat Interface - First on mobile, second on desktop */}
+          <div className="flex-1 flex flex-col bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-lg min-h-0 order-1 lg:order-2">
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+              {messages.map((msg, index) => (
+                <div key={index} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[85%] sm:max-w-[80%] flex items-start gap-3 sm:gap-4 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+                    {msg.role === "assistant" && (
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg" style={{ backgroundColor: "#0d7a8c" }}>
+                        <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                      </div>
+                    )}
+                    {msg.role === "user" && (
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg" style={{ backgroundColor: "#0d7a8c" }}>
+                        <span className="text-xs sm:text-sm font-semibold text-white">You</span>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <div
+                        className={`p-3 sm:p-4 rounded-2xl shadow-sm ${
+                          msg.role === "user"
+                            ? "text-white rounded-br-md"
+                            : "bg-gray-50 border border-gray-100 text-gray-800 rounded-bl-md"
+                        }`}
+                        style={msg.role === "user" ? { backgroundColor: "#0d7a8c" } : {}}
+                      >
+                        <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-line">{msg.content}</p>
+                      </div>
+                      <p className="text-xs text-gray-400 px-1">
+                        {msg.timestamp.toLocaleTimeString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg" style={{ backgroundColor: "#0d7a8c" }}>
+                      <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                    <div className="bg-gray-50 border border-gray-100 p-3 sm:p-4 rounded-2xl rounded-bl-md shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: "#0d7a8c" }}></div>
+                          <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: "#0d7a8c", animationDelay: "0.1s" }}></div>
+                          <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: "#0d7a8c", animationDelay: "0.2s" }}></div>
+                        </div>
+                        <span className="text-xs sm:text-sm text-gray-500">Analyzing your request...</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input - Sticky at bottom */}
+            <div className="flex-shrink-0 p-4 sm:p-6 border-t border-gray-200/50 bg-gray-50/50">
+              <div className="flex items-end gap-3 sm:gap-4">
+                <div className="flex-1 relative">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask me anything about your assets, utilization, maintenance, or optimization opportunities..."
+                    disabled={isLoading}
+                    className="w-full px-4 sm:px-5 py-3 sm:py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:border-transparent text-xs sm:text-sm disabled:opacity-50 transition-all duration-200 bg-white shadow-sm"
+                    style={{ "--tw-ring-color": "#0d7a8c" } as React.CSSProperties}
+                  />
+                  <MessageCircle className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                </div>
+                <button
+                  onClick={() => handleSendMessage(inputValue)}
+                  disabled={!inputValue.trim() || isLoading}
+                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 shadow-lg disabled:hover:scale-100"
+                  style={{ backgroundColor: "#0d7a8c" }}
+                >
+                  <Send className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Suggested Prompts Sidebar - Second on mobile, first on desktop */}
+          <div className="w-full lg:w-80 flex-shrink-0 order-2 lg:order-1">
+            <div className="h-full lg:max-h-full lg:overflow-y-auto space-y-4">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-gray-200/50 shadow-sm">
+                <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4">Quick Insights</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+                  {suggestedPrompts.slice(0, 6).map((prompt, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSendMessage(prompt)}
+                      disabled={isLoading}
+                      className="w-full text-left p-3 rounded-xl border border-gray-200 hover:border-teal-300 hover:bg-teal-50/50 transition-all duration-200 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
+                    >
+                      <div className="flex items-start gap-3">
+                        <Zap className="w-4 h-4 text-teal-600 opacity-75 group-hover:opacity-100 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700 group-hover:text-teal-700 leading-relaxed">{prompt}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-gray-200/50 shadow-sm">
+                <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4">More Prompts</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+                  {suggestedPrompts.slice(6).map((prompt, index) => (
+                    <button
+                      key={index + 6}
+                      onClick={() => handleSendMessage(prompt)}
+                      disabled={isLoading}
+                      className="w-full text-left p-3 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 transition-all duration-200 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
+                    >
+                      <div className="flex items-start gap-3">
+                        <Bot className="w-4 h-4 text-purple-600 opacity-75 group-hover:opacity-100 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700 group-hover:text-purple-700 leading-relaxed">{prompt}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
     </AILayout>
   )
 }
