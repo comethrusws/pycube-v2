@@ -404,8 +404,7 @@ export default function AiAssistantPage() {
                 <BrainCog className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold" style={{ color: "#001f3f" }}>AI Assistant</h1>
-                <p className="text-sm sm:text-base text-gray-600">Intelligent Asset Management Insights</p>
+                <h1 className="text-3xl sm:text-2xl font-light" style={{ color: "#001f3f" }}>AI Assistant</h1>
                 {assetData && (
                   <p className="text-xs sm:text-sm text-green-600 mt-1">
                     ✓ Connected to {assetData.assets.length} assets across {assetData.departments.length} departments
