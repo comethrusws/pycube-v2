@@ -41,7 +41,7 @@ const menuSections = [
       { icon: Home, label: "Homepage", href: "/dashboard" },
       { icon: Settings, label: "Implementation", href: "" },
       { icon: Zap, label: "App Settings", href: "" },
-      { icon: Bot, label: "AI Assistant", href: "" },
+      { icon: Bot, label: "AI Assistant", href: "/ai-assistant" },
     ] as MenuItem[],
   },
   {
