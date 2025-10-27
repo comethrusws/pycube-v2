@@ -6,6 +6,7 @@ import { useState } from "react"
 import Sidebar from "./sidebar"
 import Header from "./header"
 import DashboardContent from "./dashboard-content"
+import AiAssistant from "./ai-assistant"
 
 export default function DashboardLayout({ children }: { children?: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -17,6 +18,7 @@ export default function DashboardLayout({ children }: { children?: React.ReactNo
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <main className="flex-1 overflow-auto">{children || <DashboardContent />}</main>
       </div>
+      <AiAssistant />
     </div>
   )
 }
