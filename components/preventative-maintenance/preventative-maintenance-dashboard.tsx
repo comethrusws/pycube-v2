@@ -35,282 +35,276 @@ const StatCard = ({ title, value, color, textColor }: {
   </div>
 )
 
-const ChartCard = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm hover:shadow-md transition-all duration-300">
-    <h3 className="text-sm font-semibold uppercase tracking-wider mb-6" style={{ color: "#001f3f" }}>
-      {title}
-    </h3>
-    {children}
-  </div>
-)
-
-// Static data for now - can be replaced with API calls later
-const collectionStatusData = [
-  { name: "Collected", value: 45, fill: "#0d7a8c" },
-  { name: "Pending", value: 55, fill: "#c41e3a" },
-]
-
-const assetCategoryData = [
-  { category: "Infusion Pumps", collected: 12, pending: 8 },
-  { category: "Centrifuges", collected: 15, pending: 10 },
-  { category: "ECG Monitors", collected: 18, pending: 12 },
-  { category: "Ventilators", collected: 10, pending: 5 },
-  { category: "Ultrasound", collected: 8, pending: 3 },
-]
-
-const trendData = [
-  { date: "01/01", collected: 20, pending: 30 },
-  { date: "01/08", collected: 25, pending: 28 },
-  { date: "01/15", collected: 30, pending: 25 },
-  { date: "01/22", collected: 35, pending: 22 },
-  { date: "01/29", collected: 40, pending: 18 },
-  { date: "02/05", collected: 45, pending: 15 },
-]
-
 export default function PreventativeMaintenanceDashboard() {
-  const [data, setData] = useState<{
-    stats: { totalAssets: number; pending: number; collected: number; pendingCollection: number }
-    isLoading: boolean
-  }>({
-    stats: { totalAssets: 2012, pending: 340, collected: 1672, pendingCollection: 28 },
-    isLoading: false
-  })
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"overview" | "insights">("overview")
 
-  const [activeTab, setActiveTab] = useState<"overview" | "predictive">("overview")
-
-  // Simulate API call
   useEffect(() => {
-    // In a real implementation, this would be an API call
-    // apiGet("/api/preventative-maintenance/dashboard").then(setData)
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        const response = await apiGet("/api/pm/dashboard")
+        console.log("PM Dashboard Response:", response) // Debug log
+        
+        if (!response) {
+          throw new Error("No data received from API")
+        }
+        
+        setData(response)
+      } catch (err) {
+        console.error("Failed to fetch PM dashboard data:", err)
+        setError(err instanceof Error ? err.message : "Failed to load dashboard data")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
   }, [])
 
-  if (activeTab === "predictive") {
-    return <PredictiveInsightsTab />
+  if (loading) {
+    return (
+      <div className="p-6 lg:p-8 space-y-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-gray-600">Loading dashboard data...</div>
+        </div>
+      </div>
+    )
   }
 
+  if (error) {
+    return (
+      <div className="p-6 lg:p-8 space-y-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-red-600">Error: {error}</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="p-6 lg:p-8 space-y-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-gray-600">No data available</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Enhanced collection status data processing
+  const collectionStatusData = data.collectionStatus?.length > 0 ? 
+    data.collectionStatus.map((item: any) => ({
+      name: item.status,
+      value: item.percentage || Math.round((item.count / (data.stats?.totalMonitoredAssets || 1)) * 100),
+      count: item.count,
+      fill: item.color || (
+        item.status.toLowerCase().includes("completed") ? "#059669" : 
+        item.status.toLowerCase().includes("overdue") ? "#dc2626" : 
+        "#0d7a8c"
+      )
+    })) : [
+      { name: "No Data", value: 100, count: 0, fill: "#e5e7eb" }
+    ]
+
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-light mb-2" style={{ color: "#001f3f" }}>
-            Preventative Maintenance Dashboard
-          </h1>
-          <p className="text-gray-600">Comprehensive maintenance tracking and scheduling</p>
-        </div>
+    <div className="p-6 lg:p-8 space-y-8">
+      <div>
+        <h1 className="text-3xl font-light" style={{ color: "#001f3f" }}>
+          Preventative Maintenance Dashboard
+        </h1>
+      </div>
 
-        {/* Tab Navigation */}
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8 justify-center">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "overview"
-                  ? "border-teal-500 text-teal-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Maintenance Overview
-            </button>
-            <button
-              onClick={() => setActiveTab("predictive")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "predictive"
-                  ? "border-teal-500 text-teal-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Predictive Insights
-            </button>
-          </nav>
-        </div>
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab("overview")}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "overview"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab("insights")}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "insights"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            Predictive Insights
+          </button>
+        </nav>
+      </div>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard 
-            title="Total Monitored Assets" 
-            value={data.stats.totalAssets} 
-            color="#0d7a8c" 
-          />
-          <StatCard 
-            title="Preventative Maintenance Pending" 
-            value={data.stats.pending} 
-            color="#ffffff" 
-            textColor="#c41e3a"
-          />
-          <StatCard 
-            title="Preventative Maintenance Collected" 
-            value={data.stats.collected} 
-            color="#0d7a8c" 
-          />
-          <StatCard 
-            title="Assets Pending Collection for PM List" 
-            value={data.stats.pendingCollection} 
-            color="#059669" 
-          />
-        </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Collection Status */}
-          <ChartCard title="Collection Status Overview">
-            <div className="flex flex-col lg:flex-row items-center">
-              <div className="flex-1 min-h-[280px]">
-                <ResponsiveContainer width="100%" height={280}>
-                  <PieChart>
-                    <Pie 
-                      data={collectionStatusData} 
-                      cx="50%" 
-                      cy="50%" 
-                      innerRadius={60} 
-                      outerRadius={100} 
-                      dataKey="value"
-                    >
-                      {collectionStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value) => [`${value}%`, 'Percentage']}
-                      contentStyle={{
-                        backgroundColor: '#fff',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        fontSize: '12px'
-                      }}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="lg:ml-6 mt-4 lg:mt-0 space-y-3">
-                {collectionStatusData.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3 text-sm">
-                    <div 
-                      className="w-4 h-4 rounded-full flex-shrink-0" 
-                      style={{ backgroundColor: item.fill }}
-                    ></div>
-                    <span className="text-gray-700 flex-1">{item.name}</span>
-                    <span className="font-medium text-gray-900">{item.value}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </ChartCard>
-
-          {/* Asset Collected vs Pending */}
-          <ChartCard title="Asset Categories - Collected vs Pending">
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={assetCategoryData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="category" 
-                    tick={{ fontSize: 10 }} 
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                  />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      fontSize: '12px'
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="collected" fill="#0d7a8c" name="Collected" />
-                  <Bar dataKey="pending" fill="#c41e3a" name="Pending" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </ChartCard>
-        </div>
-
-        {/* Trend Chart */}
-        <ChartCard title="Asset Collected vs Pending Trend">
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 12 }} 
-                  stroke="#9ca3af"
-                />
-                <YAxis 
-                  tick={{ fontSize: 12 }} 
-                  stroke="#9ca3af"
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    fontSize: '12px'
-                  }}
-                />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="collected" 
-                  stroke="#0d7a8c" 
-                  strokeWidth={3} 
-                  dot={{ fill: "#0d7a8c", r: 4 }} 
-                  activeDot={{ r: 6, fill: "#0d7a8c" }}
-                  name="Collected"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="pending" 
-                  stroke="#c41e3a" 
-                  strokeWidth={3} 
-                  dot={{ fill: "#c41e3a", r: 4 }} 
-                  activeDot={{ r: 6, fill: "#c41e3a" }}
-                  name="Pending"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+      {activeTab === "overview" && (
+        <>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              title="Total Monitored Assets"
+              value={data.summary?.totalAssetsMonitored?.toLocaleString() || data.stats?.totalMonitoredAssets?.toLocaleString() || "0"}
+              color="#0d7a8c"
+            />
+            <StatCard
+              title="High Risk Assets"
+              value={data.summary?.highRiskAssets?.toLocaleString() || "0"}
+              color="#dc2626"
+            />
+            <StatCard
+              title="PM Tasks Completed"
+              value={data.stats?.pmCollected?.toLocaleString() || "0"}
+              color="#059669"
+            />
+            <StatCard
+              title="Potential Savings"
+              value={`$${(data.summary?.potentialCostSavings || 0).toLocaleString()}`}
+              color="#ffffff"
+              textColor="#001f3f"
+            />
           </div>
-        </ChartCard>
 
-        {/* Additional Information Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartCard title="Asset with Pending Collection by Location">
-            <div className="space-y-4">
-              <div className="text-center py-8 text-gray-500">
-                <p className="text-lg mb-2">No pending collections</p>
-                <p className="text-sm">All scheduled maintenance tasks are up to date</p>
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Enhanced Collection Status Chart */}
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold" style={{ color: "#001f3f" }}>
+                  Collection Status
+                </h3>
+                {data.collectionStatus?.length > 0 && (
+                  <div className="text-sm text-gray-500">
+                    Total: {data.collectionStatus.reduce((sum: number, item: any) => sum + item.count, 0)} tasks
+                  </div>
+                )}
               </div>
-            </div>
-          </ChartCard>
-
-          <ChartCard title="Maintenance Coming up Next Quarter">
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Upcoming Maintenance</h4>
-                <div className="space-y-3">
-                  {[
-                    { asset: "MRI Scanner #001", date: "Mar 15, 2025", type: "Preventive" },
-                    { asset: "CT Scanner #003", date: "Mar 22, 2025", type: "Calibration" },
-                    { asset: "Ventilator #045", date: "Apr 5, 2025", type: "Inspection" },
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-sm">
+              
+              <div className="flex items-center">
+                <div className="flex-1">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={collectionStatusData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {collectionStatusData.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: any, name: any, props: any) => [
+                          `${value}% (${props.payload.count} tasks)`,
+                          name
+                        ]}
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          fontSize: '12px'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                {/* Legend */}
+                <div className="ml-6 space-y-3">
+                  {collectionStatusData.map((entry: any, index: number) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div 
+                        className="w-4 h-4 rounded-full" 
+                        style={{ backgroundColor: entry.fill }}
+                      />
                       <div>
-                        <p className="font-medium text-gray-900">{item.asset}</p>
-                        <p className="text-gray-500">{item.type}</p>
+                        <p className="text-sm font-medium text-gray-900">{entry.name}</p>
+                        <p className="text-xs text-gray-500">{entry.count} tasks ({entry.value}%)</p>
                       </div>
-                      <span className="text-gray-700">{item.date}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-          </ChartCard>
-        </div>
-      </div>
+
+            {/* Enhanced Risk Distribution */}
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
+              <h3 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>
+                Risk Distribution
+              </h3>
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-red-900">High Risk</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-lg font-bold text-red-900">{data.summary?.highRiskAssets || 0}</span>
+                      <p className="text-xs text-red-600">Immediate attention required</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-orange-900">Medium Risk</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-lg font-bold text-orange-900">{data.summary?.mediumRiskAssets || 0}</span>
+                      <p className="text-xs text-orange-600">Monitor closely</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-green-900">Low Risk</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-lg font-bold text-green-900">{data.summary?.lowRiskAssets || 0}</span>
+                      <p className="text-xs text-green-600">Normal operation</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Risk Summary Stats */}
+                <div className="border-t pt-4">
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Avg Confidence</p>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {data.summary?.avgConfidenceScore || 0}%
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Total Assets</p>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {data.summary?.totalAssetsMonitored?.toLocaleString() || 0}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {activeTab === "insights" && (
+        <PredictiveInsightsTab />
+      )}
     </div>
   )
 }

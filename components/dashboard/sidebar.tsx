@@ -71,8 +71,8 @@ const menuSections = [
         label: "Preventative Maintenance",
         href: "/preventative-maintenance",
         submenu: [
-          { label: "Dashboard", href: "" },
-          { label: "Maintenance Requests", href: "" },
+          { label: "Dashboard", href: "/preventative-maintenance/dashboard" },
+          { label: "Maintenance Requests", href: "/preventative-maintenance/requests" },
         ],
       },
     ] as MenuItem[],

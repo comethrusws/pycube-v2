@@ -279,7 +279,7 @@ export default function AssetLocatorDashboard() {
   const [filters, setFilters] = useState({
     department: "all",
     assetType: "all",
-    utilizationThreshold: 40,
+    utilizationThreshold: 80,
     dateRange: "30days"
   })
 
@@ -684,45 +684,60 @@ export default function AssetLocatorDashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart 
                       data={utilization?.utilizationTrend} 
-                      margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                      margin={{ top: 20, right: 30, left: 40, bottom: 60 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis 
                         dataKey="displayDate" 
                         stroke="#9ca3af" 
-                        style={{ fontSize: "10px" }}
+                        style={{ fontSize: "11px" }}
                         tick={{ fill: '#6b7280' }}
                         axisLine={false}
                         tickLine={false}
-                        interval={Math.ceil((utilization?.utilizationTrend?.length || 30) / 6)} // Show ~6 labels
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        interval={Math.max(0, Math.ceil((utilization?.utilizationTrend?.length || 30) / 8))}
                       />
                       <YAxis 
                         stroke="#9ca3af" 
-                        style={{ fontSize: "10px" }}
+                        style={{ fontSize: "11px" }}
                         tick={{ fill: '#6b7280' }}
                         axisLine={false}
                         tickLine={false}
-                        domain={['dataMin - 5', 'dataMax + 5']} // Tighter Y-axis bounds
-                        width={35} // Smaller Y-axis width
+                        domain={[
+                          (dataMin: number) => Math.max(0, Math.floor(dataMin / 10) * 10 - 10),
+                          (dataMax: number) => Math.min(100, Math.ceil(dataMax / 10) * 10 + 10)
+                        ]}
+                        width={50}
+                        tickFormatter={(value) => `${value}%`}
                       />
                       <Tooltip 
                         contentStyle={{ 
                           backgroundColor: '#fff', 
                           border: '1px solid #e5e7eb', 
-                          borderRadius: '8px',
-                          fontSize: '11px',
-                          padding: '8px'
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          padding: '12px',
+                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
                         }}
-                        formatter={(value, name) => [`${value}%`, 'Utilization Rate']}
+                        formatter={(value: any, name) => [`${Math.round(value)}%`, 'Utilization Rate']}
                         labelFormatter={(label) => `Date: ${label}`}
+                        labelStyle={{ color: '#374151', fontWeight: 'medium' }}
                       />
                       <Line 
                         type="monotone" 
                         dataKey="utilization" 
                         stroke="#0d7a8c" 
-                        strokeWidth={2.5} 
-                        dot={false} // Remove dots for cleaner look
-                        activeDot={{ r: 4, fill: "#0d7a8c", strokeWidth: 2, stroke: "#fff" }}
+                        strokeWidth={3} 
+                        dot={{ fill: "#0d7a8c", strokeWidth: 2, r: 3 }}
+                        activeDot={{ 
+                          r: 5, 
+                          fill: "#0d7a8c", 
+                          strokeWidth: 2, 
+                          stroke: "#fff",
+                          filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
+                        }}
                       />
                     </LineChart>
                   </ResponsiveContainer>

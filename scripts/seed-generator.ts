@@ -18,6 +18,7 @@ import type {
   UserLog,
   MovementLog,
   MaintenanceTask,
+  MaintenanceRequest,
   Alert,
   UserUtilization,
   Status,
@@ -287,6 +288,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   const userLogs: UserLog[] = []
   const movementLogs: MovementLog[] = []
   const maintenanceTasks: MaintenanceTask[] = []
+  const maintenanceRequests: MaintenanceRequest[] = []
   const alerts: Alert[] = []
   const userUtilizations: UserUtilization[] = []
   const locationLists: LocationList[] = []
@@ -509,17 +511,19 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
       const statuses: MaintenanceStatus[] = ["pending", "in-progress", "completed", "overdue"]
       const statusWeights = [0.3, 0.2, 0.4, 0.1] // More realistic distribution
       const selectedStatus = weightedChoice(statuses, statusWeights)
+      const priorities = ["low", "medium", "high", "critical"]
+      const maintenanceTypes = ["preventive", "corrective", "calibration", "inspection"]
       
       maintenanceTasks.push({
         id: randomUUID(),
         assetId: asset.id,
-        type: randomChoice(["preventive", "corrective", "calibration", "inspection"]),
+        type: randomChoice(maintenanceTypes),
         description: `${randomChoice(["Routine", "Emergency", "Scheduled"])} maintenance for ${asset.name}`,
         scheduledDate: randomDateISO(selectedStatus === "overdue" ? 30 : -60),
         completedDate: selectedStatus === "completed" ? randomDateISO(7) : undefined,
         status: selectedStatus,
         assignedTo: randomChoice(users.filter(u => u.role === "biomedical" || u.role === "technician")).id,
-        priority: randomChoice(["low", "medium", "high", "critical"]),
+        priority: randomChoice(priorities),
         estimatedDuration: randomInt(30, 480), // 30 minutes to 8 hours
         cost: randomInt(50, 2000)
       })
@@ -544,7 +548,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
     }
   }
 
-  // Enhanced user utilization data
+ // Enhanced user utilization data
   for (const user of users) {
     userUtilizations.push({
       userId: user.id,
@@ -577,6 +581,107 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
       })
     }
   }
+
+
+  // Generate realistic maintenance requests
+  const requestStatuses = ["Pending", "In Progress", "Completed", "Overdue"]
+  const requestCategories = ["Preventive", "Corrective", "Emergency", "Calibration", "Inspection"]
+  const priorities = ["Low", "Medium", "High", "Critical"]
+  const urgencies = ["Low", "Normal", "High", "Urgent"]
+  const criticalities = ["Low", "Medium", "High", "Critical"]
+
+  const requestDescriptions = [
+    "Regular maintenance check required",
+    "Equipment showing performance issues",
+    "Calibration required as per schedule",
+    "Emergency repair needed",
+    "Preventive maintenance overdue",
+    "Safety inspection required",
+    "Component replacement needed",
+    "Performance optimization required",
+    "Compliance check needed",
+    "Annual maintenance service",
+    "Battery replacement required",
+    "Software update and calibration",
+    "Cleaning and sanitization",
+    "Sensor alignment check",
+    "Firmware update required"
+  ]
+
+  // Generate 50-80 maintenance requests
+  const requestCount = randomInt(50, 80)
+  for (let i = 0; i < requestCount; i++) {
+    const asset = randomChoice(assets)
+    const zone = zones.find(z => z.id === asset.location.zoneId)
+    const department = departments.find(d => d.id === asset.departmentId)
+    const requestor = randomChoice(users.filter(u => u.departmentId === asset.departmentId))
+    const assignedUser = randomChoice(users.filter(u => 
+      u.role === "biomedical" || u.role === "technician" || u.role === "admin"
+    ))
+
+    const status = randomChoice(requestStatuses)
+    const category = randomChoice(requestCategories)
+    const priority = randomChoice(priorities)
+    const urgency = randomChoice(urgencies)
+    const criticality = randomChoice(criticalities)
+
+    // Generate realistic maintenance dates based on status
+    let maintenanceDate: string
+    let createdDaysAgo: number
+    
+    if (status === "Completed") {
+      createdDaysAgo = randomInt(7, 60)
+      maintenanceDate = new Date(Date.now() - randomInt(1, createdDaysAgo) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    } else if (status === "Overdue") {
+      createdDaysAgo = randomInt(30, 90)
+      maintenanceDate = new Date(Date.now() - randomInt(1, 15) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    } else {
+      createdDaysAgo = randomInt(1, 30)
+      maintenanceDate = new Date(Date.now() + randomInt(1, 45) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    }
+
+    const createdDate = new Date(Date.now() - createdDaysAgo * 24 * 60 * 60 * 1000)
+    const lastModified = new Date(createdDate.getTime() + randomInt(0, createdDaysAgo) * 24 * 60 * 60 * 1000)
+
+    // Generate cost based on asset type and category
+    let baseCost = 100
+    if (asset.type.includes("MRI") || asset.type.includes("CT")) baseCost = 2000
+    else if (asset.type.includes("Ventilator") || asset.type.includes("Monitor")) baseCost = 500
+    else if (asset.type.includes("Pump") || asset.type.includes("ECG")) baseCost = 300
+    else if (asset.type.includes("Wheelchair") || asset.type.includes("Bed")) baseCost = 150
+
+    if (category === "Emergency") baseCost *= 2
+    else if (category === "Preventive") baseCost *= 0.7
+    else if (category === "Calibration") baseCost *= 1.5
+
+    const estimatedCost = Math.round(baseCost * (0.5 + Math.random()))
+
+    const maintenanceRequest: MaintenanceRequest = {
+      id: `MR-${(i + 1).toString().padStart(3, '0')}`,
+      status,
+      requestor: requestor.name,
+      category,
+      priority,
+      urgency,
+      department: department?.name || `Department ${asset.departmentId.slice(-3)}`,
+      description: `${randomChoice(requestDescriptions)} for ${asset.name}`,
+      maintenanceDate,
+      businessCriticality: criticality,
+      lastModified: lastModified.toISOString().split('T')[0],
+      assetName: asset.name,
+      assetId: asset.id,
+      estimatedCost,
+      createdBy: requestor.name,
+      assignedTo: status !== "Pending" ? assignedUser.name : undefined
+    }
+
+    maintenanceRequests.push(maintenanceRequest)
+  }
+
+  // Sort by creation date (most recent first)
+  maintenanceRequests.sort((a, b) => 
+    new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime()
+  )
 
   // Link assets to departments
   const deptById = new Map(departments.map((d) => [d.id, d]))
@@ -729,6 +834,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
     userLogs,
     movementLogs,
     maintenanceTasks,
+    maintenanceRequests,
     alerts,
     userUtilizations,
     locationLists,
@@ -1081,14 +1187,14 @@ function generateAssetLocatorData(
     const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000)
     const dateStr = date.toISOString().split('T')[0]
     
-    // Create more realistic utilization patterns
-    const baseUtilization = avgUtilization
+    // Create more realistic utilization patterns with better bounds
+    const baseUtilization = Math.max(40, Math.min(85, avgUtilization))
     
     // Multi-layered variation for realistic data
-    const weeklyPattern = Math.sin((i / 7) * 2 * Math.PI) * 8 // 7-day cycle
-    const monthlyTrend = Math.sin((i / 30) * Math.PI) * 5 // Monthly trend
-    const weekdayEffect = date.getDay() === 0 || date.getDay() === 6 ? -8 : 2 // Weekend vs weekday
-    const randomNoise = (Math.random() - 0.5) * 12 // Daily random variation
+    const weeklyPattern = Math.sin((i / 7) * 2 * Math.PI) * 12 // 7-day cycle
+    const monthlyTrend = Math.sin((i / 30) * Math.PI) * 8 // Monthly trend
+    const weekdayEffect = date.getDay() === 0 || date.getDay() === 6 ? -15 : 5 // Weekend vs weekday
+    const randomNoise = (Math.random() - 0.5) * 8 // Daily random variation
     
     let utilization = baseUtilization + weeklyPattern + monthlyTrend + weekdayEffect + randomNoise
     
@@ -1099,13 +1205,11 @@ function generateAssetLocatorData(
     ).length
     
     // Apply maintenance impact more realistically
-    const maintenanceImpact = Math.min(20, maintenanceEvents * 3)
+    const maintenanceImpact = Math.min(25, maintenanceEvents * 4)
     utilization -= maintenanceImpact
     
-    // Ensure realistic bounds with some variety
-    const minUtil = Math.max(20, avgUtilization - 35)
-    const maxUtil = Math.min(95, avgUtilization + 25)
-    utilization = Math.max(minUtil, Math.min(maxUtil, utilization))
+    // Ensure realistic bounds (30-95%)
+    utilization = Math.max(30, Math.min(95, utilization))
     
     return {
       date: dateStr,

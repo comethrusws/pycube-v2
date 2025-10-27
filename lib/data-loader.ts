@@ -18,7 +18,8 @@ export async function loadSeedData(): Promise<SeedData> {
       assets: cachedData.assets.length,
       zones: cachedData.zones.length,
       users: cachedData.users.length,
-      facilities: cachedData.facilities.length
+      facilities: cachedData.facilities.length,
+      predictiveInsights: cachedData.predictiveMaintenanceData?.insights.length || 0
     })
     return cachedData
   } catch (error) {
@@ -40,6 +41,7 @@ export async function loadSeedData(): Promise<SeedData> {
       userLogs: [],
       movementLogs: [],
       maintenanceTasks: [],
+      maintenanceRequests: [],
       alerts: [],
       userUtilizations: [],
       locationLists: [],
