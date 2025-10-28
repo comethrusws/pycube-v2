@@ -279,7 +279,7 @@ export default function PredictiveInsightsTab() {
         a.recommendedAction
       ]))
     ]
-    const csv = rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n")
+    const csv = rows.map((r: any) => r.map((v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n")
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
@@ -443,14 +443,14 @@ export default function PredictiveInsightsTab() {
                     boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
                     fontSize: '12px'
                   }}
-                  formatter={(value, _name, props) => {
+                  formatter={(value: any, _name: any, props: any) => {
                     const p = props.payload
                     return [
                       `${value} days`,
                       `Conf: ${p.confidenceScore}% | Usage: ${p.keyIndicators?.usageHours ?? '-'}h | Temp Δ: ${p.keyIndicators?.temperatureVariance ?? '-'} | Vib: ${p.keyIndicators?.vibrationLevels ?? '-'}`
                     ]
                   }}
-                  labelFormatter={(label, payload) => {
+                  labelFormatter={(label: any, payload: any) => {
                     const p = payload && payload[0] && (payload[0] as any).payload
                     if (!p) return label
                     return `${p.assetName} (${p.assetId || 'N/A'})\nLast: ${p.maintenanceHistory?.lastServiceDate || '-'} | Next: ${p.maintenanceHistory?.nextScheduledService || '-'}`
