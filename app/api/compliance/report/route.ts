@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { loadSeedData } from "@/lib/data-loader"
+import { writeFileSync, mkdirSync, existsSync } from "fs"
+import { join } from "path"
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,8 +35,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Return compiled report payload; client will render and export
-    return NextResponse.json({
+    const report = {
       filters: { startDate, endDate, departmentId, assetType },
       summary,
       stats: {
@@ -45,7 +46,16 @@ export async function POST(request: NextRequest) {
         averageRiskScore: Math.round(assetRisks.reduce((s, r) => s + r.riskScore, 0) / Math.max(1, assetRisks.length))
       },
       assetRisks
-    })
+    }
+
+    // Persist JSON report to disk under data/reports
+    const reportsDir = join(process.cwd(), "data", "reports")
+    if (!existsSync(reportsDir)) mkdirSync(reportsDir, { recursive: true })
+    const id = `CR-${Date.now()}`
+    const filePath = join(reportsDir, `${id}.json`)
+    writeFileSync(filePath, JSON.stringify(report), { encoding: "utf-8" })
+
+    return NextResponse.json({ id, ...report })
   } catch (error) {
     console.error("Compliance report API error:", error)
     return NextResponse.json({ error: "Failed to generate report" }, { status: 500 })
