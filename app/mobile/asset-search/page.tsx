@@ -622,10 +622,6 @@ export default function MobileAssetSearchPage() {
         </div>
       )}
 
-      {/* Emergency Call Button */}
-      <button className="fixed bottom-6 right-6 w-14 h-14 bg-red-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-red-700 transition-colors z-40">
-        <Phone className="w-6 h-6" />
-      </button>
     </div>
     </AILayout>
   )
