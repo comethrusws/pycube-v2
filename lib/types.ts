@@ -520,6 +520,27 @@ export interface MobileSearchFilters {
   statuses: string[]
 }
 
+// Add mobile-specific pagination and summary interfaces
+export interface MobilePaginationData {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+  hasNext: boolean
+  hasPrev: boolean
+}
+
+export interface MobileAssetSummary {
+  totalAssets: number
+  availableAssets: number
+  inUseAssets: number
+  maintenanceAssets: number
+  lostAssets: number
+  recentlyActive: number
+  departmentCounts: { department: string; count: number }[]
+  typeCounts: { type: string; count: number }[]
+}
+
 export interface AssetAction {
   assetId: string
   action: "retrieve" | "report_missing" | "maintenance_request" | "locate"

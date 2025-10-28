@@ -10,15 +10,74 @@ export async function GET(request: NextRequest) {
     const floor = searchParams.get("floor") || "all"
     const status = searchParams.get("status") || "all"
     const type = searchParams.get("type") || "all"
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50) // Max 50 per request
 
     const data = await loadSeedData()
     
-    // Convert assets to mobile format with enhanced location data
-    const mobileAssets = data.assets.map(asset => {
+    // Convert only necessary assets to mobile format (optimize memory usage)
+    const allAssets = data.assets
+    
+    // Apply filters first to reduce processing
+    let filteredAssetIds = allAssets.filter(asset => {
+      // Quick filter by IDs first for performance
       const zone = data.zones.find(z => z.id === asset.location.zoneId)
       const floorObj = data.floors.find(f => f.id === zone?.floorId)
-      const building = data.buildings.find(b => b.id === floorObj?.buildingId)
-      const department = data.departments.find(d => d.id === asset.departmentId)
+      const buildingObj = data.buildings.find(b => b.id === floorObj?.buildingId)
+      const departmentObj = data.departments.find(d => d.id === asset.departmentId)
+      
+      // Search query filter
+      if (query) {
+        const searchLower = query.toLowerCase()
+        const tagId = asset.tagId || `TAG-${asset.id.slice(-6)}`
+        if (!asset.name.toLowerCase().includes(searchLower) && 
+            !asset.type.toLowerCase().includes(searchLower) &&
+            !tagId.toLowerCase().includes(searchLower)) {
+          return false
+        }
+      }
+      
+      // Department filter
+      if (department !== "all") {
+        const deptName = departmentObj?.name || `Department ${asset.departmentId.slice(-3)}`
+        if (deptName !== department) return false
+      }
+      
+      // Building filter  
+      if (building !== "all") {
+        const buildingName = buildingObj?.name || "Building 1"
+        if (buildingName !== building) return false
+      }
+      
+      // Floor filter
+      if (floor !== "all") {
+        const floorName = floorObj?.name || "Floor 1"
+        if (floorName !== floor) return false
+      }
+      
+      // Status filter
+      if (status !== "all" && asset.status !== status) return false
+      
+      // Type filter
+      if (type !== "all" && asset.type !== type) return false
+      
+      return true
+    })
+
+    // Calculate pagination
+    const total = filteredAssetIds.length
+    const totalPages = Math.ceil(total / limit)
+    const startIndex = (page - 1) * limit
+    const endIndex = startIndex + limit
+    
+    // Only convert the current page to mobile format (performance optimization)
+    const pageAssets = filteredAssetIds.slice(startIndex, endIndex)
+    
+    const mobileAssets = pageAssets.map(asset => {
+      const zone = data.zones.find(z => z.id === asset.location.zoneId)
+      const floorObj = data.floors.find(f => f.id === zone?.floorId)
+      const buildingObj = data.buildings.find(b => b.id === floorObj?.buildingId)
+      const departmentObj = data.departments.find(d => d.id === asset.departmentId)
       
       // Generate coordinates based on asset ID for consistent positioning
       const assetIndex = parseInt(asset.id.slice(-3)) || 0
@@ -35,10 +94,10 @@ export async function GET(request: NextRequest) {
         status: asset.status,
         utilization: asset.utilization,
         lastActive: asset.lastActive,
-        department: department?.name || `Department ${asset.departmentId.slice(-3)}`,
+        department: departmentObj?.name || `Department ${asset.departmentId.slice(-3)}`,
         departmentId: asset.departmentId,
         location: {
-          building: building?.name || "Building 1",
+          building: buildingObj?.name || "Building 1",
           floor: floorObj?.name || "Floor 1", 
           zone: zone?.name || "Zone A",
           room: `Room ${zone?.name?.slice(-1) || 'A'}-${Math.floor(assetIndex / 10) + 1}`,
@@ -54,53 +113,27 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Apply filters
-    let filteredAssets = mobileAssets.filter(asset => {
-      // Search query filter
-      if (query && !asset.name.toLowerCase().includes(query.toLowerCase()) && 
-          !asset.type.toLowerCase().includes(query.toLowerCase()) &&
-          !asset.tagId.toLowerCase().includes(query.toLowerCase())) {
-        return false
-      }
-      
-      // Department filter
-      if (department !== "all" && asset.department !== department) {
-        return false
-      }
-      
-      // Building filter  
-      if (building !== "all" && asset.location.building !== building) {
-        return false
-      }
-      
-      // Floor filter
-      if (floor !== "all" && asset.location.floor !== floor) {
-        return false
-      }
-      
-      // Status filter
-      if (status !== "all" && asset.status !== status) {
-        return false
-      }
-      
-      // Type filter
-      if (type !== "all" && asset.type !== type) {
-        return false
-      }
-      
-      return true
-    })
-
-    // Generate filter options from all assets
-    const departments = [...new Set(mobileAssets.map(a => a.department))].sort()
-    const buildings = [...new Set(mobileAssets.map(a => a.location.building))].sort()
-    const floors = [...new Set(mobileAssets.map(a => a.location.floor))].sort()
-    const types = [...new Set(mobileAssets.map(a => a.type))].sort()
+    // Generate filter options from ALL assets (but only compute once)
+    const departments = [...new Set(data.assets.map(a => {
+      const dept = data.departments.find(d => d.id === a.departmentId)
+      return dept?.name || `Department ${a.departmentId.slice(-3)}`
+    }))].sort()
+    
+    const buildings = [...new Set(data.buildings.map(b => b.name))].sort()
+    const floors = [...new Set(data.floors.map(f => f.name))].sort()
+    const types = [...new Set(data.assets.map(a => a.type))].sort()
     const statuses = ["available", "in-use", "maintenance", "lost"]
 
     return NextResponse.json({
-      assets: filteredAssets,
-      total: filteredAssets.length,
+      assets: mobileAssets,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      },
       filters: {
         departments,
         buildings,

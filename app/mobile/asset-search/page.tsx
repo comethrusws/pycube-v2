@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { 
   Search, Filter, MapPin, List, Scan, Phone, AlertTriangle, 
   Wrench, CheckCircle, Clock, Building, Users, Zap, X, 
-  Navigation, Wifi, Battery, Signal
+  Navigation, Wifi, Battery, Signal, ChevronDown, RefreshCw
 } from "lucide-react"
 import { apiGet } from "@/lib/fetcher"
 import FloorMap from "@/components/mobile/floor-map"
@@ -45,8 +45,8 @@ interface SearchFilters {
 export default function MobileAssetSearchPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [assets, setAssets] = useState<Asset[]>([])
-  const [filteredAssets, setFilteredAssets] = useState<Asset[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [viewMode, setViewMode] = useState<"list" | "map">("list")
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
   const [showFilters, setShowFilters] = useState(false)
@@ -58,6 +58,13 @@ export default function MobileAssetSearchPage() {
     types: [],
     statuses: []
   })
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalAssets, setTotalAssets] = useState(0)
+  const [hasNextPage, setHasNextPage] = useState(false)
+  const limit = 20 // Show 20 assets per page
   
   // Filter states
   const [filters, setFilters] = useState({
@@ -71,23 +78,46 @@ export default function MobileAssetSearchPage() {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [isActionLoading, setIsActionLoading] = useState(false)
   const [actionMessage, setActionMessage] = useState("")
-
-  // Mock RFID scanner state
   const [isScanning, setIsScanning] = useState(false)
+
+  // Debounced search to avoid excessive API calls
+  const [searchDebounceTimer, setSearchDebounceTimer] = useState<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     if (searchInputRef.current) {
       searchInputRef.current.focus()
     }
-    performSearch()
+    // Load initial data
+    performSearch(1, true)
   }, [])
 
+  // Debounced search when query or filters change
   useEffect(() => {
-    performSearch()
+    if (searchDebounceTimer) {
+      clearTimeout(searchDebounceTimer)
+    }
+    
+    const timer = setTimeout(() => {
+      setCurrentPage(1)
+      performSearch(1, true)
+    }, 300) // 300ms debounce
+    
+    setSearchDebounceTimer(timer)
+    
+    return () => {
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer)
+      }
+    }
   }, [searchQuery, filters])
 
-  const performSearch = async () => {
-    setIsLoading(true)
+  const performSearch = async (page: number = 1, reset: boolean = false) => {
+    if (reset) {
+      setIsLoading(true)
+    } else {
+      setIsLoadingMore(true)
+    }
+    
     try {
       const queryParams = new URLSearchParams({
         q: searchQuery,
@@ -95,26 +125,53 @@ export default function MobileAssetSearchPage() {
         building: filters.building,
         floor: filters.floor,
         status: filters.status,
-        type: filters.type
+        type: filters.type,
+        page: page.toString(),
+        limit: limit.toString()
       })
 
       const response = await apiGet<{
         assets: Asset[]
-        total: number
+        pagination: {
+          page: number
+          limit: number
+          total: number
+          totalPages: number
+          hasNext: boolean
+          hasPrev: boolean
+        }
         filters: SearchFilters
       }>(`/api/mobile/assets/search?${queryParams}`)
 
-      setAssets(response.assets)
-      setFilteredAssets(response.assets)
+      if (reset) {
+        setAssets(response.assets)
+      } else {
+        // Append new assets for infinite scroll
+        setAssets(prev => [...prev, ...response.assets])
+      }
+      
+      setCurrentPage(response.pagination.page)
+      setTotalPages(response.pagination.totalPages)
+      setTotalAssets(response.pagination.total)
+      setHasNextPage(response.pagination.hasNext)
       setAvailableFilters(response.filters)
     } catch (error) {
       console.error("Search failed:", error)
-      setAssets([])
-      setFilteredAssets([])
+      if (reset) {
+        setAssets([])
+      }
+      setTotalAssets(0)
     } finally {
       setIsLoading(false)
+      setIsLoadingMore(false)
     }
   }
+
+  const loadMoreAssets = useCallback(() => {
+    if (!isLoadingMore && hasNextPage) {
+      performSearch(currentPage + 1, false)
+    }
+  }, [currentPage, hasNextPage, isLoadingMore])
 
   const handleAssetAction = async (assetId: string, action: string, notes?: string) => {
     setIsActionLoading(true)
@@ -140,11 +197,6 @@ export default function MobileAssetSearchPage() {
             ? { ...asset, ...result.updatedAsset }
             : asset
         ))
-        setFilteredAssets(prev => prev.map(asset => 
-          asset.id === assetId 
-            ? { ...asset, ...result.updatedAsset }
-            : asset
-        ))
 
         // Auto-hide message after 3 seconds
         setTimeout(() => setActionMessage(""), 3000)
@@ -163,14 +215,27 @@ export default function MobileAssetSearchPage() {
     
     // Simulate RFID scan delay
     setTimeout(() => {
-      const randomAsset = assets[Math.floor(Math.random() * assets.length)]
-      if (randomAsset) {
+      if (assets.length > 0) {
+        const randomAsset = assets[Math.floor(Math.random() * assets.length)]
         setSearchQuery(randomAsset.tagId)
         setSelectedAsset(randomAsset)
         setShowAssetDetail(true)
       }
       setIsScanning(false)
     }, 2000)
+  }
+
+  // Clear search and reset
+  const clearSearch = () => {
+    setSearchQuery("")
+    setFilters({
+      department: "all",
+      building: "all", 
+      floor: "all",
+      status: "all",
+      type: "all"
+    })
+    setCurrentPage(1)
   }
 
   const getStatusIcon = (status: string) => {
@@ -221,7 +286,15 @@ export default function MobileAssetSearchPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-4">
-        <h1 className="text-xl font-semibold text-gray-900 mb-4">Asset Search & Retrieval</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-semibold text-gray-900">Asset Search & Retrieval</h1>
+          <button
+            onClick={clearSearch}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            Clear All
+          </button>
+        </div>
         
         {/* Search Bar */}
         <div className="relative mb-4">
@@ -234,6 +307,11 @@ export default function MobileAssetSearchPage() {
             placeholder="Search by name, type, or tag ID..."
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
+          {isLoading && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -244,6 +322,9 @@ export default function MobileAssetSearchPage() {
           >
             <Filter className="w-4 h-4" />
             Filters
+            {(filters.department !== "all" || filters.building !== "all" || filters.status !== "all" || filters.type !== "all") && (
+              <span className="bg-teal-600 text-white text-xs rounded-full w-2 h-2"></span>
+            )}
           </button>
           
           <button
@@ -364,13 +445,14 @@ export default function MobileAssetSearchPage() {
           <>
             {/* Results Count */}
             <div className="mb-4 text-sm text-gray-600">
-              {filteredAssets.length} asset{filteredAssets.length !== 1 ? 's' : ''} found
+              Showing {assets.length} of {totalAssets} asset{totalAssets !== 1 ? 's' : ''}
+              {searchQuery && ` for "${searchQuery}"`}
             </div>
 
             {viewMode === "list" ? (
-              /* List View */
+              /* List View with Infinite Scroll */
               <div className="space-y-3">
-                {filteredAssets.map((asset) => (
+                {assets.map((asset) => (
                   <div
                     key={asset.id}
                     className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm"
@@ -444,7 +526,30 @@ export default function MobileAssetSearchPage() {
                   </div>
                 ))}
 
-                {filteredAssets.length === 0 && !isLoading && (
+                {/* Load More Button */}
+                {hasNextPage && (
+                  <div className="text-center py-4">
+                    <button
+                      onClick={loadMoreAssets}
+                      disabled={isLoadingMore}
+                      className="px-6 py-3 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto"
+                    >
+                      {isLoadingMore ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-4 h-4" />
+                          Load More ({totalAssets - assets.length} remaining)
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {assets.length === 0 && !isLoading && (
                   <div className="text-center py-12">
                     <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-600 text-lg mb-2">No assets found</p>
@@ -453,19 +558,26 @@ export default function MobileAssetSearchPage() {
                 )}
               </div>
             ) : (
-              /* Map View */
+              /* Map View - Only show first page for performance */
               <div>
-                {filteredAssets.length > 0 ? (
-                  <FloorMap
-                    assets={filteredAssets}
-                    selectedAsset={selectedAsset}
-                    onAssetSelect={(asset) => {
-                      setSelectedAsset(asset)
-                      setShowAssetDetail(true)
-                    }}
-                    floor={filters.floor === "all" ? filteredAssets[0]?.location.floor || "Floor 1" : filters.floor}
-                    building={filters.building === "all" ? filteredAssets[0]?.location.building || "Building 1" : filters.building}
-                  />
+                {assets.length > 0 ? (
+                  <>
+                    {assets.length > limit && (
+                      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                        <p>Map view shows first {limit} assets for performance. Use filters to narrow results.</p>
+                      </div>
+                    )}
+                    <FloorMap
+                      assets={assets.slice(0, limit)} // Only show first page in map view
+                      selectedAsset={selectedAsset}
+                      onAssetSelect={(asset) => {
+                        setSelectedAsset(asset)
+                        setShowAssetDetail(true)
+                      }}
+                      floor={filters.floor === "all" ? assets[0]?.location.floor || "Floor 1" : filters.floor}
+                      building={filters.building === "all" ? assets[0]?.location.building || "Building 1" : filters.building}
+                    />
+                  </>
                 ) : (
                   <div className="text-center py-12">
                     <Navigation className="w-16 h-16 text-gray-300 mx-auto mb-4" />
