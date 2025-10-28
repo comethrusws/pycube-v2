@@ -53,19 +53,79 @@ export default function ComplianceDashboard() {
     setReportOpen(false)
   }
 
-  const exportCSV = () => {
-    const rows = [["Asset","Department","Missed Maintenance","Overdue Calibration","Recall","Risk Score"],
-      ...((data?.assetRisks || []).slice(0, 2000).map((r: any) => [r.assetName, r.departmentName, r.missedMaintenance, r.overdueCalibration, r.recallFlag ? "Yes" : "No", r.riskScore]))]
+  const buildAssetRiskRows = (source: any) => [["Asset","Department","Missed Maintenance","Overdue Calibration","Recall","Risk Score"],
+    ...((source?.assetRisks || []).map((r: any) => [r.assetName, r.departmentName, r.missedMaintenance, r.overdueCalibration, r.recallFlag ? "Yes" : "No", r.riskScore]))]
+
+  const exportCSV = (useReport = false) => {
+    const source = useReport && data?.report ? data.report : data
+    const rows = buildAssetRiskRows(source)
     const csv = rows.map(r => r.join(",")).join("\n")
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `compliance-asset-risks.csv`
+    a.download = useReport ? `compliance-report.csv` : `compliance-asset-risks.csv`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
+  }
+
+  const exportXLSX = (useReport = false) => {
+    // Use CSV content with XLSX extension for lightweight export without deps
+    const source = useReport && data?.report ? data.report : data
+    const rows = buildAssetRiskRows(source)
+    const csv = rows.map(r => r.join(",")).join("\n")
+    const blob = new Blob([csv], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = useReport ? `compliance-report.xlsx` : `compliance-asset-risks.xlsx`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const exportPDF = (useReport = false) => {
+    const source = useReport && data?.report ? data.report : data
+    const win = window.open("", "_blank", "width=900,height=700")
+    if (!win) return
+    const rows = (source?.assetRisks || []).slice(0, 200).map((a: any) => `
+      <tr>
+        <td style=\"padding:6px;border:1px solid #e5e7eb;\">${a.assetName}</td>
+        <td style=\"padding:6px;border:1px solid #e5e7eb;\">${a.departmentName}</td>
+        <td style=\"padding:6px;border:1px solid #e5e7eb;\">${a.missedMaintenance}</td>
+        <td style=\"padding:6px;border:1px solid #e5e7eb;\">${a.overdueCalibration}</td>
+        <td style=\"padding:6px;border:1px solid #e5e7eb;\">${a.recallFlag ? 'Yes' : 'No'}</td>
+        <td style=\"padding:6px;border:1px solid #e5e7eb;\">${a.riskScore}</td>
+      </tr>
+    `).join("")
+    const s = source?.summary || {}
+    win.document.write(`
+      <html><head><title>Compliance Report</title></head>
+      <body>
+        <h2>Compliance Report</h2>
+        <p>Overall Score: ${s.overallScore ?? 0} | Total Assets: ${s.totalAssets ?? 0} | Fully Compliant: ${s.fullyCompliant ?? 0} | Overdue Maintenance: ${s.overdueMaintenance ?? 0} | Avg Risk: ${s.averageRiskScore ?? 0}</p>
+        <table style=\"border-collapse:collapse;width:100%;font-family:sans-serif;font-size:12px;\">
+          <thead>
+            <tr>
+              <th style=\"padding:6px;border:1px solid #e5e7eb;\">Asset</th>
+              <th style=\"padding:6px;border:1px solid #e5e7eb;\">Department</th>
+              <th style=\"padding:6px;border:1px solid #e5e7eb;\">Missed Maintenance</th>
+              <th style=\"padding:6px;border:1px solid #e5e7eb;\">Overdue Calibration</th>
+              <th style=\"padding:6px;border:1px solid #e5e7eb;\">Recall</th>
+              <th style=\"padding:6px;border:1px solid #e5e7eb;\">Risk Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+        <script>window.print()</script>
+      </body></html>
+    `)
+    win.document.close()
   }
 
   if (loading) return <div className="p-8">Loading...</div>
@@ -111,7 +171,16 @@ export default function ComplianceDashboard() {
             <h3 className="text-lg font-light" style={{ color: "#001f3f" }}>Risk Distribution</h3>
             <div className="flex items-center gap-2">
               <button onClick={() => setReportOpen(true)} className="px-3 py-2 text-sm text-white rounded-lg" style={{ backgroundColor: Accent }}>Generate Report</button>
-              <button onClick={exportCSV} className="px-3 py-2 text-sm text-gray-700 border rounded-lg flex items-center gap-2"><Download className="w-4 h-4"/>Export CSV</button>
+              <button onClick={() => exportCSV(false)} className="px-3 py-2 text-sm text-gray-700 border rounded-lg flex items-center gap-2"><Download className="w-4 h-4"/>Export CSV</button>
+              {data?.report && (
+                <div className="relative">
+                  <div className="flex gap-2">
+                    <button onClick={() => exportCSV(true)} className="px-3 py-2 text-sm text-gray-700 border rounded-lg">Report CSV</button>
+                    <button onClick={() => exportXLSX(true)} className="px-3 py-2 text-sm text-gray-700 border rounded-lg">Report XLSX</button>
+                    <button onClick={() => exportPDF(true)} className="px-3 py-2 text-sm text-gray-700 border rounded-lg">Report PDF</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center">
@@ -169,7 +238,7 @@ export default function ComplianceDashboard() {
               </tr>
             </thead>
             <tbody>
-              {(data?.assetRisks || []).slice(0, 50).map((r: any, idx: number) => (
+              {(data?.report?.assetRisks || data?.assetRisks || []).slice(0, 50).map((r: any, idx: number) => (
                 <tr key={idx} className="border-t">
                   <td className="p-3">{r.assetName}</td>
                   <td className="p-3">{r.departmentName}</td>
