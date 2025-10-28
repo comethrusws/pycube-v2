@@ -1,8 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts"
-import { X, CheckCircle, AlertCircle, Clock, MapPin, TrendingDown, ExternalLink, Search, Filter, Download, RefreshCw, PenToolIcon } from "lucide-react"
+import { 
+  MapPin, Users, Building, AlertTriangle, CheckCircle, Clock, 
+  TrendingUp, TrendingDown, RefreshCw, ExternalLink, PenToolIcon,
+  CircleAlert, Search, Filter,
+  AlertCircle,
+  Download,
+  X
+} from "lucide-react"
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line } from 'recharts'
 import { apiGet } from "@/lib/fetcher"
 
 // Enhanced Modal Component
@@ -35,107 +42,167 @@ const Modal = ({ isOpen, onClose, title, children }: {
 }
 
 // Asset Detail Modal Content
-const AssetDetailModal = ({ asset, onClose }: { asset: any, onClose: () => void }) => (
-  <div className="space-y-6">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="space-y-4">
-        <div>
-          <label className="text-sm font-medium text-gray-500">Asset Name</label>
-          <p className="text-lg font-semibold" style={{ color: "#001f3f" }}>{asset.name}</p>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-500">Type</label>
-          <p className="text-base">{asset.type}</p>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-500">Department</label>
-          <p className="text-base">{asset.department}</p>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-500">Current Location</label>
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-gray-400" />
-            <p className="text-base">{asset.location}</p>
-          </div>
-        </div>
-      </div>
-      
-      <div className="space-y-4">
-        <div>
-          <label className="text-sm font-medium text-gray-500">Utilization Rate</label>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 bg-gray-200 rounded-full h-3">
-              <div 
-                className={`h-3 rounded-full ${
-                  asset.utilization > 60 ? 'bg-green-500' : 
-                  asset.utilization > 30 ? 'bg-yellow-500' : 'bg-red-500'
-                }`}
-                style={{ width: `${asset.utilization}%` }}
-              ></div>
-            </div>
-            <span className="text-sm font-medium">{asset.utilization}%</span>
-          </div>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-500">Last Used</label>
-          <p className="text-base">{new Date(asset.lastUsed).toLocaleDateString()}</p>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-500">Idle Duration</label>
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-gray-400" />
-            <p className="text-base">{asset.idleDuration} days</p>
-          </div>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-500">Asset Value</label>
-          <p className="text-base">${asset.value?.toLocaleString() || 'N/A'}</p>
-        </div>
-      </div>
-    </div>
-    
-    <div className="border-t border-gray-200 pt-6">
-      <h3 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Recommended Actions</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <button className="p-4 border border-teal-200 rounded-xl hover:bg-teal-50 transition-colors text-left">
-          <div className="flex items-center gap-3 mb-2">
-            <TrendingDown className="w-5 h-5 text-teal-600" />
-            <span className="font-medium text-teal-700">Schedule Review</span>
-          </div>
-          <p className="text-sm text-gray-600">Analyze usage patterns and optimization opportunities</p>
-        </button>
-        
-        <button className="p-4 border border-blue-200 rounded-xl hover:bg-blue-50 transition-colors text-left">
-          <div className="flex items-center gap-3 mb-2">
-            <ExternalLink className="w-5 h-5 text-blue-600" />
-            <span className="font-medium text-blue-700">Relocate Asset</span>
-          </div>
-          <p className="text-sm text-gray-600">Move to higher-demand department</p>
-        </button>
-        
-        <button className="p-4 border border-orange-200 rounded-xl hover:bg-orange-50 transition-colors text-left">
-          <div className="flex items-center gap-3 mb-2">
-            <PenToolIcon className="w-5 h-5 text-orange-600" />
-            <span className="font-medium text-orange-700">Maintenance Check</span>
-          </div>
-          <p className="text-sm text-gray-600">Verify asset condition and functionality</p>
-        </button>
-      </div>
-    </div>
+const AssetDetailModal = ({ asset, onClose }: { asset: any, onClose: () => void }) => {
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [actionMessage, setActionMessage] = useState("")
 
-    <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-      <button
-        onClick={onClose}
-        className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-      >
-        Close
-      </button>
-      <button className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">
-        Take Action
-      </button>
+  const handleAssetAction = async (action: string, notes?: string) => {
+    setIsProcessing(true)
+    setActionMessage("")
+    
+    try {
+      const response = await fetch("/api/asset-locator/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assetId: asset.id,
+          action,
+          notes,
+          userId: "user-1" // Mock user ID
+        })
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        setActionMessage(`✓ ${result.message}`)
+        // Auto-close after 2 seconds
+        setTimeout(() => {
+          onClose()
+        }, 2000)
+      } else {
+        setActionMessage(`✗ ${result.error || "Action failed"}`)
+      }
+    } catch (error) {
+      console.error("Asset action failed:", error)
+      setActionMessage("✗ Action failed. Please try again.")
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleAnalyzeUsage = () => {
+    handleAssetAction("analyze_usage", "Usage pattern analysis requested")
+  }
+
+  const handleRelocateAsset = () => {
+    handleAssetAction("request_relocation", "Relocation to higher-demand department requested")
+  }
+
+  const handleMaintenanceCheck = () => {
+    handleAssetAction("schedule_maintenance", "Maintenance check scheduled")
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Asset Details */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <h4 className="font-medium text-gray-900 mb-2">Asset Information</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-500">Name:</span>
+              <span className="font-medium">{asset.name}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Type:</span>
+              <span>{asset.type}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Status:</span>
+              <span className={`px-2 py-1 rounded-full text-xs ${
+                asset.status === 'available' ? 'bg-green-100 text-green-800' :
+                asset.status === 'in-use' ? 'bg-blue-100 text-blue-800' :
+                asset.status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
+                'bg-red-100 text-red-800'
+              }`}>
+                {asset.status}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <h4 className="font-medium text-gray-900 mb-2">Location & Usage</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-500">Location:</span>
+              <span>{asset.location.zoneName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Department:</span>
+              <span>{asset.departmentName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Utilization:</span>
+              <span className="font-medium">{asset.utilization}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Message */}
+      {actionMessage && (
+        <div className={`p-3 rounded-lg text-sm ${
+          actionMessage.startsWith('✓') 
+            ? 'bg-green-100 text-green-800 border border-green-200' 
+            : 'bg-red-100 text-red-800 border border-red-200'
+        }`}>
+          {actionMessage}
+        </div>
+      )}
+      
+      <div className="border-t border-gray-200 pt-6">
+        <h4 className="font-medium text-gray-900 mb-4">Quick Actions</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button 
+            onClick={handleAnalyzeUsage}
+            disabled={isProcessing}
+            className="p-4 border border-teal-200 rounded-xl hover:bg-teal-50 transition-colors text-left disabled:opacity-50"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <TrendingUp className="w-5 h-5 text-teal-600" />
+              <span className="font-medium text-teal-700">Analyze Usage</span>
+            </div>
+            <p className="text-sm text-gray-600">Analyze usage patterns and optimization opportunities</p>
+          </button>
+          
+          <button 
+            onClick={handleRelocateAsset}
+            disabled={isProcessing}
+            className="p-4 border border-blue-200 rounded-xl hover:bg-blue-50 transition-colors text-left disabled:opacity-50"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <ExternalLink className="w-5 h-5 text-blue-600" />
+              <span className="font-medium text-blue-700">Relocate Asset</span>
+            </div>
+            <p className="text-sm text-gray-600">Move to higher-demand department</p>
+          </button>
+          
+          <button 
+            onClick={handleMaintenanceCheck}
+            disabled={isProcessing}
+            className="p-4 border border-orange-200 rounded-xl hover:bg-orange-50 transition-colors text-left disabled:opacity-50"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <PenToolIcon className="w-5 h-5 text-orange-600" />
+              <span className="font-medium text-orange-700">Maintenance Check</span>
+            </div>
+            <p className="text-sm text-gray-600">Verify asset condition and functionality</p>
+          </button>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+        <button
+          onClick={onClose}
+          className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          Close
+        </button>
+      </div>
     </div>
-  </div>
-)
+  )
+}
 
 // Monitor Action Modal Content  
 const MonitorActionModal = ({ asset, onClose }: { asset: any, onClose: () => void }) => {
