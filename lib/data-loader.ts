@@ -37,6 +37,8 @@ export async function loadSeedData(): Promise<SeedData> {
       userGroups: [],
       users: [],
       pointsOfContact: [],
+      products: [],
+      productCategories: [],
       assets: [],
       userLogs: [],
       movementLogs: [],

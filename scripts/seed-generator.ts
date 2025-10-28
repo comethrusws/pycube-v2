@@ -28,6 +28,8 @@ import type {
   PredictiveInsight,
   PredictiveMaintenanceData,
   DegradationTrend,
+  Product,
+  ProductCategory,
 } from "../lib/types"
 
 function randomChoice<T>(arr: T[]): T {
@@ -284,6 +286,8 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   const userGroups: UserGroup[] = []
   const users: User[] = []
   const pointsOfContact: PointOfContact[] = []
+  const productCategories: ProductCategory[] = []
+  const products: Product[] = []
   const assets: Asset[] = []
   const userLogs: UserLog[] = []
   const movementLogs: MovementLog[] = []
@@ -423,6 +427,38 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
 
   const taggingRate = 0.75 // Increased to 75% for better data
 
+  // Generate product categories and products
+  const manufacturerList = [
+    "Medtronic", "GE Healthcare", "Philips", "Siemens", "Mindray",
+    "Dräger", "Baxter", "Abbott", "Fresenius", "Stryker"
+  ]
+
+  for (const catName of ASSET_CATEGORIES) {
+    productCategories.push({
+      id: randomUUID(),
+      name: catName,
+      status: "active",
+      createdAt: new Date().toISOString()
+    })
+  }
+
+  const categoryIds = productCategories.map(c => c.id)
+  const typeToProductId = new Map<string, string>()
+  for (const typeName of ASSET_TYPES) {
+    const p: Product = {
+      id: randomUUID(),
+      name: typeName,
+      categoryId: randomChoice(categoryIds),
+      manufacturer: randomChoice(manufacturerList),
+      status: "active",
+      sku: `SKU-${randomInt(100000, 999999)}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    products.push(p)
+    typeToProductId.set(typeName, p.id)
+  }
+
   // Generate assets with enhanced data
   for (let a = 0; a < config.assetsTotal; a++) {
     const zoneId = randomChoice(allZones)
@@ -444,6 +480,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
       name: `${type} #${(a + 1).toString().padStart(4, "0")}`,
       type,
       category, // Add category field
+      productId: typeToProductId.get(type),
       tagId: isTagged ? `TAG-${(a + 1).toString().padStart(6, "0")}` : "",
       departmentId,
       location: { buildingId, floorId, zoneId },
@@ -830,6 +867,8 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
     userGroups,
     users,
     pointsOfContact,
+    products,
+    productCategories,
     assets,
     userLogs,
     movementLogs,
