@@ -18,6 +18,8 @@ import {
   Warehouse,
   Users,
   ChevronRight,
+  ListCheckIcon,
+  MapPinPlus,
 } from "lucide-react"
 import { useState } from "react"
 import { usePathname } from "next/navigation"
@@ -55,12 +57,21 @@ const menuSections = [
     items: [
       {
         icon: MapPin,
-        label: "Asset Locator",
-        href: "/asset-locator",
+        label: "Asset Utilization",
+        href: "/asset-utilization",
         submenu: [
-          { label: "Dashboard", href: "/asset-locator/dashboard" },
-          { label: "Location Lists", href: "/asset-locator/location-lists" }
+          { label: "Dashboard", href: "/asset-utilization/dashboard" },
+          { label: "Location Lists", href: "/asset-utilization/location-lists" }
         ],
+      },
+    ] as MenuItem[],
+  },
+  {
+    items: [
+      {
+        icon: MapPinPlus,
+        label: "Asset Search & Retrieval",
+        href: "/mobile/asset-search",
       },
     ] as MenuItem[],
   },
@@ -109,7 +120,7 @@ const menuSections = [
   {
     items: [
       {
-        icon: Shield,
+        icon: ListCheckIcon,
         label: "Compliance & Risk",
         href: "/compliance",
         submenu: [

@@ -3,24 +3,18 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
 import { apiGet } from "@/lib/fetcher"
+import type { DashboardData } from "@/lib/types"
 
 export default function DashboardContent() {
-  const [data, setData] = useState<{
-    stats: { totalAssets: number; totalFacilities: number; totalUsers: number; categories: number }
-    tagging: { tagged: number; untagged: number; percentTagged: number }
-    overview: { notFound: number; inUse: number; found: number }
-    visibility: { scanned: number; notScanned: number; trend: { date: string; scanned: number; notScanned: number }[] }
-    zonesNotScanned: string[]
-    assetDetails: { recentAssets: { id: string; name: string; type: string; location: string; status: string }[]; topCategories: { name: string; count: number }[]; maintenanceDue: { id: string; name: string; dueDate: string }[] }
-  }>()
+  const [data, setData] = useState<DashboardData>()
 
   const [range, setRange] = useState<"day" | "week" | "month">("week")
   const router = useRouter()
 
   useEffect(() => {
-    apiGet<typeof data>(`/api/core/dashboard?range=${range}`)
+    apiGet<DashboardData>(`/api/core/dashboard?range=${range}`)
       .then((d) => setData(d as any))
       .catch((error) => {
         console.error("Failed to fetch dashboard data:", error)
@@ -38,6 +32,9 @@ export default function DashboardContent() {
       case 'facilities':
         router.push('/facilities')
         break
+      case 'utilization':
+        router.push('/asset-locator/dashboard')
+        break
       // Add more cases as needed for other cards
       default:
         break
@@ -52,8 +49,8 @@ export default function DashboardContent() {
         </h1>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Enhanced Stat Cards with Utilization */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
         {[
           { 
             title: "Total Assets", 
@@ -63,7 +60,7 @@ export default function DashboardContent() {
             clickable: true 
           },
           { 
-            title: "Total Assets", 
+            title: "Asset Categories", 
             subtitle: "Category", 
             value: data?.stats.categories ?? "-", 
             type: "categories",
@@ -82,6 +79,20 @@ export default function DashboardContent() {
             value: data?.stats.totalUsers ?? "-", 
             type: "users",
             clickable: false 
+          },
+          {
+            title: "Avg Utilization",
+            subtitle: "System Wide",
+            value: data?.stats.avgUtilization ? `${data.stats.avgUtilization}%` : "-",
+            type: "utilization",
+            clickable: true
+          },
+          {
+            title: "Underutilized",
+            subtitle: "Assets",
+            value: data?.stats.underutilizedAssets ?? "-",
+            type: "utilization",
+            clickable: true
           },
         ].map((card, i) => (
           <div 
@@ -109,7 +120,7 @@ export default function DashboardContent() {
         ))}
       </div>
 
-      {/* Charts Section */}
+      {/* Charts Section - Updated Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Asset Tagged */}
         <div className="bg-white rounded-xl p-6 border border-gray-200">
@@ -294,6 +305,98 @@ export default function DashboardContent() {
                 +{data.zonesNotScanned.length - 6} more
               </button>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Department Utilization Overview Section */}
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-light" style={{ color: "#001f3f" }}>
+            Department Utilization Overview
+          </h2>
+          <button
+            onClick={() => router.push('/asset-locator/dashboard')}
+            className="text-sm px-4 py-2 rounded-lg border border-teal-300 text-teal-600 hover:bg-teal-50 transition-colors"
+          >
+            View Full Analytics →
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Department Performance Bar Chart */}
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: "#001f3f" }}>
+              Top Performing Departments
+            </h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart 
+                  data={data?.utilization?.departmentUtilization?.slice(0, 5) || []} 
+                  margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="departmentName" 
+                    stroke="#9ca3af" 
+                    style={{ fontSize: "10px" }}
+                    tick={{ fill: '#6b7280' }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis 
+                    stroke="#9ca3af" 
+                    style={{ fontSize: "12px" }}
+                    tick={{ fill: '#6b7280' }}
+                    label={{ value: 'Utilization %', angle: -90, position: 'insideLeft' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#fff', 
+                      border: '1px solid #e5e7eb', 
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
+                  />
+                  <Bar dataKey="avgUtilization" fill="#0d7a8c" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Top 5 Idle Assets */}
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: "#001f3f" }}>
+              Top 5 Idle Assets
+            </h3>
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {(data?.utilization?.top5IdleAssets || []).map((asset, idx) => (
+                <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm" style={{ color: "#001f3f" }}>{asset.name}</p>
+                      <p className="text-xs text-gray-500">{asset.type} • {asset.location}</p>
+                      <p className="text-xs text-gray-600 mt-1">Idle: {asset.idleDuration} days</p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        asset.utilization < 20 ? 'bg-red-100 text-red-700' :
+                        asset.utilization < 30 ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-green-100 text-green-700'
+                      }`}>
+                        {asset.utilization}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {(!data?.utilization?.top5IdleAssets || data.utilization.top5IdleAssets.length === 0) && (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No idle assets found</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
