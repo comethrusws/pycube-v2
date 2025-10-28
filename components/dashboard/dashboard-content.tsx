@@ -35,6 +35,9 @@ export default function DashboardContent() {
       case 'categories':
         router.push('/product-categories')
         break
+      case 'facilities':
+        router.push('/facilities')
+        break
       // Add more cases as needed for other cards
       default:
         break
