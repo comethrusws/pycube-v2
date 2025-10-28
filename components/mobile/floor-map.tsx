@@ -7,13 +7,24 @@ interface Asset {
   id: string
   name: string
   type: string
+  category: string
+  tagId: string
   status: "available" | "in-use" | "maintenance" | "lost"
+  utilization: number
+  lastActive: string
+  department: string
+  departmentId: string
   location: {
-    coordinates: { x: number; y: number }
+    building: string
+    floor: string
     zone: string
     room: string
+    coordinates: { x: number; y: number }
   }
   maintenanceReadiness: "green" | "yellow" | "red"
+  lastSeen: string
+  serialNumber: string
+  value: number
 }
 
 interface FloorMapProps {
@@ -34,18 +45,46 @@ export default function FloorMap({ assets, selectedAsset, onAssetSelect, floor, 
     return () => clearTimeout(timer)
   }, [floor, building])
 
+  // Generate coordinates for assets that don't have them
+  const assetsWithCoordinates = assets.map((asset, index) => {
+    if (asset.location?.coordinates?.x && asset.location?.coordinates?.y) {
+      return asset
+    }
+    
+    // Generate realistic coordinates based on asset ID/index
+    const gridCols = 4
+    const gridRows = 3
+    const row = Math.floor(index / gridCols)
+    const col = index % gridCols
+    
+    const roomWidth = 120
+    const roomHeight = 80
+    const margin = 20
+    
+    return {
+      ...asset,
+      location: {
+        ...asset.location,
+        coordinates: {
+          x: margin + (col * (roomWidth + margin)) + Math.random() * (roomWidth - 40) + 20,
+          y: margin + (row * (roomHeight + margin)) + Math.random() * (roomHeight - 40) + 20
+        }
+      }
+    }
+  })
+
   const getAssetIcon = (asset: Asset) => {
     switch (asset.status) {
       case "available":
-        return <MapPin className="w-4 h-4 text-green-600" />
+        return <MapPin className="w-3 h-3 text-green-600" />
       case "in-use":
-        return <Zap className="w-4 h-4 text-blue-600" />
+        return <Zap className="w-3 h-3 text-blue-600" />
       case "maintenance":
-        return <Wrench className="w-4 h-4 text-orange-600" />
+        return <Wrench className="w-3 h-3 text-orange-600" />
       case "lost":
-        return <AlertTriangle className="w-4 h-4 text-red-600" />
+        return <AlertTriangle className="w-3 h-3 text-red-600" />
       default:
-        return <MapPin className="w-4 h-4 text-gray-600" />
+        return <MapPin className="w-3 h-3 text-gray-600" />
     }
   }
 
@@ -141,7 +180,7 @@ export default function FloorMap({ assets, selectedAsset, onAssetSelect, floor, 
 
         {/* Asset Pins */}
         <div className="absolute inset-0" style={{ zIndex: 3 }}>
-          {assets.map((asset) => (
+          {assetsWithCoordinates.map((asset) => (
             <button
               key={asset.id}
               onClick={() => onAssetSelect(asset)}
@@ -156,7 +195,7 @@ export default function FloorMap({ assets, selectedAsset, onAssetSelect, floor, 
               }}
             >
               <div className={`
-                w-8 h-8 rounded-full border-2 flex items-center justify-center
+                w-6 h-6 rounded-full border-2 flex items-center justify-center
                 ${getStatusColor(asset)} ${getMaintenanceIndicator(asset.maintenanceReadiness)}
                 ${selectedAsset?.id === asset.id ? 'ring-2 ring-teal-500 ring-offset-2' : ''}
               `}>
@@ -167,6 +206,11 @@ export default function FloorMap({ assets, selectedAsset, onAssetSelect, floor, 
               {selectedAsset?.id === asset.id && (
                 <div className="absolute inset-0 rounded-full border-2 border-teal-500 animate-ping"></div>
               )}
+              
+              {/* Asset name tooltip on hover */}
+              <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                {asset.name}
+              </div>
             </button>
           ))}
         </div>

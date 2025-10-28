@@ -3,129 +3,110 @@ import { loadSeedData } from "@/lib/data-loader"
 
 export async function GET(request: NextRequest) {
   try {
-    const data = await loadSeedData()
     const { searchParams } = new URL(request.url)
-    
     const query = searchParams.get("q") || ""
-    const department = searchParams.get("department") || ""
-    const floor = searchParams.get("floor") || ""
-    const status = searchParams.get("status") || ""
-    const type = searchParams.get("type") || ""
-    const building = searchParams.get("building") || ""
+    const department = searchParams.get("department") || "all"
+    const building = searchParams.get("building") || "all"
+    const floor = searchParams.get("floor") || "all"
+    const status = searchParams.get("status") || "all"
+    const type = searchParams.get("type") || "all"
+
+    const data = await loadSeedData()
     
-    let filtered = data.assets || []
-
-    // Apply search query filter
-    if (query) {
-      const lowerQuery = query.toLowerCase()
-      filtered = filtered.filter(asset => 
-        asset.name.toLowerCase().includes(lowerQuery) ||
-        asset.type.toLowerCase().includes(lowerQuery) ||
-        asset.tagId.toLowerCase().includes(lowerQuery) ||
-        asset.id.toLowerCase().includes(lowerQuery)
-      )
-    }
-
-    // Apply department filter
-    if (department && department !== "all") {
-      filtered = filtered.filter(asset => {
-        const dept = data.departments.find(d => d.id === asset.departmentId)
-        return dept?.name.toLowerCase().includes(department.toLowerCase())
-      })
-    }
-
-    // Apply status filter
-    if (status && status !== "all") {
-      filtered = filtered.filter(asset => asset.status === status)
-    }
-
-    // Apply type filter
-    if (type && type !== "all") {
-      filtered = filtered.filter(asset => asset.type.toLowerCase().includes(type.toLowerCase()))
-    }
-
-    // Apply location filters
-    if (building || floor) {
-      filtered = filtered.filter(asset => {
-        const zone = data.zones.find(z => z.id === asset.location.zoneId)
-        const assetFloor = data.floors.find(f => f.id === zone?.floorId)
-        const assetBuilding = data.buildings.find(b => b.id === assetFloor?.buildingId)
-        
-        if (building && building !== "all" && assetBuilding?.name !== building) return false
-        if (floor && floor !== "all" && assetFloor?.name !== floor) return false
-        return true
-      })
-    }
-
-    // Enrich data with location information and maintenance readiness
-    const enrichedAssets = filtered.map(asset => {
+    // Convert assets to mobile format with enhanced location data
+    const mobileAssets = data.assets.map(asset => {
       const zone = data.zones.find(z => z.id === asset.location.zoneId)
-      const floor = data.floors.find(f => f.id === zone?.floorId)
-      const building = data.buildings.find(b => b.id === floor?.buildingId)
+      const floorObj = data.floors.find(f => f.id === zone?.floorId)
+      const building = data.buildings.find(b => b.id === floorObj?.buildingId)
       const department = data.departments.find(d => d.id === asset.departmentId)
       
-      // Calculate maintenance readiness
-      const overdueMaintenance = data.maintenanceTasks.some(
-        task => task.assetId === asset.id && task.status === "overdue"
-      )
-      const upcomingMaintenance = data.maintenanceTasks.some(
-        task => task.assetId === asset.id && 
-        task.status === "pending" && 
-        new Date(task.scheduledDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      )
-      
-      const maintenanceReadiness = overdueMaintenance ? "red" : upcomingMaintenance ? "yellow" : "green"
-      
-      // Generate mock coordinates for map display
-      const baseX = 100 + (parseInt(asset.id.slice(-3)) % 300)
-      const baseY = 100 + (parseInt(asset.id.slice(-2)) % 200)
+      // Generate coordinates based on asset ID for consistent positioning
+      const assetIndex = parseInt(asset.id.slice(-3)) || 0
+      const gridCols = 4
+      const row = Math.floor(assetIndex / gridCols) % 3
+      const col = assetIndex % gridCols
       
       return {
         id: asset.id,
         name: asset.name,
         type: asset.type,
         category: asset.category || asset.type,
-        tagId: asset.tagId,
+        tagId: asset.tagId || `TAG-${asset.id.slice(-6)}`,
         status: asset.status,
         utilization: asset.utilization,
         lastActive: asset.lastActive,
-        department: department?.name || "Unknown Department",
+        department: department?.name || `Department ${asset.departmentId.slice(-3)}`,
         departmentId: asset.departmentId,
         location: {
-          building: building?.name || "Unknown Building",
-          floor: floor?.name || "Unknown Floor", 
-          zone: zone?.name || "Unknown Zone",
-          room: `Room ${zone?.name?.slice(-3) || "000"}`,
-          coordinates: { x: baseX, y: baseY }
+          building: building?.name || "Building 1",
+          floor: floorObj?.name || "Floor 1", 
+          zone: zone?.name || "Zone A",
+          room: `Room ${zone?.name?.slice(-1) || 'A'}-${Math.floor(assetIndex / 10) + 1}`,
+          coordinates: {
+            x: 50 + (col * 100) + (assetIndex % 50),
+            y: 50 + (row * 80) + (assetIndex % 30)
+          }
         },
-        maintenanceReadiness,
+        maintenanceReadiness: asset.utilization > 70 ? "green" : asset.utilization > 40 ? "yellow" : "red",
         lastSeen: asset.lastActive,
-        serialNumber: asset.serialNumber,
-        value: asset.value
+        serialNumber: asset.serialNumber || `SN${asset.id.slice(-8)}`,
+        value: asset.value || Math.floor(Math.random() * 50000) + 5000
       }
     })
 
-    // Sort by relevance (exact matches first, then by name)
-    if (query) {
-      enrichedAssets.sort((a, b) => {
-        const aExactMatch = a.name.toLowerCase() === query.toLowerCase() || a.tagId.toLowerCase() === query.toLowerCase()
-        const bExactMatch = b.name.toLowerCase() === query.toLowerCase() || b.tagId.toLowerCase() === query.toLowerCase()
-        
-        if (aExactMatch && !bExactMatch) return -1
-        if (!aExactMatch && bExactMatch) return 1
-        return a.name.localeCompare(b.name)
-      })
-    }
+    // Apply filters
+    let filteredAssets = mobileAssets.filter(asset => {
+      // Search query filter
+      if (query && !asset.name.toLowerCase().includes(query.toLowerCase()) && 
+          !asset.type.toLowerCase().includes(query.toLowerCase()) &&
+          !asset.tagId.toLowerCase().includes(query.toLowerCase())) {
+        return false
+      }
+      
+      // Department filter
+      if (department !== "all" && asset.department !== department) {
+        return false
+      }
+      
+      // Building filter  
+      if (building !== "all" && asset.location.building !== building) {
+        return false
+      }
+      
+      // Floor filter
+      if (floor !== "all" && asset.location.floor !== floor) {
+        return false
+      }
+      
+      // Status filter
+      if (status !== "all" && asset.status !== status) {
+        return false
+      }
+      
+      // Type filter
+      if (type !== "all" && asset.type !== type) {
+        return false
+      }
+      
+      return true
+    })
+
+    // Generate filter options from all assets
+    const departments = [...new Set(mobileAssets.map(a => a.department))].sort()
+    const buildings = [...new Set(mobileAssets.map(a => a.location.building))].sort()
+    const floors = [...new Set(mobileAssets.map(a => a.location.floor))].sort()
+    const types = [...new Set(mobileAssets.map(a => a.type))].sort()
+    const statuses = ["available", "in-use", "maintenance", "lost"]
 
     return NextResponse.json({
-      assets: enrichedAssets.slice(0, 50), // Limit to 50 results for mobile performance
-      total: enrichedAssets.length,
+      assets: filteredAssets,
+      total: filteredAssets.length,
       filters: {
-        departments: [...new Set(data.departments.map(d => d.name))].sort(),
-        buildings: [...new Set(data.buildings.map(b => b.name))].sort(),
-        floors: [...new Set(data.floors.map(f => f.name))].sort(),
-        types: [...new Set(data.assets.map(a => a.type))].sort(),
-        statuses: ["available", "in-use", "maintenance", "lost"]
+        departments,
+        buildings,
+        floors,
+        types,
+        statuses
       }
     })
   } catch (error) {
