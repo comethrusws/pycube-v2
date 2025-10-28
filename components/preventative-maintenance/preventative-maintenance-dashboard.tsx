@@ -152,23 +152,23 @@ export default function PreventativeMaintenanceDashboard() {
             <StatCard
               title="Total Monitored Assets"
               value={data.summary?.totalAssetsMonitored?.toLocaleString() || data.stats?.totalMonitoredAssets?.toLocaleString() || "0"}
-              color="#0d7a8c"
+              color="#003d5c"
             />
             <StatCard
               title="High Risk Assets"
               value={data.summary?.highRiskAssets?.toLocaleString() || "0"}
-              color="#dc2626"
+              color="#003d5c"
             />
             <StatCard
               title="PM Tasks Completed"
               value={data.stats?.pmCollected?.toLocaleString() || "0"}
-              color="#059669"
+              color="#003d5c"
             />
             <StatCard
               title="Potential Savings"
               value={`$${(data.summary?.potentialCostSavings || 0).toLocaleString()}`}
-              color="#ffffff"
-              textColor="#001f3f"
+              color="#003d5c"
+              textColor="#ffffff"
             />
           </div>
 
@@ -182,7 +182,7 @@ export default function PreventativeMaintenanceDashboard() {
                 </h3>
                 {data.collectionStatus?.length > 0 && (
                   <div className="text-sm text-gray-500">
-                    Total: {data.collectionStatus.reduce((sum: number, item: any) => sum + item.count, 0)} tasks
+                    Total: {data.collectionStatus.reduce((sum: number, item: any) => sum + item.count, 0).toLocaleString()} tasks
                   </div>
                 )}
               </div>
@@ -206,7 +206,7 @@ export default function PreventativeMaintenanceDashboard() {
                       </Pie>
                       <Tooltip 
                         formatter={(value: any, name: any, props: any) => [
-                          `${value}% (${props.payload.count} tasks)`,
+                          `${value}% (${Number(props.payload.count || 0).toLocaleString()} tasks)`,
                           name
                         ]}
                         contentStyle={{
@@ -230,7 +230,7 @@ export default function PreventativeMaintenanceDashboard() {
                       />
                       <div>
                         <p className="text-sm font-medium text-gray-900">{entry.name}</p>
-                        <p className="text-xs text-gray-500">{entry.count} tasks ({entry.value}%)</p>
+                        <p className="text-xs text-gray-500">{Number(entry.count || 0).toLocaleString()} tasks ({entry.value}%)</p>
                       </div>
                     </div>
                   ))}
@@ -251,7 +251,7 @@ export default function PreventativeMaintenanceDashboard() {
                       <span className="text-sm font-medium text-red-900">High Risk</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-lg font-bold text-red-900">{data.summary?.highRiskAssets || 0}</span>
+                      <span className="text-lg font-bold text-red-900">{(data.summary?.highRiskAssets || 0).toLocaleString()}</span>
                       <p className="text-xs text-red-600">Immediate attention required</p>
                     </div>
                   </div>
@@ -262,7 +262,7 @@ export default function PreventativeMaintenanceDashboard() {
                       <span className="text-sm font-medium text-orange-900">Medium Risk</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-lg font-bold text-orange-900">{data.summary?.mediumRiskAssets || 0}</span>
+                      <span className="text-lg font-bold text-orange-900">{(data.summary?.mediumRiskAssets || 0).toLocaleString()}</span>
                       <p className="text-xs text-orange-600">Monitor closely</p>
                     </div>
                   </div>
@@ -273,7 +273,7 @@ export default function PreventativeMaintenanceDashboard() {
                       <span className="text-sm font-medium text-green-900">Low Risk</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-lg font-bold text-green-900">{data.summary?.lowRiskAssets || 0}</span>
+                      <span className="text-lg font-bold text-green-900">{(data.summary?.lowRiskAssets || 0).toLocaleString()}</span>
                       <p className="text-xs text-green-600">Normal operation</p>
                     </div>
                   </div>
@@ -291,7 +291,7 @@ export default function PreventativeMaintenanceDashboard() {
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Total Assets</p>
                       <p className="text-lg font-semibold text-gray-900">
-                        {data.summary?.totalAssetsMonitored?.toLocaleString() || 0}
+                        {(data.summary?.totalAssetsMonitored || 0).toLocaleString()}
                       </p>
                     </div>
                   </div>

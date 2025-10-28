@@ -46,9 +46,9 @@ const menuSections = [
   },
   {
     items: [
-      { icon: Package, label: "Product Categories", href: "" },
-      { icon: List, label: "Products", href: "" },
-      { icon: Database, label: "Assets", href: "" },
+      { icon: Package, label: "Product Categories", href: "/product-categories" },
+      { icon: List, label: "Products", href: "/products" },
+      { icon: Database, label: "Assets", href: "/assets" },
     ] as MenuItem[],
   },
   {
@@ -108,7 +108,20 @@ const menuSections = [
   },
   {
     items: [
-      { icon: Warehouse, label: "Facilities", href: "" },
+      {
+        icon: Shield,
+        label: "Compliance & Risk",
+        href: "/compliance",
+        submenu: [
+          { label: "Dashboard", href: "/compliance" },
+          { label: "Reports", href: "/compliance/reports" },
+        ],
+      },
+    ] as MenuItem[],
+  },
+  {
+    items: [
+      { icon: Warehouse, label: "Facilities", href: "/facilities" },
       { icon: Users, label: "Departments", href: "" },
     ] as MenuItem[],
   },

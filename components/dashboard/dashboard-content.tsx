@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { apiGet } from "@/lib/fetcher"
 
@@ -16,6 +17,8 @@ export default function DashboardContent() {
   }>()
 
   const [range, setRange] = useState<"day" | "week" | "month">("week")
+  const router = useRouter()
+
   useEffect(() => {
     apiGet<typeof data>(`/api/core/dashboard?range=${range}`)
       .then((d) => setData(d as any))
@@ -23,6 +26,24 @@ export default function DashboardContent() {
         console.error("Failed to fetch dashboard data:", error)
       })
   }, [range])
+
+  const handleCardClick = (cardType: string) => {
+    switch (cardType) {
+      case 'totalAssets':
+        router.push('/assets')
+        break
+      case 'categories':
+        router.push('/product-categories')
+        break
+      case 'facilities':
+        router.push('/facilities')
+        break
+      // Add more cases as needed for other cards
+      default:
+        break
+    }
+  }
+
   return (
     <div className="p-6 lg:p-8 space-y-8">
       <div>
@@ -34,19 +55,56 @@ export default function DashboardContent() {
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { title: "Total Assets", subtitle: "In System", value: data?.stats.totalAssets ?? "-" },
-          { title: "Total Assets", subtitle: "Category", value: data?.stats.categories ?? "-" },
-          { title: "Total Facilities", subtitle: "Facility", value: data?.stats.totalFacilities ?? "-" },
-          { title: "Total Users", subtitle: "Active", value: data?.stats.totalUsers ?? "-" },
+          { 
+            title: "Total Assets", 
+            subtitle: "In System", 
+            value: data?.stats.totalAssets ?? "-", 
+            type: "totalAssets",
+            clickable: true 
+          },
+          { 
+            title: "Total Assets", 
+            subtitle: "Category", 
+            value: data?.stats.categories ?? "-", 
+            type: "categories",
+            clickable: true 
+          },
+          { 
+            title: "Total Facilities", 
+            subtitle: "Facility", 
+            value: data?.stats.totalFacilities ?? "-", 
+            type: "facilities",
+            clickable: true 
+          },
+          { 
+            title: "Total Users", 
+            subtitle: "Active", 
+            value: data?.stats.totalUsers ?? "-", 
+            type: "users",
+            clickable: false 
+          },
         ].map((card, i) => (
-          <div key={i} className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
+          <div 
+            key={i} 
+            className={`bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 ${
+              card.clickable 
+                ? 'hover:shadow-lg hover:border-teal-300 cursor-pointer transform hover:-translate-y-1' 
+                : 'hover:shadow-md'
+            }`}
+            onClick={() => card.clickable && handleCardClick(card.type)}
+          >
             <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>
               {card.title}
             </p>
             <p className="text-xs text-gray-600 mb-4">{card.subtitle}</p>
             <p className="text-4xl font-light" style={{ color: "#001f3f" }}>
-              {card.value}
+              {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
             </p>
+            {card.clickable && (
+              <div className="mt-3 flex items-center text-xs text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span>Click to view details →</span>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -61,7 +119,7 @@ export default function DashboardContent() {
                 Asset Tagged
               </p>
               <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                {data?.tagging.tagged ?? 0}
+                {(data?.tagging.tagged ?? 0).toLocaleString()}
               </p>
             </div>
             <div>
@@ -69,7 +127,7 @@ export default function DashboardContent() {
                 Untagged
               </p>
               <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                {data?.tagging.untagged ?? 0}
+                {(data?.tagging.untagged ?? 0).toLocaleString()}
               </p>
             </div>
 
@@ -148,7 +206,7 @@ export default function DashboardContent() {
               }].map((item, i) => (
                 <div key={i} className="p-4 rounded-xl" style={{ backgroundColor: item.accent, border: `1px solid ${item.border}` }}>
                   <p className="text-xs font-medium mb-1" style={{ color: item.text }}>{item.label}</p>
-                  <p className="text-3xl font-light" style={{ color: "#001f3f" }}>{item.value}</p>
+                  <p className="text-3xl font-light" style={{ color: "#001f3f" }}>{(item.value ?? 0).toLocaleString()}</p>
                 </div>
               ))}
             </div>
@@ -253,7 +311,7 @@ export default function DashboardContent() {
                   Assets Scanned
                 </p>
                 <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                  {data?.visibility.scanned ?? 0}
+                  {(data?.visibility.scanned ?? 0).toLocaleString()}
                 </p>
               </div>
               <div>
@@ -261,7 +319,7 @@ export default function DashboardContent() {
                   Assets Not Scanned
                 </p>
                 <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                  {data?.visibility.notScanned ?? 0}
+                  {(data?.visibility.notScanned ?? 0).toLocaleString()}
                 </p>
               </div>
             </div>

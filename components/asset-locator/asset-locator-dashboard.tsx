@@ -227,8 +227,8 @@ const MonitorActionModal = ({ asset, onClose }: { asset: any, onClose: () => voi
   )
 }
 
-const StatCard = ({ label, value, bgColor, trend }: { label: string; value: string | number; bgColor: string; trend?: string }) => (
-  <div className={`${bgColor} text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300`}>
+const StatCard = ({ label, value, bgColor, trend, colorHex }: { label: string; value: string | number; bgColor?: string; trend?: string; colorHex?: string }) => (
+  <div className={`${bgColor || ''} text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300`} style={colorHex ? { backgroundColor: colorHex } : undefined}>
     <h3 className="text-sm font-medium uppercase tracking-wider opacity-90 mb-2">{label}</h3>
     <p className="text-4xl font-light">{typeof value === 'number' ? value.toLocaleString() : value}</p>
     {trend && <p className="text-sm opacity-80 mt-2">{trend}</p>}
@@ -400,24 +400,24 @@ export default function AssetLocatorDashboard() {
               <StatCard 
                 label="Average Utilization" 
                 value={`${data?.stats.avgUtilization ?? 0}%`}
-                bgColor="bg-gradient-to-br from-blue-600 to-blue-700" 
+                colorHex="#003d5c"
               />
               <StatCard 
                 label="Underutilized Assets" 
                 value={data?.stats.underutilized ?? 0} 
-                bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
+                colorHex="#003d5c"
                 trend="< 40% utilization"
               />
               <StatCard 
                 label="Movement Alerts" 
                 value={utilization?.movementAlerts?.length ?? 0} 
-                bgColor="bg-gradient-to-br from-red-500 to-red-600"
+                colorHex="#003d5c"
                 trend="Last 48 hours"
               />
               <StatCard 
                 label="Idle Assets (Critical)" 
                 value={utilization?.top10IdleAssets?.filter(a => a.idleDuration > 30).length ?? 0} 
-                bgColor="bg-gradient-to-br from-purple-500 to-purple-600"
+                colorHex="#003d5c"
                 trend="> 30 days idle"
               />
             </div>
@@ -888,22 +888,22 @@ export default function AssetLocatorDashboard() {
               <StatCard 
                 label="Total Monitored Assets" 
                 value={data?.stats.total ?? 0} 
-                bgColor="bg-gradient-to-br from-teal-600 to-teal-700" 
+                colorHex="#003d5c"
               />
               <StatCard 
                 label="Assets to be Located" 
                 value={data?.stats.toLocate ?? 0} 
-                bgColor="bg-gradient-to-br from-red-500 to-red-600" 
+                colorHex="#003d5c"
               />
               <StatCard 
                 label="Total Assets Located" 
                 value={data?.stats.located ?? 0} 
-                bgColor="bg-gradient-to-br from-teal-500 to-teal-600" 
+                colorHex="#003d5c"
               />
               <StatCard 
                 label="Total Assets Flagged" 
                 value={data?.stats.flagged ?? 0} 
-                bgColor="bg-gradient-to-br from-slate-500 to-slate-600" 
+                colorHex="#003d5c"
               />
             </div>
 

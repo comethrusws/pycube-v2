@@ -80,6 +80,7 @@ export interface Asset {
   name: string
   type: string
   category?: string // Add category field
+  productId?: string
   tagId: string
   departmentId: string
   location: {
@@ -248,6 +249,8 @@ export interface SeedData {
   users: User[]
   pointsOfContact: PointOfContact[]
   assets: Asset[]
+  products: Product[]
+  productCategories: ProductCategory[]
   userLogs: UserLog[]
   movementLogs: MovementLog[]
   maintenanceTasks: MaintenanceTask[]
@@ -259,6 +262,7 @@ export interface SeedData {
   dashboardData?: any
   assetLocatorData?: any
   predictiveMaintenanceData?: PredictiveMaintenanceData // Add predictive maintenance data
+  complianceData?: ComplianceData
 }
 
 // Add new interfaces for utilization analytics
@@ -425,5 +429,55 @@ export interface PredictiveMaintenanceData {
   riskDistribution: { name: string; value: number; count: number; color: string }[]
   degradationTrends: { assetId: string; assetName: string; trend: DegradationTrend[] }[]
   predictionAccuracy: { month: string; accuracy: number; predictionsCount: number }[]
+}
+
+// Products and Categories
+export interface ProductCategory {
+  id: string
+  name: string
+  status: "active" | "inactive"
+  parentCategoryId?: string
+  description?: string
+  createdAt?: string
+}
+
+export interface Product {
+  id: string
+  name: string
+  categoryId: string
+  category?: string
+  manufacturer?: string
+  status?: "active" | "inactive"
+  sku?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+// Compliance & Risk
+export interface ComplianceAssetRisk {
+  assetId: string
+  assetName: string
+  departmentId: string
+  departmentName: string
+  missedMaintenance: number
+  overdueCalibration: number
+  recallFlag: boolean
+  riskScore: number // 0-100
+}
+
+export interface ComplianceSummary {
+  overallScore: number
+  totalAssets: number
+  fullyCompliant: number
+  overdueMaintenance: number
+  recallActions: number
+  averageRiskScore: number
+  riskByDepartment: { departmentId: string; departmentName: string; high: number; medium: number; low: number }[]
+  noncomplianceTrend: { date: string; noncompliant: number }[]
+}
+
+export interface ComplianceData {
+  summary: ComplianceSummary
+  assetRisks: ComplianceAssetRisk[]
 }
 

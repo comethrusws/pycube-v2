@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { AlertTriangle, Calendar, Download, ExternalLink, TrendingUp, Zap, Clock, Settings, CheckCircle, X } from "lucide-react"
-import { apiGet } from "@/lib/fetcher"
+import { apiGet, apiPost } from "@/lib/fetcher"
 
 // Minimalist Modal Component (Jony Ive inspired)
 const Modal = ({ isOpen, onClose, title, children }: {
@@ -44,16 +44,38 @@ const ScheduleMaintenanceModal = ({ asset, onClose }: { asset: any, onClose: () 
     notes: ""
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    setIsSubmitting(false)
-    onClose()
+    setError(null)
+    setSuccess(null)
+    try {
+      const payload = {
+        assetId: asset.assetId,
+        assetName: asset.assetName,
+        type: formData.type,
+        urgency: formData.urgency,
+        scheduledDate: formData.scheduledDate,
+        estimatedDuration: Number(formData.estimatedDuration),
+        notes: formData.notes,
+        createdBy: "Predictive Insights"
+      }
+      const res = await apiPost<{ success: boolean; request: any }>("/api/preventative-maintenance/requests", payload)
+      if (res?.success) {
+        setSuccess("Maintenance scheduled successfully")
+        setTimeout(() => onClose(), 800)
+      } else {
+        setError("Failed to schedule maintenance")
+      }
+    } catch (e) {
+      setError("Failed to schedule maintenance")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -71,6 +93,9 @@ const ScheduleMaintenanceModal = ({ asset, onClose }: { asset: any, onClose: () 
           </div>
         </div>
       </div>
+
+      {error && <div className="text-sm text-red-600">{error}</div>}
+      {success && <div className="text-sm text-green-600">{success}</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -234,17 +259,76 @@ export default function PredictiveInsightsTab() {
       })
   }, [])
 
-  const handleExport = () => {
-    // Simulate CSV export
-    const csvData = data?.top5AtRisk?.map((asset: any) => [
-      asset.assetName,
-      asset.location,
-      asset.predictedIssue,
-      `${asset.confidenceScore}%`,
-      asset.recommendedAction
-    ]) || []
-    
-    console.log("Exporting predictive insights data:", csvData)
+  const handleExportCSV = () => {
+    const rows = [[
+      "Asset Name",
+      "Asset ID",
+      "Location",
+      "Predicted Issue",
+      "Failure Window (days)",
+      "Confidence (%)",
+      "Recommended Action"
+    ],
+      ...((data?.top5AtRisk || []).map((a: any) => [
+        a.assetName,
+        a.assetId,
+        a.location,
+        a.predictedIssue,
+        String(a.predictedFailureWindow),
+        String(a.confidenceScore),
+        a.recommendedAction
+      ]))
+    ]
+    const csv = rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `predictive-insights-${new Date().toISOString().slice(0,10)}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExportPDF = () => {
+    const win = window.open("", "_blank", "width=900,height=700")
+    if (!win) return
+    const rows = (data?.top5AtRisk || []).map((a: any) => `
+      <tr>
+        <td style="padding:8px;border:1px solid #e5e7eb;">${a.assetName}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;">${a.assetId}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;">${a.location}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;">${a.predictedIssue}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;">${a.predictedFailureWindow}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;">${a.confidenceScore}%</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;">${a.recommendedAction}</td>
+      </tr>
+    `).join("")
+    win.document.write(`
+      <html><head><title>Predictive Insights</title></head>
+      <body>
+        <h2>Predictive Maintenance - Top 5 At-Risk Assets</h2>
+        <table style="border-collapse:collapse;width:100%;font-family:sans-serif;font-size:12px;">
+          <thead>
+            <tr>
+              <th style="padding:8px;border:1px solid #e5e7eb;">Asset</th>
+              <th style="padding:8px;border:1px solid #e5e7eb;">Asset ID</th>
+              <th style="padding:8px;border:1px solid #e5e7eb;">Location</th>
+              <th style="padding:8px;border:1px solid #e5e7eb;">Predicted Issue</th>
+              <th style="padding:8px;border:1px solid #e5e7eb;">Failure Window</th>
+              <th style="padding:8px;border:1px solid #e5e7eb;">Confidence</th>
+              <th style="padding:8px;border:1px solid #e5e7eb;">Recommended Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+        <script>window.print()</script>
+      </body></html>
+    `)
+    win.document.close()
   }
 
   if (isLoading) {
@@ -314,13 +398,22 @@ export default function PredictiveInsightsTab() {
         <ChartCard 
           title="Failure Prediction Timeline"
           action={
-            <button 
-              onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              <span className="text-sm">Export</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleExportCSV}
+                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                <span className="text-sm">Export CSV</span>
+              </button>
+              <button 
+                onClick={handleExportPDF}
+                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                <span className="text-sm">Export PDF</span>
+              </button>
+            </div>
           }
         >
           <div className="h-80">
@@ -329,16 +422,16 @@ export default function PredictiveInsightsTab() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis 
                   dataKey="assetName" 
-                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  tick={{ fontSize: 11, fill: '#0d7a8c' }}
                   angle={-45}
                   textAnchor="end"
                   height={80}
-                  stroke="none"
+                  stroke="#0d7a8c"
                 />
                 <YAxis 
-                  tick={{ fontSize: 11, fill: '#64748b' }}
-                  axisLine={false}
-                  tickLine={false}
+                  tick={{ fontSize: 11, fill: '#0d7a8c' }}
+                  axisLine={true}
+                  tickLine={true}
                   label={{ value: 'Days Until Failure', angle: -90, position: 'insideLeft' }}
                 />
                 <Tooltip 
@@ -349,17 +442,31 @@ export default function PredictiveInsightsTab() {
                     boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
                     fontSize: '12px'
                   }}
-                  formatter={(value, name, props) => [
-                    `${value} days`,
-                    `Confidence: ${props.payload.confidenceScore}%`
-                  ]}
+                  formatter={(value, _name, props) => {
+                    const p = props.payload
+                    return [
+                      `${value} days`,
+                      `Conf: ${p.confidenceScore}% | Usage: ${p.keyIndicators?.usageHours ?? '-'}h | Temp Δ: ${p.keyIndicators?.temperatureVariance ?? '-'} | Vib: ${p.keyIndicators?.vibrationLevels ?? '-'}`
+                    ]
+                  }}
+                  labelFormatter={(label, payload) => {
+                    const p = payload && payload[0] && (payload[0] as any).payload
+                    if (!p) return label
+                    return `${p.assetName} (${p.assetId || 'N/A'})\nLast: ${p.maintenanceHistory?.lastServiceDate || '-'} | Next: ${p.maintenanceHistory?.nextScheduledService || '-'}`
+                  }}
                 />
                 <Bar 
                   dataKey="predictedFailureWindow" 
-                  fill="#0d7a8c"
                   radius={[8, 8, 0, 0]}
                   onClick={(data) => setSelectedAsset(data)}
-                />
+                >
+                  {(data?.top5AtRisk || []).map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={
+                      entry.riskLevel === 'high' ? '#dc2626' :
+                      entry.riskLevel === 'medium' ? '#ea580c' : '#059669'
+                    } />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -470,6 +577,7 @@ export default function PredictiveInsightsTab() {
             <thead>
               <tr className="bg-gray-50/50">
                 <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Asset</th>
+                <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Asset ID</th>
                 <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Location</th>
                 <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Predicted Issue</th>
                 <th className="text-left py-4 px-6 text-sm font-medium text-gray-900">Confidence</th>
@@ -491,6 +599,7 @@ export default function PredictiveInsightsTab() {
                       </div>
                     </div>
                   </td>
+                  <td className="py-4 px-6 text-sm text-gray-700">{asset.assetId}</td>
                   <td className="py-4 px-6 text-sm text-gray-700">{asset.location}</td>
                   <td className="py-4 px-6">
                     <div>
