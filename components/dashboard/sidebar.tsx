@@ -46,9 +46,9 @@ const menuSections = [
   },
   {
     items: [
-      { icon: Package, label: "Product Categories", href: "" },
-      { icon: List, label: "Products", href: "" },
-      { icon: Database, label: "Assets", href: "" },
+      { icon: Package, label: "Product Categories", href: "/product-categories" },
+      { icon: List, label: "Products", href: "/products" },
+      { icon: Database, label: "Assets", href: "/assets" },
     ] as MenuItem[],
   },
   {
