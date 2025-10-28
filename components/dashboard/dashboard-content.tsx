@@ -74,7 +74,7 @@ export default function DashboardContent() {
             subtitle: "Facility", 
             value: data?.stats.totalFacilities ?? "-", 
             type: "facilities",
-            clickable: false 
+            clickable: true 
           },
           { 
             title: "Total Users", 
