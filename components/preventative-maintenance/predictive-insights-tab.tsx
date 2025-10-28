@@ -422,16 +422,16 @@ export default function PredictiveInsightsTab() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis 
                   dataKey="assetName" 
-                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  tick={{ fontSize: 11, fill: '#0d7a8c' }}
                   angle={-45}
                   textAnchor="end"
                   height={80}
-                  stroke="none"
+                  stroke="#0d7a8c"
                 />
                 <YAxis 
-                  tick={{ fontSize: 11, fill: '#64748b' }}
-                  axisLine={false}
-                  tickLine={false}
+                  tick={{ fontSize: 11, fill: '#0d7a8c' }}
+                  axisLine={true}
+                  tickLine={true}
                   label={{ value: 'Days Until Failure', angle: -90, position: 'insideLeft' }}
                 />
                 <Tooltip 

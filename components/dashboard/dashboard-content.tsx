@@ -98,7 +98,7 @@ export default function DashboardContent() {
             </p>
             <p className="text-xs text-gray-600 mb-4">{card.subtitle}</p>
             <p className="text-4xl font-light" style={{ color: "#001f3f" }}>
-              {card.value}
+              {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
             </p>
             {card.clickable && (
               <div className="mt-3 flex items-center text-xs text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -119,7 +119,7 @@ export default function DashboardContent() {
                 Asset Tagged
               </p>
               <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                {data?.tagging.tagged ?? 0}
+                {(data?.tagging.tagged ?? 0).toLocaleString()}
               </p>
             </div>
             <div>
@@ -127,7 +127,7 @@ export default function DashboardContent() {
                 Untagged
               </p>
               <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                {data?.tagging.untagged ?? 0}
+                {(data?.tagging.untagged ?? 0).toLocaleString()}
               </p>
             </div>
 
@@ -206,7 +206,7 @@ export default function DashboardContent() {
               }].map((item, i) => (
                 <div key={i} className="p-4 rounded-xl" style={{ backgroundColor: item.accent, border: `1px solid ${item.border}` }}>
                   <p className="text-xs font-medium mb-1" style={{ color: item.text }}>{item.label}</p>
-                  <p className="text-3xl font-light" style={{ color: "#001f3f" }}>{item.value}</p>
+                  <p className="text-3xl font-light" style={{ color: "#001f3f" }}>{(item.value ?? 0).toLocaleString()}</p>
                 </div>
               ))}
             </div>
@@ -311,7 +311,7 @@ export default function DashboardContent() {
                   Assets Scanned
                 </p>
                 <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                  {data?.visibility.scanned ?? 0}
+                  {(data?.visibility.scanned ?? 0).toLocaleString()}
                 </p>
               </div>
               <div>
@@ -319,7 +319,7 @@ export default function DashboardContent() {
                   Assets Not Scanned
                 </p>
                 <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
-                  {data?.visibility.notScanned ?? 0}
+                  {(data?.visibility.notScanned ?? 0).toLocaleString()}
                 </p>
               </div>
             </div>
