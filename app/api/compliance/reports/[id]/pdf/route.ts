@@ -1,10 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { readFileSync } from "fs"
 import { join } from "path"
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: Request) {
   try {
-    const file = join(process.cwd(), "data", "reports", `${params.id}.json`)
+    const url = new URL(req.url)
+    const segs = url.pathname.split("/")
+    const idx = segs.findIndex((s) => s === "reports")
+    const id = idx >= 0 && segs.length > idx + 1 ? segs[idx + 1] : ""
+    const file = join(process.cwd(), "data", "reports", `${id}.json`)
     const raw = readFileSync(file, "utf-8")
     const json = JSON.parse(raw)
     const rows = (json.assetRisks || []).slice(0, 500).map((a: any) => `
@@ -18,7 +22,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       </tr>
     `).join("")
     const s = json.summary || {}
-    const html = `<!doctype html><html><head><meta charset='utf-8'><title>${params.id}</title></head><body>
+    const html = `<!doctype html><html><head><meta charset='utf-8'><title>${id}</title></head><body>
       <h2>Compliance Report</h2>
       <p>Overall Score: ${s.overallScore ?? 0} | Total Assets: ${s.totalAssets ?? 0} | Fully Compliant: ${s.fullyCompliant ?? 0} | Overdue Maintenance: ${s.overdueMaintenance ?? 0} | Avg Risk: ${s.averageRiskScore ?? 0}</p>
       <table style='border-collapse:collapse;width:100%;font-family:sans-serif;font-size:12px;'>
@@ -38,7 +42,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     return new NextResponse(html, {
       headers: {
         "Content-Type": "text/html; charset=utf-8",
-        "Content-Disposition": `attachment; filename=${params.id}.html`
+        "Content-Disposition": `attachment; filename=${id}.html`
       }
     })
   } catch (error) {

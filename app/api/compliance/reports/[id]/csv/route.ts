@@ -1,10 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { readFileSync } from "fs"
 import { join } from "path"
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: Request) {
   try {
-    const file = join(process.cwd(), "data", "reports", `${params.id}.json`)
+    const url = new URL(req.url)
+    const segs = url.pathname.split("/")
+    const idx = segs.findIndex((s) => s === "reports")
+    const id = idx >= 0 && segs.length > idx + 1 ? segs[idx + 1] : ""
+    const file = join(process.cwd(), "data", "reports", `${id}.json`)
     const raw = readFileSync(file, "utf-8")
     const json = JSON.parse(raw)
     const rows = [["Asset","Department","Missed Maintenance","Overdue Calibration","Recall","Risk Score"],
@@ -13,7 +17,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     return new NextResponse(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename=${params.id}.csv`
+        "Content-Disposition": `attachment; filename=${id}.csv`
       }
     })
   } catch (error) {
