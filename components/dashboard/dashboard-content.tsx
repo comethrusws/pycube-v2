@@ -30,10 +30,10 @@ export default function DashboardContent() {
   const handleCardClick = (cardType: string) => {
     switch (cardType) {
       case 'totalAssets':
-        router.push('/asset-locator')
+        router.push('/assets')
         break
       case 'categories':
-        router.push('/preventative-maintenance/dashboard')
+        router.push('/product-categories')
         break
       // Add more cases as needed for other cards
       default:
