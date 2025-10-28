@@ -379,7 +379,7 @@ export default function AssetsContent() {
                           <MapPin className="w-4 h-4 text-gray-400" />
                           <div>
                             <p className="text-sm text-gray-900">{asset.location.zoneName}</p>
-                            <p className="text-xs text-gray-500">{asset.location.buildingName} - {asset.location.floorName}</p>
+                            <p className="text-xs text-gray-500">{asset.location.floorName}</p>
                           </div>
                         </div>
                       </td>

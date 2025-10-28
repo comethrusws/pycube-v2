@@ -45,7 +45,6 @@ export async function GET(request: NextRequest) {
     // Enrich data with additional information
     const enrichedData = paginatedData.map(asset => {
       const zone = data.zones.find(z => z.id === asset.location.zoneId)
-      const building = data.buildings.find(b => b.id === zone?.buildingId)
       const floor = data.floors.find(f => f.id === zone?.floorId)
       const department = data.departments.find(d => d.id === asset.departmentId)
       
@@ -54,7 +53,6 @@ export async function GET(request: NextRequest) {
         location: {
           ...asset.location,
           zoneName: zone?.name || "Unknown Zone",
-          buildingName: building?.name || "Unknown Building",
           floorName: floor?.name || "Unknown Floor"
         },
         departmentName: department?.name || "Unknown Department"
