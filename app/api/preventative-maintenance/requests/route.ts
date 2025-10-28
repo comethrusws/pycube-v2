@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { loadSeedData } from "@/lib/data-loader"
+import { loadSeedData, clearCache } from "@/lib/data-loader"
+import { readFileSync, writeFileSync } from "fs"
+import { join } from "path"
 
 export async function GET(request: NextRequest) {
   try {
@@ -79,21 +81,40 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    
-    // In a real application, this would save to database
-    // For now, we'll return a success response
-    const newRequestId = `MR-${Date.now().toString().slice(-3)}`
-    
-    return NextResponse.json({
-      success: true,
-      message: "Maintenance request created successfully",
-      requestId: newRequestId,
-      request: {
-        id: newRequestId,
-        ...body,
-        lastModified: new Date().toISOString().split('T')[0]
-      }
-    })
+    const data = await loadSeedData()
+
+    const newRequestId = `MR-${String(data.maintenanceRequests.length + 1).padStart(3, '0')}`
+    const newReq = {
+      id: newRequestId,
+      status: body.status || "Pending",
+      requestor: body.requestor || "System",
+      category: body.type || "Preventive",
+      priority: (body.urgency || "Medium").toString().replace(/^[a-z]/, (m: string) => m.toUpperCase()),
+      urgency: (body.urgency || "Normal").toString().replace(/^[a-z]/, (m: string) => m.toUpperCase()),
+      department: body.department || "Clinical Engineering",
+      description: body.notes ? String(body.notes) : `AI-scheduled maintenance for ${body.assetName || body.assetId}`,
+      maintenanceDate: body.scheduledDate || new Date().toISOString().split('T')[0],
+      businessCriticality: body.businessCriticality || "Medium",
+      lastModified: new Date().toISOString().split('T')[0],
+      assetName: body.assetName,
+      assetId: body.assetId,
+      estimatedCost: body.estimatedCost || undefined,
+      createdBy: body.createdBy || "Predictive Insights",
+      assignedTo: body.assignedTo || undefined
+    }
+
+    const updated = {
+      ...data,
+      maintenanceRequests: [newReq, ...data.maintenanceRequests]
+    }
+
+    const seedPath = join(process.cwd(), "data", "seed.json")
+    const current = JSON.parse(readFileSync(seedPath, "utf-8"))
+    current.maintenanceRequests = updated.maintenanceRequests
+    writeFileSync(seedPath, JSON.stringify(current), { encoding: "utf-8" })
+    clearCache()
+
+    return NextResponse.json({ success: true, request: newReq })
   } catch (error) {
     console.error("Create maintenance request error:", error)
     return NextResponse.json({ error: "Failed to create maintenance request" }, { status: 500 })
