@@ -1,5 +1,6 @@
 import { loadSeedData } from "@/lib/data-loader"
 import { NextRequest, NextResponse } from "next/server"
+import { apiGet } from "@/lib/fetcher"
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,11 +15,17 @@ export async function GET(request: NextRequest) {
     const totalAssets = data.assets.length
     const taggedAssets = data.assets.filter((a) => a.tagId).length
 
+    // Calculate utilization metrics
+    const avgUtilization = Math.round(data.assets.reduce((sum, a) => sum + a.utilization, 0) / totalAssets)
+    const underutilizedAssets = data.assets.filter(a => a.utilization < 40).length
+
     const stats = {
       totalAssets,
       totalFacilities: data.facilities.length,
       totalUsers: data.users.length,
       categories: [...new Set(data.assets.map((a) => a.category || a.type))].length,
+      avgUtilization,
+      underutilizedAssets,
     }
 
     const tagging = {
@@ -81,6 +88,82 @@ export async function GET(request: NextRequest) {
       .slice(0, 5)
       .map(([name, count]) => ({ name, count }))
 
+    // Department-level utilization analysis for dashboard
+    const deptUtilization = data.assets.reduce((acc, asset) => {
+      if (!acc[asset.departmentId]) {
+        acc[asset.departmentId] = {
+          assets: [],
+          totalUtilization: 0,
+          underutilized: 0,
+          active: 0,
+          idle: 0,
+          inMaintenance: 0
+        }
+      }
+      acc[asset.departmentId].assets.push(asset)
+      acc[asset.departmentId].totalUtilization += asset.utilization
+      if (asset.utilization < 40) {
+        acc[asset.departmentId].underutilized++
+        acc[asset.departmentId].idle++
+      } else {
+        acc[asset.departmentId].active++
+      }
+      if (asset.status === "maintenance") {
+        acc[asset.departmentId].inMaintenance++
+      }
+      return acc
+    }, {} as Record<string, { 
+      assets: any[], 
+      totalUtilization: number, 
+      underutilized: number,
+      active: number,
+      idle: number,
+      inMaintenance: number
+    }>)
+
+    const departmentUtilization = Object.entries(deptUtilization).map(([deptId, deptData]) => ({
+      departmentId: deptId,
+      departmentName: `Department ${deptId.slice(-3)}`,
+      avgUtilization: Math.round(deptData.totalUtilization / deptData.assets.length),
+      totalAssets: deptData.assets.length,
+      underutilized: deptData.underutilized,
+      active: deptData.active,
+      idle: deptData.idle,
+      inMaintenance: deptData.inMaintenance,
+      utilizationTrend: Array.from({ length: 7 }, (_, i) => ({
+        date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        utilization: Math.max(20, Math.min(95, deptData.totalUtilization / deptData.assets.length + Math.floor(Math.random() * 30) - 15))
+      }))
+    })).sort((a, b) => b.avgUtilization - a.avgUtilization)
+
+    // Top 5 Idle Assets for dashboard snippet
+    const top5IdleAssets = data.assets
+      .filter(a => a.utilization < 30 && a.status === "available")
+      .sort((a, b) => a.utilization - b.utilization)
+      .slice(0, 5)
+      .map(asset => {
+        const zone = data.zones.find(z => z.id === asset.location.zoneId)
+        const department = departmentUtilization.find(d => d.departmentId === asset.departmentId)
+        const idleDays = Math.floor((Date.now() - new Date(asset.lastActive).getTime()) / (24 * 60 * 60 * 1000))
+        
+        return {
+          id: asset.id,
+          name: asset.name,
+          type: asset.type,
+          department: department?.departmentName || "Unknown Department",
+          departmentId: asset.departmentId,
+          utilization: asset.utilization,
+          location: zone?.name || "Unknown",
+          lastUsed: asset.lastActive,
+          idleDuration: idleDays,
+          recommendedAction: idleDays > 30 ? "Consider Redistribution" : 
+                            idleDays > 14 ? "Schedule Utilization Review" : 
+                            "Monitor Usage Pattern",
+          value: asset.value || 0,
+          status: asset.status
+        }
+      })
+
     const responseData = {
       stats,
       tagging,
@@ -115,6 +198,10 @@ export async function GET(request: NextRequest) {
             }
           }),
       },
+      utilization: {
+        departmentUtilization,
+        top5IdleAssets
+      }
     }
 
     return NextResponse.json(responseData)

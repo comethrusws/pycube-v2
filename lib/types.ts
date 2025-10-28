@@ -183,6 +183,8 @@ export interface DashboardData {
     totalFacilities: number
     totalUsers: number
     categories: number
+    avgUtilization: number
+    underutilizedAssets: number
   }
   tagging: {
     tagged: number
@@ -204,6 +206,10 @@ export interface DashboardData {
     recentAssets: { id: string; name: string; type: string; location: string; status: string; lastActive: string }[]
     topCategories: { name: string; count: number }[]
     maintenanceDue: { id: string; assetId: string; name: string; dueDate: string; type: string }[]
+  }
+  utilization: {
+    departmentUtilization: DepartmentUtilization[]
+    top5IdleAssets: Top10IdleAsset[]
   }
 }
 

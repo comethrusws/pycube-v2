@@ -55,11 +55,11 @@ const menuSections = [
     items: [
       {
         icon: MapPin,
-        label: "Asset Locator",
-        href: "/asset-locator",
+        label: "Asset Utilization",
+        href: "/asset-utilization",
         submenu: [
-          { label: "Dashboard", href: "/asset-locator/dashboard" },
-          { label: "Location Lists", href: "/asset-locator/location-lists" }
+          { label: "Dashboard", href: "/asset-utilization/dashboard" },
+          { label: "Location Lists", href: "/asset-utilization/location-lists" }
         ],
       },
     ] as MenuItem[],
