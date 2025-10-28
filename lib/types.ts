@@ -487,3 +487,59 @@ export interface ComplianceData {
   assetRisks: ComplianceAssetRisk[]
 }
 
+// Add mobile-specific asset interfaces
+export interface MobileAsset {
+  id: string
+  name: string
+  type: string
+  category: string
+  tagId: string
+  status: Status
+  utilization: number
+  lastActive: string
+  department: string
+  departmentId: string
+  location: {
+    building: string
+    floor: string
+    zone: string
+    room: string
+    coordinates: { x: number; y: number }
+  }
+  maintenanceReadiness: "green" | "yellow" | "red"
+  lastSeen: string
+  serialNumber?: string
+  value?: number
+}
+
+export interface MobileSearchFilters {
+  departments: string[]
+  buildings: string[]
+  floors: string[]
+  types: string[]
+  statuses: string[]
+}
+
+export interface AssetAction {
+  assetId: string
+  action: "retrieve" | "report_missing" | "maintenance_request" | "locate"
+  userId: string
+  notes?: string
+  timestamp?: string
+}
+
+export interface AssetActionResponse {
+  success: boolean
+  message: string
+  updatedAsset?: Asset
+  logs?: any[]
+  alert?: Alert
+  maintenanceRequest?: MaintenanceRequest
+  location?: {
+    building?: string
+    floor?: string
+    zone?: string
+    coordinates?: { x: number; y: number }
+  }
+}
+

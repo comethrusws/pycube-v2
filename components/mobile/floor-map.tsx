@@ -1,0 +1,203 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { MapPin, Zap, Wrench, AlertTriangle, Wifi } from "lucide-react"
+
+interface Asset {
+  id: string
+  name: string
+  type: string
+  status: "available" | "in-use" | "maintenance" | "lost"
+  location: {
+    coordinates: { x: number; y: number }
+    zone: string
+    room: string
+  }
+  maintenanceReadiness: "green" | "yellow" | "red"
+}
+
+interface FloorMapProps {
+  assets: Asset[]
+  selectedAsset: Asset | null
+  onAssetSelect: (asset: Asset) => void
+  floor: string
+  building: string
+}
+
+const FloorMap = ({ assets, selectedAsset, onAssetSelect, floor, building }: FloorMapProps) => {
+  const [mapDimensions, setMapDimensions] = useState({ width: 400, height: 300 })
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // Simulate map loading
+    const timer = setTimeout(() => setIsLoading(false), 1000)
+    return () => clearTimeout(timer)
+  }, [floor, building])
+
+  const getAssetIcon = (asset: Asset) => {
+    switch (asset.status) {
+      case "available":
+        return <MapPin className="w-4 h-4 text-green-600" />
+      case "in-use":
+        return <Zap className="w-4 h-4 text-blue-600" />
+      case "maintenance":
+        return <Wrench className="w-4 h-4 text-orange-600" />
+      case "lost":
+        return <AlertTriangle className="w-4 h-4 text-red-600" />
+      default:
+        return <MapPin className="w-4 h-4 text-gray-600" />
+    }
+  }
+
+  const getStatusColor = (asset: Asset) => {
+    switch (asset.status) {
+      case "available":
+        return "bg-green-100 border-green-300"
+      case "in-use":
+        return "bg-blue-100 border-blue-300"
+      case "maintenance":
+        return "bg-orange-100 border-orange-300"
+      case "lost":
+        return "bg-red-100 border-red-300"
+      default:
+        return "bg-gray-100 border-gray-300"
+    }
+  }
+
+  const getMaintenanceIndicator = (readiness: string) => {
+    switch (readiness) {
+      case "green":
+        return "border-l-4 border-l-green-500"
+      case "yellow":
+        return "border-l-4 border-l-yellow-500"
+      case "red":
+        return "border-l-4 border-l-red-500"
+      default:
+        return ""
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-80 bg-gray-100 rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-2"></div>
+          <p className="text-sm text-gray-600">Loading floor map...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Map Header */}
+      <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-medium text-gray-900">{building} - {floor}</h3>
+            <p className="text-sm text-gray-600">{assets.length} assets on this floor</p>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Wifi className="w-4 h-4" />
+            <span>Live</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Floor Plan */}
+      <div className="relative bg-gradient-to-br from-blue-50 to-gray-100 h-80 overflow-hidden">
+        {/* Grid Background */}
+        <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
+          <defs>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e7eb" strokeWidth="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
+
+        {/* Room Outlines */}
+        <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 2 }}>
+          {/* Mock room layouts */}
+          <rect x="20" y="20" width="120" height="80" fill="rgba(255,255,255,0.7)" stroke="#d1d5db" strokeWidth="2" rx="4" />
+          <rect x="160" y="20" width="120" height="80" fill="rgba(255,255,255,0.7)" stroke="#d1d5db" strokeWidth="2" rx="4" />
+          <rect x="300" y="20" width="120" height="80" fill="rgba(255,255,255,0.7)" stroke="#d1d5db" strokeWidth="2" rx="4" />
+          
+          <rect x="20" y="120" width="120" height="80" fill="rgba(255,255,255,0.7)" stroke="#d1d5db" strokeWidth="2" rx="4" />
+          <rect x="160" y="120" width="120" height="80" fill="rgba(255,255,255,0.7)" stroke="#d1d5db" strokeWidth="2" rx="4" />
+          <rect x="300" y="120" width="120" height="80" fill="rgba(255,255,255,0.7)" stroke="#d1d5db" strokeWidth="2" rx="4" />
+          
+          <rect x="20" y="220" width="400" height="40" fill="rgba(239,246,255,0.7)" stroke="#3b82f6" strokeWidth="2" rx="4" />
+          
+          {/* Room Labels */}
+          <text x="80" y="65" textAnchor="middle" className="fill-gray-600 text-xs font-medium">ICU-1</text>
+          <text x="220" y="65" textAnchor="middle" className="fill-gray-600 text-xs font-medium">ICU-2</text>
+          <text x="360" y="65" textAnchor="middle" className="fill-gray-600 text-xs font-medium">ICU-3</text>
+          <text x="80" y="165" textAnchor="middle" className="fill-gray-600 text-xs font-medium">Ward A</text>
+          <text x="220" y="165" textAnchor="middle" className="fill-gray-600 text-xs font-medium">Ward B</text>
+          <text x="360" y="165" textAnchor="middle" className="fill-gray-600 text-xs font-medium">Storage</text>
+          <text x="220" y="245" textAnchor="middle" className="fill-blue-600 text-xs font-medium">Corridor</text>
+        </svg>
+
+        {/* Asset Pins */}
+        <div className="absolute inset-0" style={{ zIndex: 3 }}>
+          {assets.map((asset) => (
+            <button
+              key={asset.id}
+              onClick={() => onAssetSelect(asset)}
+              className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 ${
+                selectedAsset?.id === asset.id 
+                  ? 'scale-125 shadow-lg' 
+                  : 'hover:scale-110 shadow-md hover:shadow-lg'
+              }`}
+              style={{
+                left: `${Math.min(95, Math.max(5, (asset.location.coordinates.x / 450) * 100))}%`,
+                top: `${Math.min(95, Math.max(5, (asset.location.coordinates.y / 320) * 100))}%`,
+              }}
+            >
+              <div className={`
+                w-8 h-8 rounded-full border-2 flex items-center justify-center
+                ${getStatusColor(asset)} ${getMaintenanceIndicator(asset.maintenanceReadiness)}
+                ${selectedAsset?.id === asset.id ? 'ring-2 ring-teal-500 ring-offset-2' : ''}
+              `}>
+                {getAssetIcon(asset)}
+              </div>
+              
+              {/* Pulse animation for selected asset */}
+              {selectedAsset?.id === asset.id && (
+                <div className="absolute inset-0 rounded-full border-2 border-teal-500 animate-ping"></div>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Legend */}
+        <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg" style={{ zIndex: 4 }}>
+          <div className="text-xs font-medium text-gray-700 mb-2">Asset Status</div>
+          <div className="space-y-1 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-green-100 border border-green-300 flex items-center justify-center">
+                <MapPin className="w-2 h-2 text-green-600" />
+              </div>
+              <span className="text-gray-600">Available</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-blue-100 border border-blue-300 flex items-center justify-center">
+                <Zap className="w-2 h-2 text-blue-600" />
+              </div>
+              <span className="text-gray-600">In Use</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-orange-100 border border-orange-300 flex items-center justify-center">
+                <Wrench className="w-2 h-2 text-orange-600" />
+              </div>
+              <span className="text-gray-600">Maintenance</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default FloorMap
