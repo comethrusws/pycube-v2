@@ -368,26 +368,27 @@ export default function PredictiveInsightsTab() {
           value={data?.summary?.totalAssetsMonitored || 0}
           subtitle="AI prediction enabled"
           icon={Zap}
+          color="#003d5c"
         />
         <StatCard
           title="High Risk Assets"
           value={data?.summary?.highRiskAssets || 0}
           subtitle="Requires immediate attention"
-          color="#dc2626"
+          color="#003d5c"
           icon={AlertTriangle}
         />
         <StatCard
           title="Avg Confidence"
           value={`${data?.summary?.avgConfidenceScore || 0}%`}
           subtitle="Prediction accuracy"
-          color="#059669"
+          color="#003d5c"
           icon={TrendingUp}
         />
         <StatCard
           title="Cost Savings"
           value={`$${(data?.summary?.potentialCostSavings || 0).toLocaleString()}`}
           subtitle="Prevented failures"
-          color="#7c3aed"
+          color="#003d5c"
           icon={CheckCircle}
         />
       </div>
