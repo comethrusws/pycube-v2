@@ -24,7 +24,7 @@ interface FloorMapProps {
   building: string
 }
 
-const FloorMap = ({ assets, selectedAsset, onAssetSelect, floor, building }: FloorMapProps) => {
+export default function FloorMap({ assets, selectedAsset, onAssetSelect, floor, building }: FloorMapProps) {
   const [mapDimensions, setMapDimensions] = useState({ width: 400, height: 300 })
   const [isLoading, setIsLoading] = useState(true)
 
@@ -79,7 +79,7 @@ const FloorMap = ({ assets, selectedAsset, onAssetSelect, floor, building }: Flo
 
   if (isLoading) {
     return (
-      <div className="w-full h-80 bg-gray-100 rounded-lg flex items-center justify-center">
+      <div className="w-full h-80 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-200">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-2"></div>
           <p className="text-sm text-gray-600">Loading floor map...</p>
@@ -89,23 +89,23 @@ const FloorMap = ({ assets, selectedAsset, onAssetSelect, floor, building }: Flo
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
       {/* Map Header */}
-      <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+      <div className="bg-gray-50/80 backdrop-blur-sm px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-medium text-gray-900">{building} - {floor}</h3>
+            <h3 className="font-medium" style={{ color: "#001f3f" }}>{building} - {floor}</h3>
             <p className="text-sm text-gray-600">{assets.length} assets on this floor</p>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Wifi className="w-4 h-4" />
+            <Wifi className="w-4 h-4" style={{ color: "#0d7a8c" }} />
             <span>Live</span>
           </div>
         </div>
       </div>
 
       {/* Floor Plan */}
-      <div className="relative bg-gradient-to-br from-blue-50 to-gray-100 h-80 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-blue-50/50 to-gray-100/50 h-80 overflow-hidden">
         {/* Grid Background */}
         <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
           <defs>
@@ -172,26 +172,26 @@ const FloorMap = ({ assets, selectedAsset, onAssetSelect, floor, building }: Flo
         </div>
 
         {/* Legend */}
-        <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg" style={{ zIndex: 4 }}>
-          <div className="text-xs font-medium text-gray-700 mb-2">Asset Status</div>
-          <div className="space-y-1 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-100 border border-green-300 flex items-center justify-center">
+        <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-white/20" style={{ zIndex: 4 }}>
+          <div className="text-xs font-semibold uppercase tracking-wider text-gray-700 mb-3" style={{ color: "#001f3f" }}>Asset Status</div>
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full bg-green-100 border border-green-300 flex items-center justify-center shadow-sm">
                 <MapPin className="w-2 h-2 text-green-600" />
               </div>
-              <span className="text-gray-600">Available</span>
+              <span className="text-gray-700">Available</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-100 border border-blue-300 flex items-center justify-center">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full bg-blue-100 border border-blue-300 flex items-center justify-center shadow-sm">
                 <Zap className="w-2 h-2 text-blue-600" />
               </div>
-              <span className="text-gray-600">In Use</span>
+              <span className="text-gray-700">In Use</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-orange-100 border border-orange-300 flex items-center justify-center">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full bg-orange-100 border border-orange-300 flex items-center justify-center shadow-sm">
                 <Wrench className="w-2 h-2 text-orange-600" />
               </div>
-              <span className="text-gray-600">Maintenance</span>
+              <span className="text-gray-700">Maintenance</span>
             </div>
           </div>
         </div>
@@ -199,5 +199,3 @@ const FloorMap = ({ assets, selectedAsset, onAssetSelect, floor, building }: Flo
     </div>
   )
 }
-
-export default FloorMap
