@@ -30,6 +30,8 @@ import type {
   DegradationTrend,
   Product,
   ProductCategory,
+  ComplianceData,
+  ComplianceAssetRisk,
 } from "../lib/types"
 
 function randomChoice<T>(arr: T[]): T {
@@ -857,6 +859,80 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   // Generate predictive maintenance data
   const predictiveMaintenanceData = generatePredictiveMaintenanceData(assets, maintenanceTasks, zones)
 
+  // Generate compliance data
+  const complianceData: ComplianceData = (() => {
+    const deptMap = new Map(departments.map(d => [d.id, d.name]))
+    const recallSet = new Set(assets.filter(() => Math.random() < 0.01).map(a => a.id))
+
+    const assetRisks: ComplianceAssetRisk[] = assets.slice(0, Math.min(assets.length, 3000)).map(a => {
+      const missedMaintenance = maintenanceTasks.filter(t => t.assetId === a.id && t.status === "overdue").length
+      const overdueCalibration = Math.random() < 0.05 ? 1 : 0
+      const recallFlag = recallSet.has(a.id)
+      let risk = 100
+      risk -= missedMaintenance * 20
+      risk -= overdueCalibration * 15
+      if (recallFlag) risk -= 25
+      if (a.utilization < 20) risk -= 10
+      risk = Math.max(0, Math.min(100, Math.round(risk)))
+      return {
+        assetId: a.id,
+        assetName: a.name,
+        departmentId: a.departmentId,
+        departmentName: deptMap.get(a.departmentId) || `Department ${a.departmentId.slice(-3)}`,
+        missedMaintenance,
+        overdueCalibration,
+        recallFlag,
+        riskScore: risk,
+      }
+    })
+
+    const totalAssets = assets.length
+    const fullyCompliant = assetRisks.filter(r => r.missedMaintenance === 0 && r.overdueCalibration === 0 && !r.recallFlag && r.riskScore >= 90).length
+    const overdueMaintenance = maintenanceTasks.filter(t => t.status === "overdue").length
+    const recallActions = recallSet.size
+    const avgRisk = Math.round(assetRisks.reduce((s, r) => s + r.riskScore, 0) / Math.max(1, assetRisks.length))
+
+    const byDept = new Map<string, { name: string; high: number; medium: number; low: number }>()
+    for (const r of assetRisks) {
+      const bucket = r.riskScore < 70 ? 'high' : r.riskScore < 90 ? 'medium' : 'low'
+      const cur = byDept.get(r.departmentId) || { name: r.departmentName, high: 0, medium: 0, low: 0 }
+      cur[bucket as 'high' | 'medium' | 'low']++
+      byDept.set(r.departmentId, cur)
+    }
+
+    const noncomplianceTrend = Array.from({ length: 30 }, (_, i) => {
+      const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000)
+      const base = overdueMaintenance / Math.max(1, totalAssets)
+      const noise = (Math.random() - 0.5) * 0.02
+      const value = Math.max(0, Math.round((base + noise) * totalAssets * 0.2))
+      return { date: date.toISOString().split('T')[0], noncompliant: value }
+    })
+
+    const overallScore = Math.max(0, Math.min(100,
+      100 - Math.round((overdueMaintenance / Math.max(1, totalAssets)) * 100) + Math.round((fullyCompliant / Math.max(1, totalAssets)) * 10)
+    ))
+
+    return {
+      summary: {
+        overallScore,
+        totalAssets,
+        fullyCompliant,
+        overdueMaintenance,
+        recallActions,
+        averageRiskScore: avgRisk,
+        riskByDepartment: Array.from(byDept.entries()).map(([departmentId, v]) => ({
+          departmentId,
+          departmentName: v.name,
+          high: v.high,
+          medium: v.medium,
+          low: v.low,
+        })),
+        noncomplianceTrend,
+      },
+      assetRisks,
+    }
+  })()
+
   return {
     facilities,
     departments,
@@ -881,6 +957,7 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
     dashboardData,
     assetLocatorData,
     predictiveMaintenanceData,
+    complianceData,
   }
 }
 

@@ -48,6 +48,19 @@ export async function loadSeedData(): Promise<SeedData> {
       userUtilizations: [],
       locationLists: [],
       locationActivities: [],
+      complianceData: {
+        summary: {
+          overallScore: 0,
+          totalAssets: 0,
+          fullyCompliant: 0,
+          overdueMaintenance: 0,
+          recallActions: 0,
+          averageRiskScore: 0,
+          riskByDepartment: [],
+          noncomplianceTrend: []
+        },
+        assetRisks: []
+      },
       predictiveMaintenanceData: {
         summary: {
           totalAssetsMonitored: 0,

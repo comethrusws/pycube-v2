@@ -108,6 +108,19 @@ const menuSections = [
   },
   {
     items: [
+      {
+        icon: Shield,
+        label: "Compliance & Risk",
+        href: "/compliance",
+        submenu: [
+          { label: "Dashboard", href: "/compliance" },
+          { label: "Reports", href: "/compliance/reports" },
+        ],
+      },
+    ] as MenuItem[],
+  },
+  {
+    items: [
       { icon: Warehouse, label: "Facilities", href: "/facilities" },
       { icon: Users, label: "Departments", href: "" },
     ] as MenuItem[],

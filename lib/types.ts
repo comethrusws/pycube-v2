@@ -262,6 +262,7 @@ export interface SeedData {
   dashboardData?: any
   assetLocatorData?: any
   predictiveMaintenanceData?: PredictiveMaintenanceData // Add predictive maintenance data
+  complianceData?: ComplianceData
 }
 
 // Add new interfaces for utilization analytics
@@ -450,5 +451,33 @@ export interface Product {
   sku?: string
   createdAt?: string
   updatedAt?: string
+}
+
+// Compliance & Risk
+export interface ComplianceAssetRisk {
+  assetId: string
+  assetName: string
+  departmentId: string
+  departmentName: string
+  missedMaintenance: number
+  overdueCalibration: number
+  recallFlag: boolean
+  riskScore: number // 0-100
+}
+
+export interface ComplianceSummary {
+  overallScore: number
+  totalAssets: number
+  fullyCompliant: number
+  overdueMaintenance: number
+  recallActions: number
+  averageRiskScore: number
+  riskByDepartment: { departmentId: string; departmentName: string; high: number; medium: number; low: number }[]
+  noncomplianceTrend: { date: string; noncompliant: number }[]
+}
+
+export interface ComplianceData {
+  summary: ComplianceSummary
+  assetRisks: ComplianceAssetRisk[]
 }
 
