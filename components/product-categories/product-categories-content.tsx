@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Plus, Search, Filter, Folder, Package } from "lucide-react"
+import Link from "next/link"
 import { apiGet } from "@/lib/fetcher"
 
 interface ProductCategory {
@@ -346,7 +347,9 @@ export default function ProductCategoriesContent() {
                             <Folder className="w-4 h-4 text-teal-600" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{category.name}</p>
+                            <Link href={`/products?category=${category.name}`}>
+                              <p className="text-sm font-medium text-gray-900 hover:text-teal-600">{category.name}</p>
+                            </Link>
                             <p className="text-xs text-gray-500">{category.description}</p>
                             <p className="text-xs text-gray-500">ID: {category.id}</p>
                           </div>

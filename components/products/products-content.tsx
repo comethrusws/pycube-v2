@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Plus, Search, Filter, Package, Tag, DollarSign } from "lucide-react"
 import { apiGet } from "@/lib/fetcher"
 
@@ -105,9 +106,18 @@ export default function ProductsContent() {
     }
   }
 
+  const searchParams = useSearchParams()
+  const categoryFilter = searchParams.get('category')
+
+  useEffect(() => {
+    if (categoryFilter) {
+      setFilters(prev => ({ ...prev, category: categoryFilter }))
+    }
+  }, [categoryFilter])
+
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [filters])
 
   const handlePageChange = (newPage: number) => {
     fetchData(newPage)
