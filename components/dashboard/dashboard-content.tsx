@@ -233,7 +233,11 @@ export default function DashboardContent() {
                   { id: "A002", name: "Ultrasound", type: "Medical", location: "Zone B", status: "Available" },
                   { id: "A003", name: "X-Ray Machine", type: "Medical", location: "Zone C", status: "Maintenance" }
                 ]).slice(0, 3).map((asset, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 bg-slate-50 rounded border border-gray-200">
+                  <div 
+                    key={i} 
+                    className="flex items-center justify-between p-2 bg-slate-50 rounded border border-gray-200 cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={() => router.push(`/assets/${asset.id}`)}
+                  >
                     <div>
                       <p className="text-sm font-medium" style={{ color: "#001f3f" }}>{asset.name}</p>
                       <p className="text-xs text-gray-500">{asset.location}</p>
@@ -372,7 +376,11 @@ export default function DashboardContent() {
             </h3>
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {(data?.utilization?.top5IdleAssets || []).map((asset, idx) => (
-                <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div 
+                  key={idx} 
+                  className="p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => router.push(`/assets/${asset.id}`)}
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="font-medium text-sm" style={{ color: "#001f3f" }}>{asset.name}</p>
