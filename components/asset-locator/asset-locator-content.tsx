@@ -27,6 +27,10 @@ export default function AssetLocatorContent() {
   const [showFilters, setShowFilters] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [priority, setPriority] = useState<LocationList['priority']>('medium')
+  const [status, setStatus] = useState<LocationList['status']>('pending')
+  const [assignedGroup, setAssignedGroup] = useState('CMC Group')
 
   // Filter states
   const [filters, setFilters] = useState({
@@ -41,6 +45,12 @@ export default function AssetLocatorContent() {
   }, [currentPage, filters])
 
   const loadLocationLists = async () => {
+    const localData = localStorage.getItem('locationLists')
+    if (localData) {
+      setData(JSON.parse(localData))
+      setIsLoading(false)
+      return
+    }
     try {
       setIsLoading(true)
       const queryParams = new URLSearchParams({
@@ -195,7 +205,10 @@ export default function AssetLocatorContent() {
               <Download size={16} />
               Export CSV
             </button>
-            <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm transition-colors duration-200 flex items-center gap-2">
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm transition-colors duration-200 flex items-center gap-2"
+            >
               <Plus size={16} />
               Create Location List
             </button>
@@ -335,6 +348,79 @@ export default function AssetLocatorContent() {
           </div>
         </div>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">Create New Location List</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              const form = e.target as HTMLFormElement
+              const listName = (form.elements.namedItem('listName') as HTMLInputElement).value
+              const description = (form.elements.namedItem('description') as HTMLInputElement).value
+              
+              const newList: LocationList = {
+                id: new Date().toISOString(),
+                listId: `LL-${Math.random().toString(36).substr(2, 9)}`,
+                listName,
+                description,
+                status: status,
+                assignedGroup: assignedGroup,
+                createdDate: new Date().toLocaleDateString(),
+                assetCount: 0,
+                completionPercentage: 0,
+                priority: priority,
+              }
+
+              const existingLists = JSON.parse(localStorage.getItem('locationLists') || '[]')
+              localStorage.setItem('locationLists', JSON.stringify([...existingLists, newList]))
+              
+              setData([...data, newList])
+              setIsModalOpen(false)
+            }}>
+              <div className="mb-4">
+                <label htmlFor="listName" className="block text-sm font-medium text-gray-700">List Name</label>
+                <input type="text" id="listName" name="listName" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm" required />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+                <textarea id="description" name="description" rows={3} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm"></textarea>
+              </div>
+              <div className="mb-4">
+                <label htmlFor="priority" className="block text-sm font-medium text-gray-700">Priority</label>
+                <select id="priority" name="priority" value={priority} onChange={(e) => setPriority(e.target.value as LocationList['priority'])} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
+                <select id="status" name="status" value={status} onChange={(e) => setStatus(e.target.value as LocationList['status'])} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                  <option value="pending">Pending</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="overdue">Overdue</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label htmlFor="assignedGroup" className="block text-sm font-medium text-gray-700">Assigned Group</label>
+                <select id="assignedGroup" name="assignedGroup" value={assignedGroup} onChange={(e) => setAssignedGroup(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                  <option value="CMC Group">CMC Group</option>
+                  <option value="Biomedical Team">Biomedical Team</option>
+                  <option value="Nursing Staff">Nursing Staff</option>
+                  <option value="IT Department">IT Department</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-4">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Close</button>
+                <button type="submit" className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">Create List</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
