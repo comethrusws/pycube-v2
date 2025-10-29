@@ -28,7 +28,7 @@ interface PaginationData {
   hasPrev: boolean
 }
 
-const StatusBadge = ({ status }: { status: string }) => {
+const StatusBadge = ({ status = "inactive" }: { status?: string }) => {
   const getStatusStyle = (status: string) => {
     switch (status) {
       case "active":

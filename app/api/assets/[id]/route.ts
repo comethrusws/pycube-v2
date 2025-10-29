@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
 import type { Asset } from "@/lib/types"
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const file = await fs.readFile(path.resolve(process.cwd(), "data/seed.json"), "utf8")
   const data = JSON.parse(file)
   const asset = data.assets.find((asset: Asset) => asset.id === id)
