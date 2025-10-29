@@ -5,18 +5,19 @@ import { Search, Filter, Download, Plus, MapPin, Eye } from "lucide-react"
 import { apiGet } from "@/lib/fetcher"
 
 interface LocationList {
-  id: string
-  name: string
-  description: string
-  status: "pending" | "in-progress" | "completed"
-  assignedTo: string
-  createdDate: string
-  totalAssets: number
-  checkedAssets: number
-  priority: "low" | "medium" | "high"
-  department: string
-  building: string
-  floor: string
+  id: string;
+  listId: string;
+  listName: string;
+  description: string;
+  status: "pending" | "in-progress" | "completed" | "overdue";
+  assignedGroup: string;
+  createdDate: string;
+  assetCount: number;
+  completionPercentage: number;
+  priority: "low" | "medium" | "high" | "critical";
+  department?: string;
+  building?: string;
+  floor?: string;
 }
 
 export default function AssetLocatorContent() {
@@ -76,9 +77,9 @@ export default function AssetLocatorContent() {
 
   const exportData = () => {
     const csv = [
-      "ID,Name,Description,Status,Assigned To,Created Date,Total Assets,Checked Assets,Priority,Department,Building,Floor",
+      "ID,Name,Description,Status,Assigned To,Created Date,Total Assets,Completion %,Priority",
       ...data.map(item => 
-        `${item.id},"${item.name}","${item.description}",${item.status},"${item.assignedTo}",${item.createdDate},${item.totalAssets},${item.checkedAssets},${item.priority},"${item.department}","${item.building}","${item.floor}"`
+        `${item.listId},"${item.listName}","${item.description}",${item.status},"${item.assignedGroup}",${item.createdDate},${item.assetCount},${item.completionPercentage},${item.priority}`
       )
     ].join("\n")
     
@@ -91,10 +92,10 @@ export default function AssetLocatorContent() {
     URL.revokeObjectURL(url)
   }
 
-  const filteredData = data.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.assignedTo.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredData = (data || []).filter(item =>
+    (item.listName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.assignedGroup || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const getStatusColor = (status: string) => {
@@ -105,6 +106,8 @@ export default function AssetLocatorContent() {
         return 'bg-blue-100 text-blue-800'
       case 'pending':
         return 'bg-yellow-100 text-yellow-800'
+      case 'overdue':
+        return 'bg-red-100 text-red-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -112,6 +115,8 @@ export default function AssetLocatorContent() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
+      case 'critical':
+        return 'bg-red-500 text-white'
       case 'high':
         return 'bg-red-100 text-red-800'
       case 'medium':
@@ -212,6 +217,7 @@ export default function AssetLocatorContent() {
                   <option value="pending">Pending</option>
                   <option value="in-progress">In Progress</option>
                   <option value="completed">Completed</option>
+                  <option value="overdue">Overdue</option>
                 </select>
               </div>
               
@@ -223,6 +229,7 @@ export default function AssetLocatorContent() {
                   className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="all">All Priorities</option>
+                  <option value="critical">Critical</option>
                   <option value="high">High</option>
                   <option value="medium">Medium</option>
                   <option value="low">Low</option>
@@ -252,9 +259,10 @@ export default function AssetLocatorContent() {
                   className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="all">All Staff</option>
-                  <option value="John Smith">John Smith</option>
-                  <option value="Sarah Johnson">Sarah Johnson</option>
-                  <option value="Mike Chen">Mike Chen</option>
+                  <option value="CMC Group">CMC Group</option>
+                  <option value="Biomedical Team">Biomedical Team</option>
+                  <option value="Nursing Staff">Nursing Staff</option>
+                  <option value="IT Department">IT Department</option>
                 </select>
               </div>
             </div>
@@ -271,9 +279,8 @@ export default function AssetLocatorContent() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Group</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -282,7 +289,7 @@ export default function AssetLocatorContent() {
                   <tr key={list.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{list.name}</div>
+                        <div className="text-sm font-medium text-gray-900">{list.listName}</div>
                         <div className="text-sm text-gray-500">{list.description}</div>
                       </div>
                     </td>
@@ -301,19 +308,16 @@ export default function AssetLocatorContent() {
                         <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
                           <div 
                             className="bg-teal-600 h-2 rounded-full" 
-                            style={{ width: `${(list.checkedAssets / list.totalAssets) * 100}%` }}
+                            style={{ width: `${list.completionPercentage}%` }}
                           ></div>
                         </div>
                         <span className="text-sm text-gray-900">
-                          {list.checkedAssets}/{list.totalAssets}
+                          {list.completionPercentage}%
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{list.assignedTo}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{list.department}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {list.building} - {list.floor}
-                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{list.assignedGroup}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{list.createdDate}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
                         <button className="text-teal-600 hover:text-teal-900">
