@@ -115,7 +115,7 @@ export default function SystemIntegrationsContent() {
             {integrations.map(integration => (
               <div key={integration.id} className="border rounded-lg p-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  {/* <img src={integration.logo} alt={integration.name} className="h-10 w-10" /> */}
+                  <img src={integration.logo} alt={integration.name} className="h-10 w-10" />
                   <div>
                     <p className="font-semibold text-gray-800">{integration.name}</p>
                     <p className="text-sm text-gray-500">{integration.type}</p>
@@ -152,7 +152,7 @@ export default function SystemIntegrationsContent() {
               {integrations.filter(int => int.status === "Connected").map(integration => (
                 <tr key={integration.id} className="border-b">
                   <td className="p-4 flex items-center gap-3">
-                    {/* <img src={integration.logo} alt={integration.name} className="h-8 w-8" /> */}
+                    <img src={integration.logo} alt={integration.name} className="h-8 w-8" />
                     {integration.name}
                   </td>
                   <td className="p-4 text-gray-600">{integration.type}</td>
