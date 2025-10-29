@@ -58,11 +58,19 @@ export default function ProductCategoriesContent() {
   })
   const [isLoading, setIsLoading] = useState(true)
   const [showFilters, setShowFilters] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   
   const [filters, setFilters] = useState({
     name: "",
     status: "",
     parentCategory: "",
+  })
+
+  const [newCategory, setNewCategory] = useState({
+    name: "",
+    description: "",
+    parentCategoryId: "",
+    status: "active",
   })
 
   const fetchData = async (page: number = 1) => {
@@ -130,6 +138,20 @@ export default function ProductCategoriesContent() {
     URL.revokeObjectURL(url)
   }
 
+  const handleAddCategory = () => {
+    const storedCategories = JSON.parse(localStorage.getItem("productCategories") || "[]");
+    const updatedCategories = [...storedCategories, { ...newCategory, id: `cat-${Date.now()}` }];
+    localStorage.setItem("productCategories", JSON.stringify(updatedCategories));
+    setIsModalOpen(false);
+    setNewCategory({
+      name: "",
+      description: "",
+      parentCategoryId: "",
+      status: "active",
+    });
+    console.log("Category added:", newCategory);
+  };
+
   if (isLoading && data.length === 0) {
     return (
       <div className="p-8 bg-gray-50 min-h-screen">
@@ -185,7 +207,10 @@ export default function ProductCategoriesContent() {
               Export CSV
             </button>
           </div>
-          <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm transition-colors duration-200 flex items-center gap-2">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm transition-colors duration-200 flex items-center gap-2"
+          >
             <Plus size={16} />
             Add Category
           </button>
@@ -435,6 +460,71 @@ export default function ProductCategoriesContent() {
           </div>
         </div>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 w-full max-w-md">
+            <h2 className="text-2xl font-light mb-4">Add New Category</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <input
+                  type="text"
+                  value={newCategory.name}
+                  onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                  value={newCategory.description}
+                  onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Parent Category</label>
+                <select
+                  value={newCategory.parentCategoryId}
+                  onChange={(e) => setNewCategory({ ...newCategory, parentCategoryId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                >
+                  <option value="">None (Root Category)</option>
+                  {data.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <select
+                  value={newCategory.status}
+                  onChange={(e) => setNewCategory({ ...newCategory, status: e.target.value as "active" | "inactive" })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddCategory}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg"
+              >
+                Add Category
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
