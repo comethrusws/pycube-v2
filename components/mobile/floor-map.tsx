@@ -45,33 +45,7 @@ export default function FloorMap({ assets, selectedAsset, onAssetSelect, floor, 
     return () => clearTimeout(timer)
   }, [floor, building])
 
-  // Generate coordinates for assets that don't have them
-  const assetsWithCoordinates = assets.map((asset, index) => {
-    if (asset.location?.coordinates?.x && asset.location?.coordinates?.y) {
-      return asset
-    }
-    
-    // Generate realistic coordinates based on asset ID/index
-    const gridCols = 4
-    const gridRows = 3
-    const row = Math.floor(index / gridCols)
-    const col = index % gridCols
-    
-    const roomWidth = 120
-    const roomHeight = 80
-    const margin = 20
-    
-    return {
-      ...asset,
-      location: {
-        ...asset.location,
-        coordinates: {
-          x: margin + (col * (roomWidth + margin)) + Math.random() * (roomWidth - 40) + 20,
-          y: margin + (row * (roomHeight + margin)) + Math.random() * (roomHeight - 40) + 20
-        }
-      }
-    }
-  })
+  const assetsWithCoordinates = assets.filter(asset => asset.location?.coordinates?.x && asset.location?.coordinates?.y);
 
   const getAssetIcon = (asset: Asset) => {
     switch (asset.status) {

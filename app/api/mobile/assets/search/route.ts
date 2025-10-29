@@ -22,9 +22,13 @@ export async function GET(request: NextRequest) {
     let filteredAssetIds = allAssets.filter(asset => {
       // Quick filter by IDs first for performance
       const zone = data.zones.find(z => z.id === asset.location.zoneId)
+      if (!zone) return false; // Ensure zone exists
       const floorObj = data.floors.find(f => f.id === zone?.floorId)
+      if (!floorObj) return false; // Ensure floor exists
       const buildingObj = data.buildings.find(b => b.id === floorObj?.buildingId)
+      if (!buildingObj) return false; // Ensure building exists
       const departmentObj = data.departments.find(d => d.id === asset.departmentId)
+      if (!departmentObj) return false; // Ensure department exists
       
       // Search query filter
       if (query) {
