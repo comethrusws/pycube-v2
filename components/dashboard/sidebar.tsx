@@ -20,6 +20,7 @@ import {
   ChevronRight,
   ListCheckIcon,
   MapPinPlus,
+  Share2,
 } from "lucide-react"
 import { useState } from "react"
 import { usePathname } from "next/navigation"
@@ -44,6 +45,7 @@ const menuSections = [
       { icon: Settings, label: "Implementation", href: "" },
       { icon: Zap, label: "App Settings", href: "" },
       { icon: Bot, label: "AI Assistant", href: "/ai-assistant" },
+      { icon: Share2, label: "Integrations", href: "/system-integrations" },
     ] as MenuItem[],
   },
   {

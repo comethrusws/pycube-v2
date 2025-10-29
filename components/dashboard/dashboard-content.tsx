@@ -33,7 +33,7 @@ export default function DashboardContent() {
         router.push('/facilities')
         break
       case 'utilization':
-        router.push('/asset-locator/dashboard')
+        router.push('/asset-utilization/dashboard')
         break
       // Add more cases as needed for other cards
       default:

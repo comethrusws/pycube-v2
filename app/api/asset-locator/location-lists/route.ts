@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     }))
 
     return NextResponse.json({
-      data: enrichedData,
+      locationLists: enrichedData,
       pagination: {
         page,
         limit,
