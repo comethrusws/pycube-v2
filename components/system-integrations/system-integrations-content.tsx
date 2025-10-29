@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Zap, ShieldCheck, AlertTriangle, Plus, ChevronRight, RefreshCw, List } from "lucide-react"
 import { apiGet, apiPost } from "@/lib/fetcher"
-import DashboardLayout from "../dashboard/dashboard-layout"
 
 interface Integration {
   id: string
@@ -27,11 +26,22 @@ export default function SystemIntegrationsContent() {
     loadIntegrations()
   }, [])
 
+  useEffect(() => {
+    if (integrations.length > 0) {
+      localStorage.setItem("integrations", JSON.stringify(integrations))
+    }
+  }, [integrations])
+
   const loadIntegrations = async () => {
     try {
       setIsLoading(true)
-      const data = await apiGet<Integration[]>("/api/system-integrations")
-      setIntegrations(data)
+      const storedIntegrations = localStorage.getItem("integrations")
+      if (storedIntegrations) {
+        setIntegrations(JSON.parse(storedIntegrations))
+      } else {
+        const data = await apiGet<Integration[]>("/api/system-integrations")
+        setIntegrations(data)
+      }
     } catch (error) {
       console.error("Failed to load integrations:", error)
     } finally {
@@ -58,9 +68,10 @@ export default function SystemIntegrationsContent() {
     try {
       await apiPost("/api/system-integrations/connect", { apiKey })
       setConnectionStep("successful")
-      setIntegrations(integrations.map(int => 
+      const updatedIntegrations: Integration[] = integrations.map(int => 
         int.id === selectedIntegration.id ? { ...int, status: "Connected", lastSync: new Date().toISOString() } : int
-      ))
+      )
+      setIntegrations(updatedIntegrations)
       setTimeout(() => {
         handleModalClose()
         router.push("/system-integrations")
@@ -73,23 +84,17 @@ export default function SystemIntegrationsContent() {
   const handleTestSync = async (id: string) => {
     setSyncingId(id)
     await new Promise(resolve => setTimeout(resolve, 2000))
-    setIntegrations(integrations.map(int => 
+    const updatedIntegrations: Integration[] = integrations.map(int => 
       int.id === id ? { ...int, lastSync: new Date().toISOString() } : int
-    ))
+    )
+    setIntegrations(updatedIntegrations)
     setSyncingId(null)
   }
 
-if (isLoading) {
-    return (
-      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center gap-4">
-        <div className="relative w-16 h-16">
-          <div className="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
-          <div className="absolute inset-0 border-4 border-[#003d5c] rounded-full border-t-transparent animate-spin"></div>
-        </div>
-        <p className="text-[#003d5c] text-lg font-medium">Loading...</p>
-      </div>
-    )
+  if (isLoading) {
+    return <div>Loading...</div>
   }
+
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-8">

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server"
 
+function randomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
 export async function GET() {
   const logs = [
     {
@@ -13,14 +17,14 @@ export async function GET() {
       id: "2",
       timestamp: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
       level: "Info",
-      message: "Successfully synced 1,200 new records.",
+      message: `Successfully synced ${randomInt(1000, 2000)} new records.`,
       integration: "Cerner",
     },
     {
       id: "3",
       timestamp: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
       level: "Warning",
-      message: "Could not sync 5 records due to missing patient ID.",
+      message: `Could not sync ${randomInt(2, 10)} records due to missing patient ID.`,
       integration: "Cerner",
     },
     {
