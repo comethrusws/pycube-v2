@@ -305,7 +305,7 @@ export default function MobileAssetSearchPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name, type, or tag ID..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003d5c] focus:border-transparent"
           />
           {isLoading && (
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -323,14 +323,14 @@ export default function MobileAssetSearchPage() {
             <Filter className="w-4 h-4" />
             Filters
             {(filters.department !== "all" || filters.building !== "all" || filters.status !== "all" || filters.type !== "all") && (
-              <span className="bg-teal-600 text-white text-xs rounded-full w-2 h-2"></span>
+              <span className="bg-[#003d5c] text-white text-xs rounded-full w-2 h-2"></span>
             )}
           </button>
           
           <button
             onClick={simulateRFIDScan}
             disabled={isScanning}
-            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-[#003d5c] text-white rounded-lg font-medium hover:bg-opacity-90 transition-colors disabled:opacity-50"
           >
             <Scan className={`w-4 h-4 ${isScanning ? 'animate-pulse' : ''}`} />
             {isScanning ? 'Scanning...' : 'RFID Scan'}
@@ -343,7 +343,7 @@ export default function MobileAssetSearchPage() {
             onClick={() => setViewMode("list")}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 font-medium transition-colors ${
               viewMode === "list"
-                ? "bg-teal-600 text-white"
+                ? "bg-[#003d5c] text-white"
                 : "bg-white text-gray-700 hover:bg-gray-50"
             }`}
           >
@@ -354,7 +354,7 @@ export default function MobileAssetSearchPage() {
             onClick={() => setViewMode("map")}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 font-medium transition-colors ${
               viewMode === "map"
-                ? "bg-teal-600 text-white"
+                ? "bg-[#003d5c] text-white"
                 : "bg-white text-gray-700 hover:bg-gray-50"
             }`}
           >
@@ -379,8 +379,6 @@ export default function MobileAssetSearchPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
               <select
                 value={filters.department}
-                onChange={(e) => setFilters({ ...filters, department: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="all">All Departments</option>
                 {availableFilters.departments.map(dept => (
@@ -438,7 +436,7 @@ export default function MobileAssetSearchPage() {
       <div className="flex-1 p-4">
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003d5c] mx-auto mb-4"></div>
             <p className="text-gray-600">Searching assets...</p>
           </div>
         ) : (
@@ -499,7 +497,7 @@ export default function MobileAssetSearchPage() {
                           setSelectedAsset(asset)
                           setShowAssetDetail(true)
                         }}
-                        className="flex-1 bg-teal-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-teal-700 transition-colors"
+                        className="flex-1 bg-[#003d5c] text-white py-2 px-4 rounded-lg font-medium hover:bg-opacity-90 transition-colors"
                       >
                         <MapPin className="w-4 h-4 inline mr-2" />
                         Locate
@@ -532,7 +530,7 @@ export default function MobileAssetSearchPage() {
                     <button
                       onClick={loadMoreAssets}
                       disabled={isLoadingMore}
-                      className="px-6 py-3 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto"
+                      className="px-6 py-3 bg-[#003d5c] text-white rounded-lg font-medium hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto"
                     >
                       {isLoadingMore ? (
                         <>
@@ -683,7 +681,7 @@ export default function MobileAssetSearchPage() {
                 <button
                   onClick={() => handleAssetAction(selectedAsset.id, "locate")}
                   disabled={isActionLoading}
-                  className="bg-teal-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-teal-700 transition-colors disabled:opacity-50"
+                  className="bg-[#003d5c] text-white py-3 px-4 rounded-lg font-medium hover:bg-opacity-90 transition-colors disabled:opacity-50"
                 >
                   <MapPin className="w-4 h-4 inline mr-2" />
                   Locate

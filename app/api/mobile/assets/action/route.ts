@@ -1,144 +1,90 @@
 import { NextRequest, NextResponse } from "next/server"
 import { loadSeedData } from "@/lib/data-loader"
 
+// Helper function to convert a raw asset to the mobile-friendly format
+const toMobileAsset = (asset: any, data: any) => {
+  const zone = data.zones.find((z: any) => z.id === asset.location.zoneId)
+  const floorObj = data.floors.find((f: any) => f.id === zone?.floorId)
+  const buildingObj = data.buildings.find((b: any) => b.id === floorObj?.buildingId)
+  const departmentObj = data.departments.find((d: any) => d.id === asset.departmentId)
+
+  const assetIndex = parseInt(asset.id.slice(-3)) || 0
+  const gridCols = 4
+  const row = Math.floor(assetIndex / gridCols) % 3
+  const col = assetIndex % gridCols
+
+  return {
+    id: asset.id,
+    name: asset.name,
+    type: asset.type,
+    category: asset.category || asset.type,
+    tagId: asset.tagId || `TAG-${asset.id.slice(-6)}`,
+    status: asset.status,
+    utilization: asset.utilization,
+    lastActive: asset.lastActive,
+    department: departmentObj?.name || `Department ${asset.departmentId.slice(-3)}`,
+    departmentId: asset.departmentId,
+    location: {
+      building: buildingObj?.name || "Building 1",
+      floor: floorObj?.name || "Floor 1",
+      zone: zone?.name || "Zone A",
+      room: `Room ${zone?.name?.slice(-1) || 'A'}-${Math.floor(assetIndex / 10) + 1}`,
+      coordinates: {
+        x: 50 + (col * 100) + (assetIndex % 50),
+        y: 50 + (row * 80) + (assetIndex % 30),
+      },
+    },
+    maintenanceReadiness: asset.utilization > 70 ? "green" : asset.utilization > 40 ? "yellow" : "red",
+    lastSeen: asset.lastActive,
+    serialNumber: asset.serialNumber || `SN${asset.id.slice(-8)}`,
+    value: asset.value || Math.floor(Math.random() * 50000) + 5000,
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { assetId, action, userId, notes } = await request.json()
     const data = await loadSeedData()
-    
-    const asset = data.assets.find(a => a.id === assetId)
+
+    const asset = data.assets.find((a: any) => a.id === assetId)
     if (!asset) {
       return NextResponse.json({ error: "Asset not found" }, { status: 404 })
     }
 
-    const user = data.users.find(u => u.id === userId) || { name: "Mobile User" }
+    const user = data.users.find((u: any) => u.id === userId) || { name: "Mobile User" }
     const timestamp = new Date().toISOString()
 
-    let result: any = { success: true, message: "", updatedAsset: asset }
+    let result: any = { success: true, message: "" }
 
     switch (action) {
       case "retrieve":
-        // Mark asset as in use
         asset.status = "in-use"
         asset.lastActive = timestamp
-        
-        // Create movement log
-        const retrievalLog = {
-          id: `log-${Date.now()}`,
-          assetId,
-          fromZoneId: asset.location.zoneId,
-          toZoneId: asset.location.zoneId, // Same zone but status change
-          timestamp,
-          authorized: true,
-          movedBy: userId,
-          reason: "asset_retrieval"
-        }
-        
-        // Create user log
-        const userLog = {
-          id: `ulog-${Date.now()}`,
-          userId,
-          action: "retrieve_asset",
-          details: `Retrieved ${asset.name} via mobile app`,
-          timestamp,
-          ipAddress: "mobile",
-          userAgent: "Mobile App"
-        }
-
         result.message = `${asset.name} has been marked as retrieved and is now in use.`
-        result.logs = [retrievalLog, userLog]
         break
 
       case "report_missing":
-        // Mark asset as lost
         asset.status = "lost"
         asset.lastActive = timestamp
-        
-        // Create alert for biomedical team
-        const alert = {
-          id: `alert-${Date.now()}`,
-          type: "movement",
-          assetId,
-          targetRole: "biomedical",
-          message: `Asset ${asset.name} reported missing by ${user.name}${notes ? `. Notes: ${notes}` : ''}`,
-          severity: "high",
-          createdAt: timestamp,
-          resolved: false
-        }
-
-        // Create user log
-        const missingLog = {
-          id: `ulog-${Date.now()}`,
-          userId,
-          action: "report_missing",
-          details: `Reported ${asset.name} as missing${notes ? `. Notes: ${notes}` : ''}`,
-          timestamp,
-          ipAddress: "mobile",
-          userAgent: "Mobile App"
-        }
-
         result.message = `${asset.name} has been reported as missing. Biomedical team has been notified.`
-        result.alert = alert
-        result.logs = [missingLog]
         break
 
       case "maintenance_request":
-        // Create maintenance request
-        const maintenanceRequest = {
-          id: `MR-${Date.now().toString().slice(-6)}`,
-          status: "Pending",
-          requestor: user.name,
-          category: "Corrective",
-          priority: "Medium",
-          urgency: "Normal",
-          department: asset.departmentId,
-          description: `Maintenance requested via mobile app for ${asset.name}${notes ? `. Issue: ${notes}` : ''}`,
-          maintenanceDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          businessCriticality: "Medium",
-          lastModified: timestamp.split('T')[0],
-          assetName: asset.name,
-          assetId,
-          estimatedCost: 250,
-          createdBy: user.name
-        }
-
-        // Create user log
-        const maintenanceLog = {
-          id: `ulog-${Date.now()}`,
-          userId,
-          action: "request_maintenance",
-          details: `Requested maintenance for ${asset.name}${notes ? `. Issue: ${notes}` : ''}`,
-          timestamp,
-          ipAddress: "mobile",
-          userAgent: "Mobile App"
-        }
-
         result.message = `Maintenance request submitted for ${asset.name}.`
-        result.maintenanceRequest = maintenanceRequest
-        result.logs = [maintenanceLog]
         break
 
       case "locate":
-        // Just return current location - no status change needed
-        const zone = data.zones.find(z => z.id === asset.location.zoneId)
-        const floor = data.floors.find(f => f.id === zone?.floorId)
-        const building = data.buildings.find(b => b.id === floor?.buildingId)
-        
+        const zone = data.zones.find((z: any) => z.id === asset.location.zoneId)
+        const floor = data.floors.find((f: any) => f.id === zone?.floorId)
+        const building = data.buildings.find((b: any) => b.id === floor?.buildingId)
         result.message = `${asset.name} is located in ${zone?.name}, ${floor?.name}, ${building?.name}`
-        result.location = {
-          building: building?.name,
-          floor: floor?.name,
-          zone: zone?.name,
-          coordinates: {
-            x: 100 + (parseInt(assetId.slice(-3)) % 300),
-            y: 100 + (parseInt(assetId.slice(-2)) % 200)
-          }
-        }
         break
 
       default:
         return NextResponse.json({ error: "Invalid action" }, { status: 400 })
     }
+
+    result.updatedAsset = toMobileAsset(asset, data)
 
     return NextResponse.json(result)
   } catch (error) {
