@@ -9,6 +9,7 @@ import {
   Download,
   X
 } from "lucide-react"
+import Link from "next/link"
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line } from 'recharts'
 import { apiGet } from "@/lib/fetcher"
 
@@ -912,7 +913,9 @@ export default function AssetLocatorDashboard() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-medium text-gray-900 text-sm">{alert.assetName}</h4>
+                            <Link href={`/assets/${alert.assetId}`}>
+                              <h4 className="font-medium text-gray-900 text-sm hover:text-teal-600">{alert.assetName}</h4>
+                            </Link>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                               alert.severity === 'high' ? 'bg-red-100 text-red-700' :
                               alert.severity === 'medium' ? 'bg-yellow-100 text-yellow-700' :
