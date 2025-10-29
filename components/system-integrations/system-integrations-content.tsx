@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Zap, ShieldCheck, AlertTriangle, Plus, ChevronRight, RefreshCw, List } from "lucide-react"
 import { apiGet, apiPost } from "@/lib/fetcher"
+import DashboardLayout from "../dashboard/dashboard-layout"
 
 interface Integration {
   id: string
@@ -18,6 +20,8 @@ export default function SystemIntegrationsContent() {
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null)
   const [apiKey, setApiKey] = useState("")
   const [connectionStep, setConnectionStep] = useState("initial")
+  const [syncingId, setSyncingId] = useState<string | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     loadIntegrations()
@@ -59,16 +63,33 @@ export default function SystemIntegrationsContent() {
       ))
       setTimeout(() => {
         handleModalClose()
+        router.push("/system-integrations")
       }, 2000)
     } catch (error) {
       setConnectionStep("failed")
     }
   }
 
-  if (isLoading) {
-    return <div>Loading...</div>
+  const handleTestSync = async (id: string) => {
+    setSyncingId(id)
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    setIntegrations(integrations.map(int => 
+      int.id === id ? { ...int, lastSync: new Date().toISOString() } : int
+    ))
+    setSyncingId(null)
   }
 
+if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center gap-4">
+        <div className="relative w-16 h-16">
+          <div className="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
+          <div className="absolute inset-0 border-4 border-[#003d5c] rounded-full border-t-transparent animate-spin"></div>
+        </div>
+        <p className="text-[#003d5c] text-lg font-medium">Loading...</p>
+      </div>
+    )
+  }
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -92,7 +113,7 @@ export default function SystemIntegrationsContent() {
                   disabled={integration.status === "Connected"}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${integration.status === "Connected"
                       ? "bg-green-100 text-green-700 cursor-not-allowed"
-                      : "bg-blue-500 text-white hover:bg-blue-600"
+                      : "bg-[#003d5c] text-white hover:bg-opacity-90"
                     }`}>
                   {integration.status === "Connected" ? "Connected" : "Connect"}
                 </button>
@@ -127,10 +148,14 @@ export default function SystemIntegrationsContent() {
                       Connected
                     </span>
                   </td>
-                  <td className="p-4 text-gray-600">{new Date(integration.lastSync!).toLocaleString()}</td>
+                  <td className="p-4 text-gray-600">
+                    {syncingId === integration.id ? "Syncing..." : new Date(integration.lastSync!).toLocaleString()}
+                  </td>
                   <td className="p-4 flex items-center gap-2">
-                    <button className="p-2 text-blue-500 hover:bg-blue-50 rounded-md"><RefreshCw size={16} /></button>
-                    <button className="p-2 text-gray-500 hover:bg-gray-50 rounded-md"><List size={16} /></button>
+                    <button onClick={() => handleTestSync(integration.id)} disabled={syncingId === integration.id} className="p-2 text-[#003d5c] hover:bg-gray-100 rounded-md disabled:opacity-50">
+                      <RefreshCw size={16} />
+                    </button>
+                    <button onClick={() => router.push("/system-integrations/logs")} className="p-2 text-gray-500 hover:bg-gray-100 rounded-md"><List size={16} /></button>
                   </td>
                 </tr>
               ))}
@@ -153,19 +178,19 @@ export default function SystemIntegrationsContent() {
                     type="text"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003d5c]"
                     placeholder="Enter your API key"
                   />
                   <div className="mt-6 flex justify-end gap-3">
                     <button onClick={handleModalClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
-                    <button onClick={handleConnect} className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Connect</button>
+                    <button onClick={handleConnect} className="px-4 py-2 bg-[#003d5c] text-white rounded-md hover:bg-opacity-90">Connect</button>
                   </div>
                 </>
               )}
 
               {connectionStep === "verifying" && (
                 <div className="text-center py-8">
-                  <RefreshCw className="animate-spin h-12 w-12 text-blue-500 mx-auto mb-4" />
+                  <RefreshCw className="animate-spin h-12 w-12 text-[#003d5c] mx-auto mb-4" />
                   <p className="text-lg font-medium text-gray-700">Verifying connection...</p>
                 </div>
               )}
@@ -182,7 +207,7 @@ export default function SystemIntegrationsContent() {
                   <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
                   <p className="text-lg font-medium text-gray-700 mb-4">Connection Failed</p>
                   <p className="text-sm text-gray-600 mb-6">Please check your API key and try again.</p>
-                  <button onClick={() => setConnectionStep("initial")} className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Try Again</button>
+                  <button onClick={() => setConnectionStep("initial")} className="px-4 py-2 bg-[#003d5c] text-white rounded-md hover:bg-opacity-90">Try Again</button>
                 </div>
               )}
             </div>
