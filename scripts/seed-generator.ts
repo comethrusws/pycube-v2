@@ -447,15 +447,19 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   const categoryIds = productCategories.map(c => c.id)
   const typeToProductId = new Map<string, string>()
   for (const typeName of ASSET_TYPES) {
+    const category = randomChoice(productCategories)
     const p: Product = {
       id: randomUUID(),
       name: typeName,
-      categoryId: randomChoice(categoryIds),
+      categoryId: category.id,
+      category: category.name,
       manufacturer: randomChoice(manufacturerList),
       status: "active",
       sku: `SKU-${randomInt(100000, 999999)}`,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      price: randomInt(1000, 50000),
+      description: `Description for ${typeName}`
     }
     products.push(p)
     typeToProductId.set(typeName, p.id)

@@ -7,15 +7,15 @@ import { apiGet } from "@/lib/fetcher"
 interface Product {
   id: string
   name: string
-  description: string
-  category: string
-  manufacturer: string
-  model: string
-  price: number
-  sku: string
-  status: "active" | "discontinued" | "out-of-stock"
-  createdDate: string
-  updatedDate: string
+  description?: string
+  category?: string
+  manufacturer?: string
+  model?: string
+  price?: number
+  sku?: string
+  status?: "active" | "discontinued" | "out-of-stock" | "inactive"
+  createdAt?: string
+  updatedAt?: string
   totalAssets: number
 }
 
@@ -124,7 +124,7 @@ export default function ProductsContent() {
     const csv = [
       "Product ID,Name,Description,Category,Manufacturer,Model,Price,SKU,Status,Total Assets,Created Date",
       ...data.map(item => 
-        `${item.id},"${item.name}","${item.description}","${item.category}","${item.manufacturer}","${item.model}",${item.price},"${item.sku}",${item.status},${item.totalAssets},${item.createdDate}`
+        `${item.id},"${item.name}","${item.description || ''}","${item.category || ''}","${item.manufacturer || ''}","${item.model || ''}",${item.price || 'N/A'},"${item.sku || ''}",${item.status},${item.totalAssets},${item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ''}`
       )
     ].join("\n")
     
@@ -376,7 +376,7 @@ export default function ProductsContent() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {new Date(product.createdDate).toLocaleDateString()}
+                        {product.createdAt ? new Date(product.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
                     </tr>
                   ))

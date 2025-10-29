@@ -457,6 +457,8 @@ export interface Product {
   sku?: string
   createdAt?: string
   updatedAt?: string
+  price?: number
+  description?: string
 }
 
 // Compliance & Risk
