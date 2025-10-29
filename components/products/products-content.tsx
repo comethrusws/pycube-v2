@@ -61,6 +61,7 @@ export default function ProductsContent() {
   })
   const [isLoading, setIsLoading] = useState(true)
   const [showFilters, setShowFilters] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   
   const [filters, setFilters] = useState({
     name: "",
@@ -68,6 +69,17 @@ export default function ProductsContent() {
     manufacturer: "",
     status: "",
     sku: "",
+  })
+
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    description: "",
+    category: "",
+    manufacturer: "",
+    model: "",
+    price: 0,
+    sku: "",
+    status: "active" as "active" | "discontinued" | "out-of-stock" | "inactive",
   })
 
   const fetchData = async (page: number = 1) => {
@@ -137,6 +149,24 @@ export default function ProductsContent() {
     URL.revokeObjectURL(url)
   }
 
+  const handleAddProduct = () => {
+    const storedProducts = JSON.parse(localStorage.getItem("products") || "[]");
+    const updatedProducts = [...storedProducts, { ...newProduct, id: `prod-${Date.now()}` }];
+    localStorage.setItem("products", JSON.stringify(updatedProducts));
+    setIsModalOpen(false);
+    setNewProduct({
+      name: "",
+      description: "",
+      category: "",
+      manufacturer: "",
+      model: "",
+      price: 0,
+      sku: "",
+      status: "active",
+    });
+    console.log("Product added:", newProduct);
+  };
+
   if (isLoading && data.length === 0) {
     return (
       <div className="p-8 bg-gray-50 min-h-screen">
@@ -192,7 +222,10 @@ export default function ProductsContent() {
               Export CSV
             </button>
           </div>
-          <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm transition-colors duration-200 flex items-center gap-2">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm transition-colors duration-200 flex items-center gap-2"
+          >
             <Plus size={16} />
             Add Product
           </button>
@@ -458,6 +491,105 @@ export default function ProductsContent() {
           </div>
         </div>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 w-full max-w-md">
+            <h2 className="text-2xl font-light mb-4">Add New Product</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <input
+                  type="text"
+                  value={newProduct.name}
+                  onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                  value={newProduct.description}
+                  onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Category</label>
+                <input
+                  type="text"
+                  value={newProduct.category}
+                  onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Manufacturer</label>
+                <input
+                  type="text"
+                  value={newProduct.manufacturer}
+                  onChange={(e) => setNewProduct({ ...newProduct, manufacturer: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Model</label>
+                <input
+                  type="text"
+                  value={newProduct.model}
+                  onChange={(e) => setNewProduct({ ...newProduct, model: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Price</label>
+                <input
+                  type="number"
+                  value={newProduct.price}
+                  onChange={(e) => setNewProduct({ ...newProduct, price: Number(e.target.value) })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">SKU</label>
+                <input
+                  type="text"
+                  value={newProduct.sku}
+                  onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <select
+                  value={newProduct.status}
+                  onChange={(e) => setNewProduct({ ...newProduct, status: e.target.value as any })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                >
+                  <option value="active">Active</option>
+                  <option value="discontinued">Discontinued</option>
+                  <option value="out-of-stock">Out of Stock</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddProduct}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg"
+              >
+                Add Product
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -27,12 +27,28 @@ export default function AssetsContent() {
   const [showFilters, setShowFilters] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(25)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Filter states
   const [filters, setFilters] = useState({
     status: "all",
     type: "all",
     department: "all"
+  })
+
+  const [newAsset, setNewAsset] = useState({
+    name: "",
+    type: "",
+    category: "",
+    status: "available" as "available" | "in-use" | "maintenance" | "lost",
+    departmentName: "",
+    location: {
+      zoneName: "",
+    },
+    utilization: 0,
+    value: 0,
+    serialNumber: "",
+    purchaseDate: "",
   })
 
   useEffect(() => {
@@ -89,6 +105,28 @@ export default function AssetsContent() {
     a.click()
     URL.revokeObjectURL(url)
   }
+
+  const handleAddAsset = () => {
+    const storedAssets = JSON.parse(localStorage.getItem("assets") || "[]");
+    const updatedAssets = [...storedAssets, { ...newAsset, id: `asset-${Date.now()}` }];
+    localStorage.setItem("assets", JSON.stringify(updatedAssets));
+    setIsModalOpen(false);
+    setNewAsset({
+      name: "",
+      type: "",
+      category: "",
+      status: "available",
+      departmentName: "",
+      location: {
+        zoneName: "",
+      },
+      utilization: 0,
+      value: 0,
+      serialNumber: "",
+      purchaseDate: "",
+    });
+    console.log("Asset added:", newAsset);
+  };
 
   const filteredData = data.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -163,7 +201,10 @@ export default function AssetsContent() {
               <Download size={16} />
               Export CSV
             </button>
-            <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm transition-colors duration-200 flex items-center gap-2">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm transition-colors duration-200 flex items-center gap-2"
+            >
               <Plus size={16} />
               Add Asset
             </button>
@@ -282,6 +323,115 @@ export default function AssetsContent() {
           </div>
         </div>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 w-full max-w-md">
+            <h2 className="text-2xl font-light mb-4">Add New Asset</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <input
+                  type="text"
+                  value={newAsset.name}
+                  onChange={(e) => setNewAsset({ ...newAsset, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Type</label>
+                <input
+                  type="text"
+                  value={newAsset.type}
+                  onChange={(e) => setNewAsset({ ...newAsset, type: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Category</label>
+                <input
+                  type="text"
+                  value={newAsset.category}
+                  onChange={(e) => setNewAsset({ ...newAsset, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <select
+                  value={newAsset.status}
+                  onChange={(e) => setNewAsset({ ...newAsset, status: e.target.value as any })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                >
+                  <option value="available">Available</option>
+                  <option value="in-use">In Use</option>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="lost">Lost</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Department</label>
+                <input
+                  type="text"
+                  value={newAsset.departmentName}
+                  onChange={(e) => setNewAsset({ ...newAsset, departmentName: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Location</label>
+                <input
+                  type="text"
+                  value={newAsset.location.zoneName}
+                  onChange={(e) => setNewAsset({ ...newAsset, location: { zoneName: e.target.value } })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Value</label>
+                <input
+                  type="number"
+                  value={newAsset.value}
+                  onChange={(e) => setNewAsset({ ...newAsset, value: Number(e.target.value) })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Serial Number</label>
+                <input
+                  type="text"
+                  value={newAsset.serialNumber}
+                  onChange={(e) => setNewAsset({ ...newAsset, serialNumber: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Purchase Date</label>
+                <input
+                  type="date"
+                  value={newAsset.purchaseDate}
+                  onChange={(e) => setNewAsset({ ...newAsset, purchaseDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddAsset}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg"
+              >
+                Add Asset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
