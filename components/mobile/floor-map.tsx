@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { MapPin, Zap, Wrench, AlertTriangle, Wifi } from "lucide-react"
 
 interface Asset {
@@ -36,35 +36,36 @@ interface FloorMapProps {
   building: string
 }
 
+const getAssetCoordinates = (asset: Asset, assets: Asset[], mapDetails: { width: number, height: number, x: number, y: number }) => {
+  const padding = 50;
+  const minX = Math.min(...assets.map(a => a.location.coordinates.x));
+  const minY = Math.min(...assets.map(a => a.location.coordinates.y));
+  const maxX = Math.max(...assets.map(a => a.location.coordinates.x));
+  const maxY = Math.max(...assets.map(a => a.location.coordinates.y));
+
+  const boundingBoxWidth = maxX - minX;
+  const boundingBoxHeight = maxY - minY;
+
+  const scaleX = (mapDetails.width - padding * 2) / boundingBoxWidth;
+  const scaleY = (mapDetails.height - padding * 2) / boundingBoxHeight;
+  const scale = Math.min(scaleX, scaleY);
+
+  const offsetX = (mapDetails.width - boundingBoxWidth * scale) / 2 - minX * scale + mapDetails.x;
+  const offsetY = (mapDetails.height - boundingBoxHeight * scale) / 4 - minY * scale + mapDetails.y;
+
+  const x = asset.location.coordinates.x * scale + offsetX;
+  const y = asset.location.coordinates.y * scale + offsetY;
+
+  return { x, y };
+}
+
 export default function FloorMap({ assets, selectedAsset, onAssetSelect, floor, building }: FloorMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [mapImage, setMapImage] = useState<HTMLImageElement | null>(null)
+  const [mapRenderDetails, setMapRenderDetails] = useState({ width: 0, height: 0, x: 0, y: 0 })
 
-  const getAssetCoordinates = (asset: Asset, canvasWidth: number, canvasHeight: number) => {
-    const padding = 50;
-    const minX = Math.min(...assets.map(a => a.location.coordinates.x));
-    const minY = Math.min(...assets.map(a => a.location.coordinates.y));
-    const maxX = Math.max(...assets.map(a => a.location.coordinates.x));
-    const maxY = Math.max(...assets.map(a => a.location.coordinates.y));
-
-    const boundingBoxWidth = maxX - minX;
-    const boundingBoxHeight = maxY - minY;
-
-    const scaleX = (canvasWidth - padding * 2) / boundingBoxWidth;
-    const scaleY = (canvasHeight - padding * 2) / boundingBoxHeight;
-    const scale = Math.min(scaleX, scaleY);
-
-    const offsetX = (canvasWidth - boundingBoxWidth * scale) / 2 - minX * scale;
-    const offsetY = (canvasHeight - boundingBoxHeight * scale) / 4 - minY * scale;
-
-    const x = asset.location.coordinates.x * scale + offsetX;
-    const y = asset.location.coordinates.y * scale + offsetY;
-
-    return { x, y };
-  }
-
-  const getPinColor = (status: Asset["status"]) => {
+  const getPinColor = useCallback((status: Asset["status"]) => {
     switch (status) {
       case "available":
         return "#10B981"
@@ -77,7 +78,7 @@ export default function FloorMap({ assets, selectedAsset, onAssetSelect, floor, 
       default:
         return "#6B7280"
     }
-  }
+  }, [])
 
   useEffect(() => {
     const img = new Image()
@@ -105,14 +106,30 @@ export default function FloorMap({ assets, selectedAsset, onAssetSelect, floor, 
     canvas.width = width
     canvas.height = height
 
-    ctx.drawImage(mapImage, 0, 0, width, height)
+    const imageAspectRatio = mapImage.width / mapImage.height;
+    const canvasAspectRatio = width / height;
+    let drawWidth = width;
+    let drawHeight = height;
+    let imageX = 0;
+    let imageY = 0;
+
+    if (imageAspectRatio > canvasAspectRatio) {
+      drawHeight = width / imageAspectRatio;
+      imageY = (height - drawHeight) / 2;
+    } else {
+      drawWidth = height * imageAspectRatio;
+      imageX = (width - drawWidth) / 2;
+    }
+
+    ctx.drawImage(mapImage, imageX, imageY, drawWidth, drawHeight);
+    setMapRenderDetails({ width: drawWidth, height: drawHeight, x: imageX, y: imageY });
 
     assets.forEach(asset => {
       if (asset.location?.coordinates?.x && asset.location?.coordinates?.y) {
-        const { x, y } = getAssetCoordinates(asset, width, height);
+        const { x: assetX, y: assetY } = getAssetCoordinates(asset, assets, { width: drawWidth, height: drawHeight, x: imageX, y: imageY });
 
         ctx.beginPath()
-        ctx.arc(x, y, 8, 0, 2 * Math.PI)
+        ctx.arc(assetX, assetY, 8, 0, 2 * Math.PI)
         ctx.fillStyle = getPinColor(asset.status)
         ctx.fill()
         ctx.strokeStyle = "white"
@@ -121,14 +138,14 @@ export default function FloorMap({ assets, selectedAsset, onAssetSelect, floor, 
 
         if (selectedAsset?.id === asset.id) {
           ctx.beginPath()
-          ctx.arc(x, y, 12, 0, 2 * Math.PI)
+          ctx.arc(assetX, assetY, 12, 0, 2 * Math.PI)
           ctx.strokeStyle = "#0d7a8c"
           ctx.lineWidth = 3
           ctx.stroke()
         }
       }
     })
-  }, [assets, selectedAsset, mapImage, getAssetCoordinates, getPinColor])
+  }, [assets, selectedAsset, mapImage, getPinColor])
 
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
@@ -140,7 +157,29 @@ export default function FloorMap({ assets, selectedAsset, onAssetSelect, floor, 
 
     const clickedAsset = assets.find(asset => {
       if (asset.location?.coordinates?.x && asset.location?.coordinates?.y) {
-        const { x: assetX, y: assetY } = getAssetCoordinates(asset, canvas.width, canvas.height);
+        const { x: assetX, y: assetY } = getAssetCoordinates(asset, assets, mapRenderDetails);
+        const distance = Math.sqrt(Math.pow(x - assetX, 2) + Math.pow(y - assetY, 2))
+        return distance < 10
+      }
+      return false
+    })
+
+    if (clickedAsset) {
+      onAssetSelect(clickedAsset)
+    }
+  }
+
+  const handleCanvasTouch = (event: React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const rect = canvas.getBoundingClientRect()
+    const x = event.touches[0].clientX - rect.left
+    const y = event.touches[0].clientY - rect.top
+
+    const clickedAsset = assets.find(asset => {
+      if (asset.location?.coordinates?.x && asset.location?.coordinates?.y) {
+        const { x: assetX, y: assetY } = getAssetCoordinates(asset, assets, mapRenderDetails);
         const distance = Math.sqrt(Math.pow(x - assetX, 2) + Math.pow(y - assetY, 2))
         return distance < 10
       }
@@ -183,6 +222,7 @@ export default function FloorMap({ assets, selectedAsset, onAssetSelect, floor, 
           ref={canvasRef}
           className="absolute inset-0 w-full h-full"
           onClick={handleCanvasClick}
+          onTouchStart={handleCanvasTouch}
         />
         <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-white/20">
           <div className="text-xs font-semibold uppercase tracking-wider text-gray-700 mb-3" style={{ color: "#001f3f" }}>Asset Status</div>
