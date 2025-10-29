@@ -2,16 +2,11 @@
 
 import { useState, useRef, useEffect } from "react"
 import { X, Bot, Send, Sparkles, MessageCircle, Zap, BrainCog } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { getAIAssistantPrompts } from "@/lib/ai-prompts"
 import { apiGet } from "@/lib/fetcher"
 
-const suggestedPrompts = [
-  "Which assets are underutilized today?",
-  "Recommend asset reallocations across departments",
-  "Show equipment that can be transferred to ICU",
-  "List assets nearing maintenance schedules",
-  "Find idle assets over 30 days",
-  "Analyze utilization trends this month"
-]
+
 
 interface AssetData {
   assets: any[]
@@ -38,6 +33,9 @@ export default function AiAssistant() {
   const [assetData, setAssetData] = useState<AssetData | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const pathname = usePathname()
+
+  const suggestedPrompts = getAIAssistantPrompts(pathname)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
