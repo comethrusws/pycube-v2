@@ -7,12 +7,12 @@ import { apiGet } from "@/lib/fetcher"
 interface ProductCategory {
   id: string
   name: string
-  description: string
+  description?: string
   parentCategoryId?: string
   parentCategoryName?: string
   status: "active" | "inactive"
-  createdDate: string
-  updatedDate: string
+  createdAt?: string
+  updatedAt?: string
   totalProducts: number
   totalAssets: number
   level: number
@@ -117,7 +117,7 @@ export default function ProductCategoriesContent() {
     const csv = [
       "Category ID,Name,Description,Parent Category,Status,Total Products,Total Assets,Created Date",
       ...data.map(item => 
-        `${item.id},"${item.name}","${item.description}","${item.parentCategoryName || 'Root'}",${item.status},${item.totalProducts},${item.totalAssets},${item.createdDate}`
+        `${item.id},"${item.name}","${item.description || ''}","${item.parentCategoryName || 'Root'}",${item.status},${item.totalProducts},${item.totalAssets},${item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ''}`
       )
     ].join("\n")
     
@@ -353,7 +353,7 @@ export default function ProductCategoriesContent() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {new Date(category.createdDate).toLocaleDateString()}
+                        {category.createdAt ? new Date(category.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
                     </tr>
                   ))
