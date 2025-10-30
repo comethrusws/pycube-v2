@@ -372,7 +372,7 @@ export default function AssetLocatorDashboard() {
   // Filter utilization data based on current filters
   const filteredDepartments = utilization?.departmentUtilization?.filter(dept => {
     if (filters.department !== "all" && dept.departmentId !== filters.department) return false
-    return dept.avgUtilization <= filters.utilizationThreshold
+    return true
   }) || []
 
   const filteredAssetTypes = utilization?.assetTypeUtilization?.filter(type => {
@@ -576,7 +576,7 @@ export default function AssetLocatorDashboard() {
                       stroke="#9ca3af" 
                       style={{ fontSize: "12px" }}
                       tick={{ fill: '#6b7280' }}
-                      label={{ value: 'Utilization %', angle: -90, position: 'insideLeft' }}
+                      label={{ value: 'Asset Status %', angle: -90, position: 'insideLeft' }}
                     />
                     <Tooltip 
                       contentStyle={{ 
@@ -586,14 +586,14 @@ export default function AssetLocatorDashboard() {
                         fontSize: '12px'
                       }}
                       formatter={(value, name) => [
-                        typeof value === 'number' ? `${value} assets` : value,
-                        name === 'active' ? 'Active' : name === 'idle' ? 'Idle' : 'In Maintenance'
+                        `${value}%`,
+                        name === 'available' ? 'Available' : name === 'underMaintenance' ? 'Under Maintenance' : 'Pending Maintenance'
                       ]}
                     />
                     <Legend />
-                    <Bar dataKey="active" stackId="a" fill="#059669" name="Active" />
-                    <Bar dataKey="idle" stackId="a" fill="#dc2626" name="Idle" />
-                    <Bar dataKey="inMaintenance" stackId="a" fill="#d97706" name="In Maintenance" />
+                    <Bar dataKey="available" stackId="a" fill="#059669" name="Available" />
+                    <Bar dataKey="underMaintenance" stackId="a" fill="#d97706" name="Under Maintenance" />
+                    <Bar dataKey="pendingMaintenance" stackId="a" fill="#dc2626" name="Pending Maintenance" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

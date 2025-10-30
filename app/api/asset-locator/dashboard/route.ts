@@ -33,7 +33,9 @@ export async function GET() {
           underutilized: 0,
           active: 0,
           idle: 0,
-          inMaintenance: 0
+          inMaintenance: 0,
+          available: 0,
+          pendingMaintenance: 0
         }
       }
       acc[asset.departmentId].assets.push(asset)
@@ -47,6 +49,9 @@ export async function GET() {
       if (asset.status === "maintenance") {
         acc[asset.departmentId].inMaintenance++
       }
+      if (asset.status === "available") {
+        acc[asset.departmentId].available++
+      }
       return acc
     }, {} as Record<string, { 
       assets: any[], 
@@ -54,23 +59,40 @@ export async function GET() {
       underutilized: number,
       active: number,
       idle: number,
-      inMaintenance: number
+      inMaintenance: number,
+      available: number,
+      pendingMaintenance: number
     }>)
 
-    const departmentUtilization = Object.entries(deptUtilization).map(([deptId, deptData]) => ({
-      departmentId: deptId,
-      departmentName: `Department ${deptId.slice(-3)}`,
-      avgUtilization: Math.round(deptData.totalUtilization / deptData.assets.length),
-      totalAssets: deptData.assets.length,
-      underutilized: deptData.underutilized,
-      active: deptData.active,
-      idle: deptData.idle,
-      inMaintenance: deptData.inMaintenance,
-      utilizationTrend: Array.from({ length: 7 }, (_, i) => ({
-        date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        utilization: Math.max(20, Math.min(95, deptData.totalUtilization / deptData.assets.length + Math.floor(Math.random() * 30) - 15))
-      }))
-    })).sort((a, b) => b.avgUtilization - a.avgUtilization)
+    data.maintenanceTasks.forEach(task => {
+      const asset = data.assets.find(a => a.id === task.assetId)
+      if (asset && task.status === 'pending') {
+        if (deptUtilization[asset.departmentId]) {
+          deptUtilization[asset.departmentId].pendingMaintenance++
+        }
+      }
+    })
+
+    const departmentUtilization = Object.entries(deptUtilization).map(([deptId, deptData]) => {
+      const totalAssets = deptData.assets.length;
+      return {
+        departmentId: deptId,
+        departmentName: `Department ${deptId.slice(-3)}`,
+        avgUtilization: Math.round(deptData.totalUtilization / totalAssets),
+        totalAssets: totalAssets,
+        underutilized: deptData.underutilized,
+        active: deptData.active,
+        idle: deptData.idle,
+        inMaintenance: deptData.inMaintenance,
+        available: Math.round((deptData.available / totalAssets) * 100),
+        underMaintenance: Math.round((deptData.inMaintenance / totalAssets) * 100),
+        pendingMaintenance: Math.round((deptData.pendingMaintenance / totalAssets) * 100),
+        utilizationTrend: Array.from({ length: 7 }, (_, i) => ({
+          date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          utilization: Math.max(20, Math.min(95, deptData.totalUtilization / totalAssets + Math.floor(Math.random() * 30) - 15))
+        }))
+      }
+    }).sort((a, b) => b.avgUtilization - a.avgUtilization)
 
     // Top 10 Idle Assets with enhanced details
     const top10IdleAssets = data.assets

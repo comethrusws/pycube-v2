@@ -1138,7 +1138,9 @@ function generateAssetLocatorData(
         underutilized: 0,
         active: 0,
         idle: 0,
-        inMaintenance: 0
+        inMaintenance: 0,
+        available: 0,
+        pendingMaintenance: 0
       }
     }
     acc[asset.departmentId].assets.push(asset)
@@ -1152,6 +1154,9 @@ function generateAssetLocatorData(
     if (asset.status === "maintenance") {
       acc[asset.departmentId].inMaintenance++
     }
+    if (asset.status === "available") {
+      acc[asset.departmentId].available++
+    }
     return acc
   }, {} as Record<string, { 
     assets: Asset[], 
@@ -1159,23 +1164,40 @@ function generateAssetLocatorData(
     underutilized: number,
     active: number,
     idle: number,
-    inMaintenance: number
+    inMaintenance: number,
+    available: number,
+    pendingMaintenance: number
   }>)
 
-  const departmentUtilization = Object.entries(deptUtilization).map(([deptId, data]) => ({
-    departmentId: deptId,
-    departmentName: `Department ${deptId.slice(-3)}`,
-    avgUtilization: Math.round(data.totalUtilization / data.assets.length),
-    totalAssets: data.assets.length,
-    underutilized: data.underutilized,
-    active: data.active,
-    idle: data.idle,
-    inMaintenance: data.inMaintenance,
-    utilizationTrend: Array.from({ length: 7 }, (_, i) => ({
-      date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      utilization: Math.max(20, Math.min(95, data.totalUtilization / data.assets.length + randomInt(-15, 15)))
-    }))
-  })).sort((a, b) => b.avgUtilization - a.avgUtilization)
+  maintenanceTasks.forEach(task => {
+    const asset = assets.find(a => a.id === task.assetId)
+    if (asset && task.status === 'pending') {
+      if (deptUtilization[asset.departmentId]) {
+        deptUtilization[asset.departmentId].pendingMaintenance++
+      }
+    }
+  })
+
+  const departmentUtilization = Object.entries(deptUtilization).map(([deptId, data]) => {
+    const totalAssets = data.assets.length;
+    return {
+      departmentId: deptId,
+      departmentName: `Department ${deptId.slice(-3)}`,
+      avgUtilization: Math.round(data.totalUtilization / totalAssets),
+      totalAssets: totalAssets,
+      underutilized: data.underutilized,
+      active: data.active,
+      idle: data.idle,
+      inMaintenance: data.inMaintenance,
+      available: Math.round((data.available / totalAssets) * 100),
+      underMaintenance: Math.round((data.inMaintenance / totalAssets) * 100),
+      pendingMaintenance: Math.round((data.pendingMaintenance / totalAssets) * 100),
+      utilizationTrend: Array.from({ length: 7 }, (_, i) => ({
+        date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        utilization: Math.max(20, Math.min(95, data.totalUtilization / data.assets.length + randomInt(-15, 15)))
+      }))
+    }
+  }).sort((a, b) => b.avgUtilization - a.avgUtilization)
 
   // Asset type utilization breakdown
   const typeUtilization = assets.reduce((acc, asset) => {
