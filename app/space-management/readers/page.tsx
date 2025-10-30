@@ -2,6 +2,8 @@
 
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 import { useEffect, useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { apiGet, apiPost } from "@/lib/fetcher"
 
 interface PaginationData {
@@ -15,6 +17,7 @@ interface PaginationData {
 
 export default function ReadersPage() {
 	const [data, setData] = useState<any[]>([])
+	const router = useRouter()
 	const [zones, setZones] = useState<any[]>([])
 	const [pagination, setPagination] = useState<PaginationData>({ page: 1, limit: 25, total: 0, totalPages: 1, hasNext: false, hasPrev: false })
 	const [loading, setLoading] = useState(true)
@@ -121,9 +124,9 @@ export default function ReadersPage() {
 									) : data.length === 0 ? (
 										<tr><td colSpan={3} className="px-4 py-8 text-center text-gray-500">No readers found</td></tr>
 									) : data.map((r: any) => (
-										<tr key={r.id} className="border-b border-gray-200 hover:bg-gray-50">
+									<tr key={r.id} className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer" onClick={() => router.push(`/space-management/readers/${r.id}`)}>
 											<td className="px-4 py-3">
-												<div className="text-sm text-gray-900">{r.name}</div>
+											<div className="text-sm text-gray-900">{r.name}</div>
 												<div className="text-xs text-gray-500">ID: {r.id}</div>
 											</td>
 											<td className="px-4 py-3 text-sm text-gray-900">{r.buildingName} • {r.floorName} • {r.zoneName}</td>
