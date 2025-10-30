@@ -347,7 +347,7 @@ export default function AssetLocatorDashboard() {
   const [filters, setFilters] = useState({
     department: "all",
     assetType: "all",
-    utilizationThreshold: 80,
+    utilizationThreshold: 60,
     dateRange: "30days"
   })
 
@@ -372,7 +372,8 @@ export default function AssetLocatorDashboard() {
   // Filter utilization data based on current filters
   const filteredDepartments = utilization?.departmentUtilization?.filter(dept => {
     if (filters.department !== "all" && dept.departmentId !== filters.department) return false
-    return true
+    // Apply utilization threshold: show departments with avg utilization <= selected threshold
+    return (dept.avgUtilization ?? 0) <= filters.utilizationThreshold
   }) || []
 
   const filteredAssetTypes = utilization?.assetTypeUtilization?.filter(type => {
@@ -533,7 +534,6 @@ export default function AssetLocatorDashboard() {
                     onChange={(e) => setFilters({...filters, utilizationThreshold: Number(e.target.value)})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
-                    <option value={20}>Under 20%</option>
                     <option value={40}>Under 40%</option>
                     <option value={60}>Under 60%</option>
                     <option value={80}>Under 80%</option>
