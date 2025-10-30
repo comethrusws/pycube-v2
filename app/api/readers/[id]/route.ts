@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { loadSeedData } from "@/lib/data-loader"
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  _request: NextRequest, 
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    const { id } = await params
+    const { id } = await context.params
     const data = await loadSeedData()
     const reader = (data.readers || []).find((r: any) => r.id === id)
     if (!reader) {

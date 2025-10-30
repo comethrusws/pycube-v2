@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { loadSeedData } from "@/lib/data-loader"
+import type { Reader } from "@/lib/types"
 
 export async function POST(request: NextRequest) {
 	try {
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
 		}
 
 		const data = await loadSeedData()
-		const newReader = {
+		const newReader: Reader = {
 			id: `RDR-${Date.now()}`,
 			name,
 			zoneId,
