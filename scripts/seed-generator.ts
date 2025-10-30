@@ -1178,8 +1178,12 @@ function generateAssetLocatorData(
     }
   })
 
-  const departmentUtilization = Object.entries(deptUtilization).map(([deptId, data]) => {
+  let departmentUtilization = Object.entries(deptUtilization).map(([deptId, data]) => {
     const totalAssets = data.assets.length;
+    const underMaintenancePct = Math.round((data.inMaintenance / totalAssets) * 100)
+    const pendingMaintenancePct = Math.round((data.pendingMaintenance / totalAssets) * 100)
+    const availablePct = Math.max(0, 100 - underMaintenancePct - pendingMaintenancePct)
+
     return {
       departmentId: deptId,
       departmentName: `Department ${deptId.slice(-3)}`,
@@ -1189,15 +1193,40 @@ function generateAssetLocatorData(
       active: data.active,
       idle: data.idle,
       inMaintenance: data.inMaintenance,
-      available: Math.round((data.available / totalAssets) * 100),
-      underMaintenance: Math.round((data.inMaintenance / totalAssets) * 100),
-      pendingMaintenance: Math.round((data.pendingMaintenance / totalAssets) * 100),
+      // Stacked bar values that must sum to 100
+      available: availablePct,
+      underMaintenance: underMaintenancePct,
+      pendingMaintenance: pendingMaintenancePct,
       utilizationTrend: Array.from({ length: 7 }, (_, i) => ({
         date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         utilization: Math.max(20, Math.min(95, data.totalUtilization / data.assets.length + randomInt(-15, 15)))
       }))
     }
   }).sort((a, b) => b.avgUtilization - a.avgUtilization)
+
+  // Ensure distribution so filters (40/60/80) always show data
+  const n = departmentUtilization.length
+  if (n > 0) {
+    // Top 4-5 fully utilized (>= 90%)
+    const topCount = Math.min(5, n)
+    for (let i = 0; i < topCount; i++) {
+      departmentUtilization[i].avgUtilization = Math.max(departmentUtilization[i].avgUtilization, 90 + randomInt(0, 7))
+    }
+
+    // Bottom 2-3 under 40%
+    const low40Count = Math.min(3, n)
+    for (let i = 0; i < low40Count; i++) {
+      const idx = n - 1 - i
+      departmentUtilization[idx].avgUtilization = Math.min(departmentUtilization[idx].avgUtilization, 25 + randomInt(0, 12)) // 25-37
+    }
+
+    // Next 2-3 in 45-57% bucket (under 60)
+    const low60Count = Math.min(3, Math.max(0, n - low40Count - topCount))
+    for (let i = 0; i < low60Count; i++) {
+      const idx = n - 1 - low40Count - i
+      departmentUtilization[idx].avgUtilization = 45 + randomInt(0, 12) // 45-57
+    }
+  }
 
   // Asset type utilization breakdown
   const typeUtilization = assets.reduce((acc, asset) => {
