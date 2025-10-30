@@ -20,6 +20,7 @@ export default function SystemIntegrationsContent() {
   const [apiKey, setApiKey] = useState("")
   const [connectionStep, setConnectionStep] = useState("initial")
   const [syncingId, setSyncingId] = useState<string | null>(null)
+  const [syncStatus, setSyncStatus] = useState<"syncing" | "success" | "error" | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -83,12 +84,21 @@ export default function SystemIntegrationsContent() {
 
   const handleTestSync = async (id: string) => {
     setSyncingId(id)
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    const updatedIntegrations: Integration[] = integrations.map(int => 
-      int.id === id ? { ...int, lastSync: new Date().toISOString() } : int
-    )
-    setIntegrations(updatedIntegrations)
-    setSyncingId(null)
+    setSyncStatus("syncing")
+    try {
+      await apiPost("/api/system-integrations/sync", { id })
+      const updatedIntegrations: Integration[] = integrations.map(int =>
+        int.id === id ? { ...int, lastSync: new Date().toISOString() } : int
+      )
+      setIntegrations(updatedIntegrations)
+      setSyncStatus("success")
+    } catch (error) {
+      setSyncStatus("error")
+    }
+    finally {
+      setSyncingId(null)
+      setTimeout(() => setSyncStatus(null), 5000)
+    }
   }
 
   if (isLoading) {
@@ -163,6 +173,12 @@ export default function SystemIntegrationsContent() {
                   </td>
                   <td className="p-4 text-gray-600">
                     {syncingId === integration.id ? "Syncing..." : new Date(integration.lastSync!).toLocaleString()}
+                    {syncStatus === "success" && syncingId !== integration.id && (
+                      <span className="ml-2 text-sm text-green-600">Sync successful!</span>
+                    )}
+                    {syncStatus === "error" && syncingId !== integration.id && (
+                      <span className="ml-2 text-sm text-red-600">Sync failed.</span>
+                    )}
                   </td>
                   <td className="p-4 flex items-center gap-2">
                     <button onClick={() => handleTestSync(integration.id)} disabled={syncingId === integration.id} className="p-2 text-[#003d5c] hover:bg-gray-100 rounded-md disabled:opacity-50">

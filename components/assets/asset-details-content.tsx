@@ -2,15 +2,35 @@
 
 import { useEffect, useState } from "react"
 import { apiGet } from "@/lib/fetcher"
-import type { Asset } from "@/lib/types"
+import type { Asset, Building, Floor, Zone } from "@/lib/types"
 
 export default function AssetDetailsContent({ assetId }: { assetId: string }) {
   const [asset, setAsset] = useState<Asset | null>(null)
+  const [building, setBuilding] = useState<Building | null>(null)
+  const [floor, setFloor] = useState<Floor | null>(null)
+  const [zone, setZone] = useState<Zone | null>(null)
 
   useEffect(() => {
     if (assetId) {
       apiGet<Asset>(`/api/assets/${assetId}`)
-        .then((data) => setAsset(data))
+        .then((data) => {
+          setAsset(data)
+          if (data.location.buildingId) {
+            apiGet<Building>(`/api/buildings/${data.location.buildingId}`)
+              .then(setBuilding)
+              .catch((err) => console.error('Failed to fetch building', err))
+          }
+          if (data.location.floorId) {
+            apiGet<Floor>(`/api/floors/${data.location.floorId}`)
+              .then(setFloor)
+              .catch((err) => console.error('Failed to fetch floor', err))
+          }
+          if (data.location.zoneId) {
+            apiGet<Zone>(`/api/zones/${data.location.zoneId}`)
+              .then(setZone)
+              .catch((err) => console.error('Failed to fetch zone', err))
+          }
+        })
         .catch((error) => console.error("Failed to fetch asset data:", error))
     }
   }, [assetId])
@@ -91,15 +111,15 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
             <h2 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Location</h2>
             <div>
               <p className="text-sm text-gray-500">Building</p>
-              <p className="text-lg font-medium">{asset.location.buildingId}</p>
+              <p className="text-lg font-medium">{building ? building.name : asset.location.buildingId}</p>
             </div>
             <div className="mt-4">
               <p className="text-sm text-gray-500">Floor</p>
-              <p className="text-lg font-medium">{asset.location.floorId}</p>
+              <p className="text-lg font-medium">{floor ? floor.name : asset.location.floorId}</p>
             </div>
             <div className="mt-4">
               <p className="text-sm text-gray-500">Zone</p>
-              <p className="text-lg font-medium">{asset.location.zoneId}</p>
+              <p className="text-lg font-medium">{zone ? zone.name : asset.location.zoneId}</p>
             </div>
           </div>
         </div>
