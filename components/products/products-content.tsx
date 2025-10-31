@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Plus, Search, Filter, Package, Tag, DollarSign } from "lucide-react"
 import { apiGet } from "@/lib/fetcher"
 
@@ -107,6 +107,7 @@ export default function ProductsContent() {
   }
 
   const searchParams = useSearchParams()
+  const router = useRouter()
   const categoryFilter = searchParams.get('category')
 
   useEffect(() => {
@@ -388,7 +389,11 @@ export default function ProductsContent() {
                   </tr>
                 ) : (
                   data.map((product) => (
-                    <tr key={product.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150">
+                    <tr
+                      key={product.id}
+                      className="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+                      onClick={() => router.push(`/assets?productId=${product.id}`)}
+                    >
                       <td className="px-4 py-3">
                         <div>
                           <p className="text-sm font-medium text-gray-900">{product.name}</p>

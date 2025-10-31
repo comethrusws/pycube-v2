@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Search, Filter, Download, Plus, Eye, Edit, Trash2 } from "lucide-react"
 import { apiGet } from "@/lib/fetcher"
 
@@ -29,6 +31,9 @@ export default function AssetsContent() {
   const [itemsPerPage] = useState(25)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
   // Filter states
   const [filters, setFilters] = useState({
     status: "all",
@@ -52,10 +57,17 @@ export default function AssetsContent() {
   })
 
   useEffect(() => {
-    loadAssets()
-  }, [currentPage, filters])
+    // Apply productId from query if present
+    const productId = searchParams.get("productId")
+    if (productId) {
+      // Trigger load with productId filter embedded in query params
+      loadAssets(productId)
+    } else {
+      loadAssets()
+    }
+  }, [currentPage, filters, searchParams])
 
-  const loadAssets = async () => {
+  const loadAssets = async (productId?: string | null) => {
     try {
       setIsLoading(true)
       const queryParams = new URLSearchParams({
@@ -63,6 +75,10 @@ export default function AssetsContent() {
         limit: itemsPerPage.toString(),
         ...Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== "all"))
       })
+
+      if (productId) {
+        queryParams.set("productId", productId)
+      }
 
       const response = await apiGet<{
         assets: Asset[]
@@ -281,7 +297,7 @@ export default function AssetsContent() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredData.map((asset) => (
-                  <tr key={asset.id} className="hover:bg-gray-50">
+                  <tr key={asset.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => router.push(`/assets/${asset.id}`)}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{asset.name}</div>
@@ -305,15 +321,7 @@ export default function AssetsContent() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${asset.value.toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
-                        <button className="text-teal-600 hover:text-teal-900">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button className="text-blue-600 hover:text-blue-900">
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button className="text-red-600 hover:text-red-900">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <Link href={`/assets/${asset.id}`} className="text-teal-600 hover:text-teal-900">View</Link>
                       </div>
                     </td>
                   </tr>

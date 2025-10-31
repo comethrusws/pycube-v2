@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get("category") || ""
     const status = searchParams.get("status") || ""
     const department = searchParams.get("department") || ""
+    const productId = searchParams.get("productId") || ""
 
     let filtered = data.assets || []
 
@@ -34,6 +35,11 @@ export async function GET(request: NextRequest) {
         const dept = data.departments.find(d => d.id === asset.departmentId)
         return dept?.name.toLowerCase().includes(department.toLowerCase())
       })
+    }
+
+    // Filter by productId if provided
+    if (productId) {
+      filtered = filtered.filter(asset => asset.productId === productId)
     }
 
     // Pagination
