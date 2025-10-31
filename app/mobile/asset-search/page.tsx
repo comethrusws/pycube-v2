@@ -45,6 +45,7 @@ interface SearchFilters {
 export default function MobileAssetSearchPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [assets, setAssets] = useState<Asset[]>([])
+  const [allAssets, setAllAssets] = useState<Asset[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [viewMode, setViewMode] = useState<"list" | "map">("list")
@@ -91,7 +92,7 @@ export default function MobileAssetSearchPage() {
     performSearch(1, true)
   }, [])
 
-  // Debounced search when query or filters change
+  // Debounced search when query changes (always loads up to 20)
   useEffect(() => {
     if (searchDebounceTimer) {
       clearTimeout(searchDebounceTimer)
@@ -109,7 +110,13 @@ export default function MobileAssetSearchPage() {
         clearTimeout(searchDebounceTimer)
       }
     }
-  }, [searchQuery, filters])
+  }, [searchQuery])
+
+  // Apply local filters (including search text) to the 20 loaded assets
+  useEffect(() => {
+    const filtered = applyLocalFilters(allAssets, searchQuery, filters)
+    setAssets(filtered)
+  }, [allAssets, filters, searchQuery])
 
   const performSearch = async (page: number = 1, reset: boolean = false) => {
     // Always load a single page of up to 20 assets
@@ -118,12 +125,7 @@ export default function MobileAssetSearchPage() {
     try {
       const queryParams = new URLSearchParams({
         q: searchQuery,
-        department: filters.department,
-        building: filters.building,
-        floor: filters.floor,
-        status: filters.status,
-        type: filters.type,
-        page: page.toString(),
+        page: '1',
         limit: limit.toString()
       })
 
@@ -140,8 +142,9 @@ export default function MobileAssetSearchPage() {
         filters: SearchFilters
       }>(`/api/mobile/assets/search?${queryParams}`)
 
-      // Only keep the first `limit` assets
-      setAssets((response.assets || []).slice(0, limit))
+      const base = (response.assets || []).slice(0, limit)
+      setAllAssets(base)
+      setAssets(applyLocalFilters(base, searchQuery, filters))
 
       // Normalize pagination to a single page
       setCurrentPage(1)
@@ -159,6 +162,23 @@ export default function MobileAssetSearchPage() {
       setIsLoading(false)
       setIsLoadingMore(false)
     }
+  }
+
+  // Local filtering within the 20-asset base set
+  const applyLocalFilters = (base: Asset[], query: string, f: any): Asset[] => {
+    const q = (query || '').toLowerCase().trim()
+    return base.filter(a => {
+      if (f.department !== 'all' && a.department?.toLowerCase() !== f.department.toLowerCase()) return false
+      if (f.building !== 'all' && a.location?.building?.toLowerCase() !== f.building.toLowerCase()) return false
+      if (f.floor !== 'all' && a.location?.floor?.toLowerCase() !== f.floor.toLowerCase()) return false
+      if (f.status !== 'all' && a.status?.toLowerCase() !== f.status.toLowerCase()) return false
+      if (f.type !== 'all' && a.type?.toLowerCase() !== f.type.toLowerCase()) return false
+      if (q) {
+        const hay = `${a.name} ${a.type} ${a.tagId}`.toLowerCase()
+        if (!hay.includes(q)) return false
+      }
+      return true
+    })
   }
 
   const loadMoreAssets = useCallback(() => {
@@ -373,6 +393,8 @@ export default function MobileAssetSearchPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
               <select
                 value={filters.department}
+                onChange={(e) => setFilters({ ...filters, department: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="all">All Departments</option>
                 {availableFilters.departments.map(dept => (
