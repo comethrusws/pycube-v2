@@ -241,7 +241,7 @@ export default function FloorMap({ assets, selectedAsset, onAssetSelect, floor, 
             </div>
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-full bg-[#EF4444] border border-red-300"></div>
-              <span className="text-gray-700">Lost</span>
+              <span className="text-gray-700">Last Seen</span>
             </div>
           </div>
         </div>
