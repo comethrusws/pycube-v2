@@ -106,10 +106,11 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
       <h1 className="text-3xl font-light" style={{ color: "#001f3f" }}>
         {asset.name}
       </h1>
+      <p className="text-sm text-gray-500 -mt-2">Asset details, compliance and actions</p>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-gray-200">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-2xl p-6 border">
           <p className="text-xs text-gray-500">Compliance Risk</p>
           <div className="flex items-center gap-3 mt-1">
             <div className="w-28 bg-gray-200 rounded-full h-2">
@@ -118,25 +119,27 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
             <span className="text-lg font-medium">{assetRisk?.riskScore ?? '-'}{typeof assetRisk?.riskScore === 'number' ? '%' : ''}</span>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200">
+        <div className="bg-white rounded-2xl p-6 border">
           <p className="text-xs text-gray-500">Predicted Issues</p>
-          <p className="text-2xl font-light" style={{ color: "#001f3f" }}>{predicted?.atRisk ? 1 : 0}</p>
+          <p className="text-2xl font-light" style={{ color: "#001f3f" }}>
+            {((predicted?.insights?.length || 0) + (predicted?.atRisk ? 1 : 0))}
+          </p>
           <p className="text-[10px] text-gray-500 mt-1">From predictive maintenance</p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200">
+        <div className="bg-white rounded-2xl p-6 border">
           <p className="text-xs text-gray-500">Overdue Maintenance</p>
           <p className="text-2xl font-light text-red-600">{assetTasks?.overdue ?? 0}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200">
+        <div className="bg-white rounded-2xl p-6 border">
           <p className="text-xs text-gray-500">Pending Tasks</p>
           <p className="text-2xl font-light text-amber-600">{assetTasks?.pending ?? 0}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Column 1: Asset Information */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-white rounded-2xl p-6 border">
             <h2 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Asset Information</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -158,7 +161,7 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-white rounded-2xl p-6 border">
             <h2 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Purchase Information</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -177,7 +180,7 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
           </div>
 
           {/* Compliance Details */}
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-white rounded-2xl p-6 border">
             <h2 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Compliance</h2>
             {assetRisk ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -204,7 +207,7 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
           </div>
 
           {/* Predictive Insights */}
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-white rounded-2xl p-6 border">
             <h2 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Predicted Issues</h2>
             {predicted?.atRisk || (predicted?.insights || []).length > 0 ? (
               <ul className="list-disc pl-5 space-y-2 text-sm">
@@ -223,7 +226,7 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
 
         {/* Column 2: Status and Location */}
         <div className="space-y-6">
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
+        <div className="bg-white rounded-2xl p-6 border">
             <h2 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Actions</h2>
             {actionMessage && (
               <div className="mb-4 px-3 py-2 text-sm rounded bg-blue-50 text-blue-700 border border-blue-200">
@@ -280,7 +283,7 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-white rounded-2xl p-6 border">
             <h2 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Status & Utilization</h2>
             <div>
               <p className="text-sm text-gray-500">Utilization</p>
@@ -296,7 +299,7 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-white rounded-2xl p-6 border">
             <h2 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Location</h2>
             <div>
               <p className="text-sm text-gray-500">Building</p>
