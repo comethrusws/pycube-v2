@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { apiGet } from "@/lib/fetcher"
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts"
 import { Download, FileSpreadsheet, FileText, Share2 } from "lucide-react"
@@ -238,9 +239,13 @@ export default function ComplianceDashboard() {
               </tr>
             </thead>
             <tbody>
-              {(data?.report?.assetRisks || data?.assetRisks || []).slice(0, 50).map((r: any, idx: number) => (
+              {(data?.report?.assetRisks || data?.assetRisks || []).slice(0, 20).map((r: any, idx: number) => (
                 <tr key={idx} className="border-t">
-                  <td className="p-3">{r.assetName}</td>
+                  <td className="p-3">
+                    <Link href={`/assets/${r.assetId}`} className="text-blue-700 hover:underline">
+                      {r.assetName}
+                    </Link>
+                  </td>
                   <td className="p-3">{r.departmentName}</td>
                   <td className="p-3">{r.missedMaintenance}</td>
                   <td className="p-3">{r.overdueCalibration}</td>
