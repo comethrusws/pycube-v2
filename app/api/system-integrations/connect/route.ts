@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from "next/server"
 export async function POST(request: NextRequest) {
   const { apiKey } = await request.json()
 
-  if (apiKey === "1234") {
+  // Accept any non-empty API key to enable realistic demo integrations
+  if (typeof apiKey === "string" && apiKey.trim().length > 0) {
     return NextResponse.json({ success: true, message: "Integration successful." })
-  } else {
-    return NextResponse.json({ success: false, message: "Invalid API key." }, { status: 400 })
   }
+  return NextResponse.json({ success: false, message: "API key is required." }, { status: 400 })
 }
