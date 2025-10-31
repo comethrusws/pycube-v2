@@ -41,10 +41,7 @@ interface MenuItem {
 const menuSections = [
   {
     items: [
-      { icon: Home, label: "Homepage", href: "/dashboard" },
-      { icon: Settings, label: "Implementation", href: "" },
-      { icon: Zap, label: "App Settings", href: "" },
-      { icon: Bot, label: "AI Assistant", href: "/ai-assistant" },
+      { icon: Home, label: "Dashboard", href: "/dashboard" },
       { icon: Share2, label: "Integrations", href: "/system-integrations" },
     ] as MenuItem[],
   },
@@ -55,6 +52,20 @@ const menuSections = [
       { icon: Database, label: "Assets", href: "/assets" },
     ] as MenuItem[],
   },
+  {
+    items: [
+      {
+        icon: ListCheckIcon,
+        label: "Compliance & Risk",
+        href: "/compliance",
+        submenu: [
+          { label: "Dashboard", href: "/compliance" },
+          { label: "Reports", href: "/compliance/reports" },
+        ],
+      },
+    ] as MenuItem[],
+  },
+
   {
     items: [
       {
@@ -115,19 +126,6 @@ const menuSections = [
         submenu: [
           { label: "Dashboard", href: "" },
           { label: "Assets", href: "" },
-        ],
-      },
-    ] as MenuItem[],
-  },
-  {
-    items: [
-      {
-        icon: ListCheckIcon,
-        label: "Compliance & Risk",
-        href: "/compliance",
-        submenu: [
-          { label: "Dashboard", href: "/compliance" },
-          { label: "Reports", href: "/compliance/reports" },
         ],
       },
     ] as MenuItem[],
