@@ -54,7 +54,7 @@ export default function ProductsContent() {
   const [data, setData] = useState<Product[]>([])
   const [pagination, setPagination] = useState<PaginationData>({
     page: 1,
-    limit: 25,
+    limit: 20,
     total: 0,
     totalPages: 1,
     hasNext: false,

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { apiGet } from "@/lib/fetcher"
 import type { Asset, Building, Floor, Zone } from "@/lib/types"
+import { MapPin, CheckCircle, Wrench, AlertTriangle, Navigation } from "lucide-react"
 
 export default function AssetDetailsContent({ assetId }: { assetId: string }) {
   const [asset, setAsset] = useState<Asset | null>(null)
@@ -13,6 +14,36 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
   const [assetRisk, setAssetRisk] = useState<any | null>(null)
   const [predicted, setPredicted] = useState<any | null>(null)
   const [assetTasks, setAssetTasks] = useState<{ overdue: number; pending: number } | null>(null)
+  const [isActionLoading, setIsActionLoading] = useState(false)
+  const [actionMessage, setActionMessage] = useState("")
+
+  const handleAssetAction = async (targetAssetId: string, action: string, notes?: string) => {
+    try {
+      setIsActionLoading(true)
+      const response = await fetch("/api/mobile/assets/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assetId: targetAssetId, action, userId: "web-user-1", notes })
+      })
+      const result = await response.json()
+      if (result?.success) {
+        setActionMessage(result.message)
+        // If API returns updated asset data, reflect it locally
+        if (result.updatedAsset) {
+          setAsset(prev => prev ? { ...prev, ...result.updatedAsset } : prev)
+        }
+        setTimeout(() => setActionMessage(""), 3000)
+      } else {
+        setActionMessage("Action failed. Please try again.")
+        setTimeout(() => setActionMessage(""), 3000)
+      }
+    } catch (e) {
+      setActionMessage("Action failed. Please try again.")
+      setTimeout(() => setActionMessage(""), 3000)
+    } finally {
+      setIsActionLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (assetId) {
@@ -192,6 +223,63 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
 
         {/* Column 2: Status and Location */}
         <div className="space-y-6">
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
+            <h2 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Actions</h2>
+            {actionMessage && (
+              <div className="mb-4 px-3 py-2 text-sm rounded bg-blue-50 text-blue-700 border border-blue-200">
+                {actionMessage}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => handleAssetAction(asset.id, "locate")}
+                disabled={isActionLoading}
+                className="bg-[#003d5c] text-white py-2.5 px-3 rounded-lg font-medium hover:bg-opacity-90 transition-colors disabled:opacity-50 text-sm"
+              >
+                <MapPin className="w-4 h-4 inline mr-2" />
+                Locate
+              </button>
+
+              {asset.status === "available" && (
+                <button
+                  onClick={() => handleAssetAction(asset.id, "retrieve")}
+                  disabled={isActionLoading}
+                  className="bg-blue-600 text-white py-2.5 px-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
+                >
+                  <CheckCircle className="w-4 h-4 inline mr-2" />
+                  Retrieve
+                </button>
+              )}
+
+              <button
+                onClick={() => handleAssetAction(asset.id, "maintenance_request", "Issue reported via web")}
+                disabled={isActionLoading}
+                className="bg-orange-600 text-white py-2.5 px-3 rounded-lg font-medium hover:bg-orange-700 transition-colors disabled:opacity-50 text-sm"
+              >
+                <Wrench className="w-4 h-4 inline mr-2" />
+                Request Maintenance
+              </button>
+
+              <button
+                onClick={() => handleAssetAction(asset.id, "report_missing", "Reported missing via web")}
+                disabled={isActionLoading}
+                className="bg-red-600 text-white py-2.5 px-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 text-sm"
+              >
+                <AlertTriangle className="w-4 h-4 inline mr-2" />
+                Report Missing
+              </button>
+
+              <button
+                onClick={() => handleAssetAction(asset.id, "request_relocation", "Relocation requested via web")}
+                disabled={isActionLoading}
+                className="bg-teal-600 text-white py-2.5 px-3 rounded-lg font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 text-sm col-span-2"
+              >
+                <Navigation className="w-4 h-4 inline mr-2" />
+                Request Relocation
+              </button>
+            </div>
+          </div>
+
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <h2 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Status & Utilization</h2>
             <div>
@@ -223,6 +311,8 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
               <p className="text-lg font-medium">{zone ? zone.name : asset.location.zoneId}</p>
             </div>
           </div>
+
+          {/* Actions */}
         </div>
       </div>
     </div>

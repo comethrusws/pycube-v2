@@ -28,7 +28,7 @@ export default function AssetsContent() {
   const [searchTerm, setSearchTerm] = useState("")
   const [showFilters, setShowFilters] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(25)
+  const [itemsPerPage] = useState(20)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const searchParams = useSearchParams()

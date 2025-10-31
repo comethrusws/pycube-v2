@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { AlertTriangle, Calendar, Download, ExternalLink, TrendingUp, Zap, Clock, Settings, CheckCircle, X } from "lucide-react"
 import { apiGet, apiPost } from "@/lib/fetcher"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 // Minimalist Modal Component (Jony Ive inspired)
 const Modal = ({ isOpen, onClose, title, children }: {
@@ -246,6 +248,7 @@ export default function PredictiveInsightsTab() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedAsset, setSelectedAsset] = useState<any>(null)
   const [scheduleModalAsset, setScheduleModalAsset] = useState<any>(null)
+  const router = useRouter()
 
   useEffect(() => {
     apiGet("/api/preventative-maintenance/predictive")
@@ -587,7 +590,11 @@ export default function PredictiveInsightsTab() {
             </thead>
             <tbody>
               {(data?.top5AtRisk || []).map((asset: any, idx: number) => (
-                <tr key={idx} className="border-t border-gray-100/50 hover:bg-gray-50/30 transition-colors">
+                <tr 
+                  key={idx} 
+                  className="border-t border-gray-100/50 hover:bg-gray-50/30 transition-colors cursor-pointer"
+                  onClick={() => router.push(`/assets/${asset.assetId}`)}
+                >
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${
@@ -595,7 +602,11 @@ export default function PredictiveInsightsTab() {
                         asset.riskLevel === 'medium' ? 'bg-orange-500' : 'bg-green-500'
                       }`} />
                       <div>
-                        <p className="font-medium text-gray-900 text-sm">{asset.assetName}</p>
+                        <p className="font-medium text-gray-900 text-sm">
+                          <Link href={`/assets/${asset.assetId}`} className="text-blue-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+                            {asset.assetName}
+                          </Link>
+                        </p>
                         <p className="text-xs text-gray-500">{asset.assetType}</p>
                       </div>
                     </div>
@@ -631,6 +642,13 @@ export default function PredictiveInsightsTab() {
                         <Calendar className="w-4 h-4" />
                         Schedule
                       </button>
+                      <Link 
+                        href={`/assets/${asset.assetId}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-3 py-2 text-blue-700 hover:text-blue-900 text-sm font-medium"
+                      >
+                        View
+                      </Link>
                     </div>
                   </td>
                 </tr>
