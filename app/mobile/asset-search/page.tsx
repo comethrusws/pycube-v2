@@ -112,11 +112,8 @@ export default function MobileAssetSearchPage() {
   }, [searchQuery, filters])
 
   const performSearch = async (page: number = 1, reset: boolean = false) => {
-    if (reset) {
-      setIsLoading(true)
-    } else {
-      setIsLoadingMore(true)
-    }
+    // Always load a single page of up to 20 assets
+    setIsLoading(true)
     
     try {
       const queryParams = new URLSearchParams({
@@ -143,17 +140,14 @@ export default function MobileAssetSearchPage() {
         filters: SearchFilters
       }>(`/api/mobile/assets/search?${queryParams}`)
 
-      if (reset) {
-        setAssets(response.assets)
-      } else {
-        // Append new assets for infinite scroll
-        setAssets(prev => [...prev, ...response.assets])
-      }
-      
-      setCurrentPage(response.pagination.page)
-      setTotalPages(response.pagination.totalPages)
+      // Only keep the first `limit` assets
+      setAssets((response.assets || []).slice(0, limit))
+
+      // Normalize pagination to a single page
+      setCurrentPage(1)
+      setTotalPages(1)
       setTotalAssets(response.pagination.total)
-      setHasNextPage(response.pagination.hasNext)
+      setHasNextPage(false)
       setAvailableFilters(response.filters)
     } catch (error) {
       console.error("Search failed:", error)
@@ -443,7 +437,6 @@ export default function MobileAssetSearchPage() {
           <>
             {/* Results Count */}
             <div className="mb-4 text-sm text-gray-600">
-              Showing {assets.length} of {totalAssets} asset{totalAssets !== 1 ? 's' : ''}
               {searchQuery && ` for "${searchQuery}"`}
             </div>
 
