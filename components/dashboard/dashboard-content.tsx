@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
 import { apiGet } from "@/lib/fetcher"
 import type { DashboardData } from "@/lib/types"
+import ComplianceSummaryCard from "./compliance-summary-card"
+import AssetsByFloorCard from "./assets-by-floor-card"
+import MaintenanceImpactCard from "./maintenance-impact-card"
 
 export default function DashboardContent() {
   const [data, setData] = useState<DashboardData>()
@@ -313,6 +316,13 @@ export default function DashboardContent() {
         </div>
       </div>
 
+      <div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <AssetsByFloorCard />
+          <ComplianceSummaryCard />
+          <MaintenanceImpactCard />
+        </div>
+      </div>    
 
       {/* Visibility */}
       <div className="bg-white rounded-xl p-6 border border-gray-200">
@@ -405,6 +415,7 @@ export default function DashboardContent() {
           </div>
         </div>
       </div>
+
     </div>
   )
 }
