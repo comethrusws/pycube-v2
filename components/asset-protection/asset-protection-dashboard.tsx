@@ -121,17 +121,17 @@ const StatCard = ({
   onClick?: () => void
 }) => {
   const colorClasses = {
-    blue: "bg-blue-50 border-blue-200 text-blue-700",
-    green: "bg-green-50 border-green-200 text-green-700",
-    yellow: "bg-yellow-50 border-yellow-200 text-yellow-700",
-    red: "bg-red-50 border-red-200 text-red-700",
-    purple: "bg-purple-50 border-purple-200 text-purple-700",
-    gray: "bg-gray-50 border-gray-200 text-gray-700"
+    blue: "bg-[#001f3f]/5 border-[#001f3f]/10 backdrop-blur-sm",
+    green: "bg-[#0d7a8c]/5 border-[#0d7a8c]/10 backdrop-blur-sm",
+    yellow: "bg-yellow-500/5 border-yellow-500/10 backdrop-blur-sm",
+    red: "bg-red-500/5 border-red-500/10 backdrop-blur-sm",
+    purple: "bg-purple-500/5 border-purple-500/10 backdrop-blur-sm",
+    gray: "bg-gray-500/5 border-gray-500/10 backdrop-blur-sm"
   }
   
   const iconColorClasses = {
-    blue: "text-blue-600",
-    green: "text-green-600", 
+    blue: "text-[#001f3f]",
+    green: "text-[#0d7a8c]", 
     yellow: "text-yellow-600",
     red: "text-red-600",
     purple: "text-purple-600",
@@ -140,19 +140,19 @@ const StatCard = ({
   
   return (
     <div 
-      className={`p-6 rounded-2xl border ${colorClasses[color as keyof typeof colorClasses]} ${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+      className={`p-6 rounded-3xl border ${colorClasses[color as keyof typeof colorClasses]} ${onClick ? 'cursor-pointer hover:shadow-md transition-all duration-200' : ''} bg-white/50`}
       onClick={onClick}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Icon className={`w-6 h-6 ${iconColorClasses[color as keyof typeof iconColorClasses]}`} />
           <div>
-            <p className="text-sm font-medium text-gray-600">{label}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <p className="text-sm font-light text-gray-600">{label}</p>
+            <p className="text-2xl font-semibold text-[#001f3f]">{value}</p>
             {trend && trendValue && (
-              <p className={`text-xs ${
-                trend === 'up' ? 'text-green-600' : 
-                trend === 'down' ? 'text-red-600' : 
+              <p className={`text-xs font-light ${
+                trend === 'up' ? 'text-[#0d7a8c]' : 
+                trend === 'down' ? 'text-red-500' : 
                 'text-gray-500'
               }`}>
                 {trend === 'up' ? '↗' : trend === 'down' ? '↘' : '→'} {trendValue}
@@ -166,9 +166,9 @@ const StatCard = ({
 }
 
 const ChartCard = ({ title, children, action }: { title: string, children: React.ReactNode, action?: React.ReactNode }) => (
-  <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+  <div className="bg-white/50 backdrop-blur-sm rounded-3xl border border-[#001f3f]/10 p-6 shadow-sm">
     <div className="flex items-center justify-between mb-6">
-      <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+      <h3 className="text-lg font-light text-[#001f3f]">{title}</h3>
       {action}
     </div>
     {children}
@@ -267,12 +267,12 @@ export default function AssetProtectionDashboard() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="p-8 bg-[#f8fafc] min-h-screen">
         <div className="animate-pulse space-y-8">
-          <div className="h-8 bg-gray-200 rounded w-64"></div>
+          <div className="h-8 bg-[#001f3f]/10 rounded-2xl w-64"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-32 bg-gray-200 rounded-2xl"></div>
+              <div key={i} className="h-32 bg-white/50 backdrop-blur-sm rounded-3xl border border-[#001f3f]/10"></div>
             ))}
           </div>
         </div>
@@ -281,17 +281,17 @@ export default function AssetProtectionDashboard() {
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 bg-[#f8fafc] min-h-screen">
       <Toaster />
       
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Shield className="w-8 h-8 text-blue-600" />
+          <h1 className="text-3xl font-light text-[#001f3f] flex items-center gap-3">
+            <Shield className="w-8 h-8 text-[#0d7a8c]" />
             Asset Protection Dashboard
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 mt-2 font-light">
             Monitor asset security, geofencing violations, and movement anomalies
           </p>
         </div>
@@ -300,7 +300,7 @@ export default function AssetProtectionDashboard() {
           <select 
             value={selectedTimeRange} 
             onChange={(e) => setSelectedTimeRange(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-[#001f3f]/20 rounded-2xl focus:ring-2 focus:ring-[#0d7a8c] bg-white/50 backdrop-blur-sm text-[#001f3f]"
           >
             <option value="1h">Last Hour</option>
             <option value="24h">Last 24 Hours</option>
@@ -311,7 +311,7 @@ export default function AssetProtectionDashboard() {
           <button
             onClick={loadData}
             disabled={refreshing}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 bg-[#0d7a8c] text-white rounded-2xl hover:bg-[#003d5c] disabled:opacity-50 flex items-center gap-2 transition-colors duration-200"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -319,7 +319,7 @@ export default function AssetProtectionDashboard() {
           
           <button
             onClick={handleGeofenceAlert}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
+            className="px-4 py-2 bg-red-500 text-white rounded-2xl hover:bg-red-600 flex items-center gap-2 transition-colors duration-200"
           >
             <AlertTriangle className="w-4 h-4" />
             Test Alert
@@ -426,18 +426,18 @@ export default function AssetProtectionDashboard() {
             {data?.recentViolations?.slice(0, 6).map((violation, idx) => (
               <div 
                 key={idx} 
-                className={`p-4 rounded-xl border cursor-pointer hover:shadow-md transition-shadow ${
-                  violation.severity === 'critical' ? 'bg-red-50 border-red-200' :
-                  violation.severity === 'high' ? 'bg-orange-50 border-orange-200' :
-                  violation.severity === 'medium' ? 'bg-yellow-50 border-yellow-200' :
-                  'bg-blue-50 border-blue-200'
+                className={`p-4 rounded-2xl border cursor-pointer hover:shadow-md transition-all duration-200 backdrop-blur-sm ${
+                  violation.severity === 'critical' ? 'bg-red-500/5 border-red-500/20' :
+                  violation.severity === 'high' ? 'bg-orange-500/5 border-orange-500/20' :
+                  violation.severity === 'medium' ? 'bg-yellow-500/5 border-yellow-500/20' :
+                  'bg-[#0d7a8c]/5 border-[#0d7a8c]/20'
                 }`}
                 onClick={() => handleViolationClick(violation)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-gray-900 text-sm">{violation.assetName}</h4>
+                      <h4 className="font-medium text-[#001f3f] text-sm">{violation.assetName}</h4>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         violation.severity === 'critical' ? 'bg-red-100 text-red-800' :
                         violation.severity === 'high' ? 'bg-orange-100 text-orange-800' :
@@ -482,7 +482,7 @@ export default function AssetProtectionDashboard() {
           action={
             <button
               onClick={handleEmergencyResponse}
-              className="px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700"
+              className="px-3 py-1 bg-red-500 text-white text-sm rounded-2xl hover:bg-red-600 transition-colors duration-200"
             >
               Emergency Response
             </button>
@@ -492,25 +492,25 @@ export default function AssetProtectionDashboard() {
             {data?.activeAlerts?.slice(0, 6).map((alert, idx) => (
               <div 
                 key={idx} 
-                className={`p-4 rounded-xl border cursor-pointer hover:shadow-md transition-shadow ${
-                  alert.urgency === 'immediate' ? 'bg-red-50 border-red-200' :
-                  alert.urgency === 'within_hour' ? 'bg-orange-50 border-orange-200' :
-                  alert.urgency === 'within_day' ? 'bg-yellow-50 border-yellow-200' :
-                  'bg-blue-50 border-blue-200'
+                className={`p-4 rounded-2xl border cursor-pointer hover:shadow-md transition-all duration-200 backdrop-blur-sm ${
+                  alert.urgency === 'immediate' ? 'bg-red-500/5 border-red-500/20' :
+                  alert.urgency === 'within_hour' ? 'bg-orange-500/5 border-orange-500/20' :
+                  alert.urgency === 'within_day' ? 'bg-yellow-500/5 border-yellow-500/20' :
+                  'bg-[#0d7a8c]/5 border-[#0d7a8c]/20'
                 }`}
                 onClick={() => handleAlertClick(alert)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-medium text-gray-900 text-sm">{alert.assetName}</h4>
+                      <h4 className="font-medium text-[#001f3f] text-sm">{alert.assetName}</h4>
                       {alert.actionRequired && (
                         <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
                           Action Required
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-700 mb-1">{alert.message}</p>
+                    <p className="text-sm text-[#001f3f]/80 mb-1 font-light">{alert.message}</p>
                     <p className="text-xs text-gray-500">
                       {alert.type.replace(/_/g, ' ')} • {alert.urgency.replace(/_/g, ' ')}
                     </p>
@@ -554,9 +554,9 @@ export default function AssetProtectionDashboard() {
         >
           <div className="space-y-3 max-h-80 overflow-y-auto">
             {data?.riskAssets?.slice(0, 8).map((asset, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+              <div key={idx} className="flex items-center justify-between p-3 bg-white/50 backdrop-blur-sm rounded-2xl border border-[#001f3f]/10 hover:bg-white/70 transition-all duration-200 cursor-pointer">
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 text-sm">{asset.assetName}</h4>
+                  <h4 className="font-medium text-[#001f3f] text-sm">{asset.assetName}</h4>
                   <p className="text-xs text-gray-600">{asset.assetType} • {asset.location}</p>
                   <p className="text-xs text-gray-500">Value: ${asset.value.toLocaleString()}</p>
                 </div>
@@ -584,13 +584,13 @@ export default function AssetProtectionDashboard() {
             {data?.protectionCoverage?.slice(0, 6).map((dept, idx) => (
               <div key={idx} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">{dept.departmentName}</span>
+                  <span className="text-sm font-medium text-[#001f3f]">{dept.departmentName}</span>
                   <span className="text-sm text-gray-500">{dept.coverage}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-[#001f3f]/10 rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full transition-all duration-300 ${
-                      dept.coverage >= 90 ? 'bg-green-500' :
+                      dept.coverage >= 90 ? 'bg-[#0d7a8c]' :
                       dept.coverage >= 70 ? 'bg-yellow-500' :
                       'bg-red-500'
                     }`}
@@ -610,47 +610,47 @@ export default function AssetProtectionDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-100">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-blue-600" />
+      <div className="bg-gradient-to-r from-[#001f3f]/5 to-[#003d5c]/5 rounded-3xl p-6 border border-[#001f3f]/10 backdrop-blur-sm">
+        <h3 className="text-lg font-light text-[#001f3f] mb-4 flex items-center gap-2">
+          <Zap className="w-5 h-5 text-[#0d7a8c]" />
           Quick Actions
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link 
             href="/asset-protection/geofencing"
-            className="p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow group"
+            className="p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-[#001f3f]/10 hover:shadow-md transition-all duration-200 group"
           >
             <div className="flex items-center gap-3">
-              <MapPin className="w-6 h-6 text-blue-600 group-hover:text-blue-700" />
+              <MapPin className="w-6 h-6 text-[#0d7a8c] group-hover:text-[#003d5c]" />
               <div>
-                <h4 className="font-medium text-gray-900">Manage Geofences</h4>
-                <p className="text-sm text-gray-600">Configure virtual boundaries</p>
+                <h4 className="font-medium text-[#001f3f]">Manage Geofences</h4>
+                <p className="text-sm text-gray-600 font-light">Configure virtual boundaries</p>
               </div>
             </div>
           </Link>
           
           <Link 
             href="/asset-protection/movement-logs"
-            className="p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow group"
+            className="p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-[#001f3f]/10 hover:shadow-md transition-all duration-200 group"
           >
             <div className="flex items-center gap-3">
-              <Activity className="w-6 h-6 text-green-600 group-hover:text-green-700" />
+              <Activity className="w-6 h-6 text-[#0d7a8c] group-hover:text-[#003d5c]" />
               <div>
-                <h4 className="font-medium text-gray-900">Movement Logs</h4>
-                <p className="text-sm text-gray-600">View asset movement history</p>
+                <h4 className="font-medium text-[#001f3f]">Movement Logs</h4>
+                <p className="text-sm text-gray-600 font-light">View asset movement history</p>
               </div>
             </div>
           </Link>
           
           <button
             onClick={() => toast.success('Downloading protection report...', { icon: '📊' })}
-            className="p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow group text-left"
+            className="p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-[#001f3f]/10 hover:shadow-md transition-all duration-200 group text-left"
           >
             <div className="flex items-center gap-3">
-              <Download className="w-6 h-6 text-purple-600 group-hover:text-purple-700" />
+              <Download className="w-6 h-6 text-[#0d7a8c] group-hover:text-[#003d5c]" />
               <div>
-                <h4 className="font-medium text-gray-900">Export Report</h4>
-                <p className="text-sm text-gray-600">Download security analytics</p>
+                <h4 className="font-medium text-[#001f3f]">Export Report</h4>
+                <p className="text-sm text-gray-600 font-light">Download security analytics</p>
               </div>
             </div>
           </button>

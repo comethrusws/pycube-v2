@@ -141,123 +141,116 @@ const FloorPlanMap = ({
   return (
     <div className="relative">
       {/* Floor Plan Background */}
-      <div className="bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 relative overflow-hidden">
-        <svg 
-          width="800" 
-          height="600" 
-          className={`w-full h-auto ${isCreating ? 'cursor-crosshair' : 'cursor-pointer'}`}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-        >
-          {/* Floor Plan Grid */}
-          <defs>
-            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e7eb" strokeWidth="1"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
+      <div className="bg-gray-100 rounded-2xl border border-[#001f3f]/20 relative overflow-hidden">
+        <div className="relative w-full" style={{ aspectRatio: '16/9', minHeight: '400px' }}>
+          {/* Background Plan Image */}
+          <img 
+            src="/plan.png" 
+            alt="Floor Plan"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ filter: 'brightness(0.95) contrast(1.1)' }}
+          />
           
-          {/* Mock Room Layouts */}
-          <rect x="50" y="50" width="150" height="100" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="2" />
-          <text x="125" y="105" textAnchor="middle" className="text-xs fill-gray-600">ICU Ward</text>
-          
-          <rect x="220" y="50" width="120" height="80" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="2" />
-          <text x="280" y="95" textAnchor="middle" className="text-xs fill-gray-600">OR 1</text>
-          
-          <rect x="360" y="50" width="120" height="80" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="2" />
-          <text x="420" y="95" textAnchor="middle" className="text-xs fill-gray-600">OR 2</text>
-          
-          <rect x="50" y="170" width="180" height="120" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="2" />
-          <text x="140" y="235" textAnchor="middle" className="text-xs fill-gray-600">Emergency Dept</text>
-          
-          <rect x="250" y="170" width="100" height="120" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="2" />
-          <text x="300" y="235" textAnchor="middle" className="text-xs fill-gray-600">Pharmacy</text>
-          
-          <rect x="370" y="170" width="150" height="120" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="2" />
-          <text x="445" y="235" textAnchor="middle" className="text-xs fill-gray-600">Radiology</text>
-          
-          <rect x="50" y="310" width="200" height="100" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="2" />
-          <text x="150" y="365" textAnchor="middle" className="text-xs fill-gray-600">Patient Rooms</text>
-          
-          <rect x="270" y="310" width="250" height="100" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="2" />
-          <text x="395" y="365" textAnchor="middle" className="text-xs fill-gray-600">Laboratory</text>
+          {/* Overlay for interactions */}
+          <div className="absolute inset-0 bg-white/5 backdrop-blur-[0.5px]">
+            <svg 
+              width="100%" 
+              height="100%" 
+              className={`w-full h-full ${isCreating ? 'cursor-crosshair' : 'cursor-pointer'}`}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              viewBox="0 0 800 450"
+            >
+              {/* Existing Geofences */}
+              {geofences.map((geofence, idx) => (
+                <g key={geofence.id}>
+                  <rect
+                    x={100 + (idx * 150)}
+                    y={100 + (idx % 2) * 150}
+                    width={120}
+                    height={80}
+                    fill={
+                      geofence.type === 'restricted' ? 'rgba(239, 68, 68, 0.25)' :
+                      geofence.type === 'authorized' ? 'rgba(13, 122, 140, 0.25)' :
+                      geofence.type === 'high-security' ? 'rgba(249, 115, 22, 0.25)' :
+                      'rgba(0, 31, 63, 0.25)'
+                    }
+                    stroke={
+                      geofence.type === 'restricted' ? '#ef4444' :
+                      geofence.type === 'authorized' ? '#0d7a8c' :
+                      geofence.type === 'high-security' ? '#f97316' :
+                      '#001f3f'
+                    }
+                    strokeWidth="2"
+                    strokeDasharray={geofence.active ? "0" : "5,5"}
+                    className={`cursor-pointer hover:opacity-75 transition-opacity duration-200 ${
+                      selectedGeofence?.id === geofence.id ? 'opacity-90' : 'opacity-60'
+                    }`}
+                    onClick={() => onGeofenceSelect(geofence)}
+                  />
+                  <text 
+                    x={160 + (idx * 150)}
+                    y={145 + (idx % 2) * 150}
+                    textAnchor="middle"
+                    className="text-xs font-medium fill-[#001f3f] pointer-events-none drop-shadow-sm"
+                  >
+                    {geofence.name}
+                  </text>
+                  {/* Priority indicator */}
+                  <circle
+                    cx={210 + (idx * 150)}
+                    cy={110 + (idx % 2) * 150}
+                    r="4"
+                    fill={
+                      geofence.priority === 'critical' ? '#dc2626' :
+                      geofence.priority === 'high' ? '#ea580c' :
+                      geofence.priority === 'medium' ? '#d97706' :
+                      '#0d7a8c'
+                    }
+                    stroke="white"
+                    strokeWidth="1"
+                    className="drop-shadow-sm"
+                  />
+                </g>
+              ))}
 
-          {/* Existing Geofences */}
-          {geofences.map((geofence) => (
-            geofence.coordinates && (
-              <g key={geofence.id}>
+              {/* Drawing Preview */}
+              {isCreating && dragStart && dragEnd && (
                 <rect
-                  x={geofence.coordinates.x}
-                  y={geofence.coordinates.y}
-                  width={geofence.coordinates.width}
-                  height={geofence.coordinates.height}
-                  fill={getGeofenceColor(geofence)}
-                  fillOpacity={getGeofenceOpacity(geofence)}
-                  stroke={getGeofenceColor(geofence)}
+                  x={Math.min(dragStart.x, dragEnd.x)}
+                  y={Math.min(dragStart.y, dragEnd.y)}
+                  width={Math.abs(dragEnd.x - dragStart.x)}
+                  height={Math.abs(dragEnd.y - dragStart.y)}
+                  fill="rgba(13, 122, 140, 0.3)"
+                  stroke="#0d7a8c"
                   strokeWidth="2"
-                  strokeDasharray={geofence.active ? "0" : "5,5"}
-                  className="cursor-pointer hover:fill-opacity-70"
-                  onClick={() => onGeofenceSelect(geofence)}
+                  strokeDasharray="5,5"
                 />
-                <text 
-                  x={geofence.coordinates.x + geofence.coordinates.width / 2}
-                  y={geofence.coordinates.y + 15}
-                  textAnchor="middle"
-                  className="text-xs fill-white font-medium pointer-events-none"
-                >
-                  {geofence.name}
-                </text>
-                {/* Priority indicator */}
-                <circle
-                  cx={geofence.coordinates.x + geofence.coordinates.width - 10}
-                  cy={geofence.coordinates.y + 10}
-                  r="5"
-                  fill={
-                    geofence.priority === 'critical' ? '#dc2626' :
-                    geofence.priority === 'high' ? '#ea580c' :
-                    geofence.priority === 'medium' ? '#d97706' :
-                    '#65a30d'
-                  }
-                />
-              </g>
-            )
-          ))}
-
-          {/* Drawing Preview */}
-          {isCreating && dragStart && dragEnd && (
-            <rect
-              x={Math.min(dragStart.x, dragEnd.x)}
-              y={Math.min(dragStart.y, dragEnd.y)}
-              width={Math.abs(dragEnd.x - dragStart.x)}
-              height={Math.abs(dragEnd.y - dragStart.y)}
-              fill="rgba(59, 130, 246, 0.3)"
-              stroke="#3b82f6"
-              strokeWidth="2"
-              strokeDasharray="5,5"
-            />
-          )}
-        </svg>
+              )}
+            </svg>
+          </div>
+        </div>
       </div>
 
       {/* Map Legend */}
-      <div className="mt-4 bg-white p-4 rounded-lg border border-gray-200">
-        <h4 className="font-medium text-gray-900 mb-3">Geofence Types</h4>
+      <div className="mt-4 bg-white/70 backdrop-blur-sm p-4 rounded-2xl border border-[#001f3f]/10">
+        <h4 className="font-medium text-[#001f3f] mb-3">Geofence Types</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-600 rounded"></div>
+            <div className="w-4 h-4 bg-red-500 rounded"></div>
             <span className="text-xs text-gray-600">Restricted</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-green-600 rounded"></div>
+            <div className="w-4 h-4 bg-[#0d7a8c] rounded"></div>
             <span className="text-xs text-gray-600">Authorized</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-amber-800 rounded"></div>
+            <div className="w-4 h-4 bg-orange-500 rounded"></div>
             <span className="text-xs text-gray-600">High Security</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-orange-600 rounded"></div>
+            <div className="w-4 h-4 bg-[#001f3f] rounded"></div>
             <span className="text-xs text-gray-600">Maintenance Only</span>
           </div>
         </div>
@@ -627,25 +620,25 @@ export default function GeofencingContent() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="p-8 bg-[#f8fafc] min-h-screen">
         <div className="animate-pulse space-y-8">
-          <div className="h-8 bg-gray-200 rounded w-64"></div>
-          <div className="h-96 bg-gray-200 rounded-2xl"></div>
+          <div className="h-8 bg-[#001f3f]/10 rounded-2xl w-64"></div>
+          <div className="h-96 bg-white/50 backdrop-blur-sm rounded-3xl border border-[#001f3f]/10"></div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 bg-[#f8fafc] min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Target className="w-8 h-8 text-blue-600" />
+          <h1 className="text-3xl font-light text-[#001f3f] flex items-center gap-3">
+            <Target className="w-8 h-8 text-[#0d7a8c]" />
             Geofencing Management
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 mt-2 font-light">
             Configure virtual boundaries to protect high-value assets
           </p>
         </div>
@@ -654,7 +647,7 @@ export default function GeofencingContent() {
           <button
             onClick={() => setIsCreating(true)}
             disabled={isCreating}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 bg-[#0d7a8c] text-white rounded-2xl hover:bg-[#003d5c] disabled:opacity-50 flex items-center gap-2 transition-colors duration-200"
           >
             <Plus className="w-4 h-4" />
             {isCreating ? 'Click & Drag on Map' : 'Create Geofence'}
@@ -663,7 +656,7 @@ export default function GeofencingContent() {
           {isCreating && (
             <button
               onClick={() => setIsCreating(false)}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
+              className="px-4 py-2 bg-gray-500 text-white rounded-2xl hover:bg-gray-600 flex items-center gap-2 transition-colors duration-200"
             >
               <X className="w-4 h-4" />
               Cancel
@@ -674,42 +667,42 @@ export default function GeofencingContent() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+        <div className="bg-white/50 border border-[#001f3f]/10 rounded-3xl p-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <Shield className="w-6 h-6 text-blue-600" />
+            <Shield className="w-6 h-6 text-[#001f3f]" />
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Zones</p>
-              <p className="text-2xl font-bold text-gray-900">{data?.totalZones || 0}</p>
+              <p className="text-sm font-light text-gray-600">Total Zones</p>
+              <p className="text-2xl font-semibold text-[#001f3f]">{data?.totalZones || 0}</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
+        <div className="bg-white/50 border border-[#0d7a8c]/10 rounded-3xl p-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <Eye className="w-6 h-6 text-green-600" />
+            <Eye className="w-6 h-6 text-[#0d7a8c]" />
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Zones</p>
-              <p className="text-2xl font-bold text-gray-900">{data?.activeZones || 0}</p>
+              <p className="text-sm font-light text-gray-600">Active Zones</p>
+              <p className="text-2xl font-semibold text-[#001f3f]">{data?.activeZones || 0}</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-6">
+        <div className="bg-white/50 border border-yellow-500/10 rounded-3xl p-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <EyeOff className="w-6 h-6 text-yellow-600" />
             <div>
-              <p className="text-sm font-medium text-gray-600">Inactive Zones</p>
-              <p className="text-2xl font-bold text-gray-900">{data?.inactiveZones || 0}</p>
+              <p className="text-sm font-light text-gray-600">Inactive Zones</p>
+              <p className="text-2xl font-semibold text-[#001f3f]">{data?.inactiveZones || 0}</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-purple-50 border border-purple-200 rounded-2xl p-6">
+        <div className="bg-white/50 border border-red-500/10 rounded-3xl p-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="w-6 h-6 text-purple-600" />
+            <AlertTriangle className="w-6 h-6 text-red-600" />
             <div>
-              <p className="text-sm font-medium text-gray-600">High Priority</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-light text-gray-600">High Priority</p>
+              <p className="text-2xl font-semibold text-[#001f3f]">
                 {filteredGeofences.filter(z => z.priority === 'high' || z.priority === 'critical').length}
               </p>
             </div>
@@ -721,11 +714,11 @@ export default function GeofencingContent() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Map View */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          <div className="bg-white/50 backdrop-blur-sm rounded-3xl border border-[#001f3f]/10 p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Floor Plan & Geofences</h3>
+              <h3 className="text-lg font-light text-[#001f3f]">Floor Plan & Geofences</h3>
               {isCreating && (
-                <p className="text-sm text-blue-600 font-medium">
+                <p className="text-sm text-[#0d7a8c] font-light">
                   Click and drag to create a new geofence zone
                 </p>
               )}
@@ -745,8 +738,8 @@ export default function GeofencingContent() {
         {/* Side Panel */}
         <div className="space-y-6">
           {/* Filters */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
+          <div className="bg-white/50 backdrop-blur-sm rounded-3xl border border-[#001f3f]/10 p-6 shadow-sm">
+            <h3 className="text-lg font-light text-[#001f3f] mb-4">Filters</h3>
             
             <div className="space-y-4">
               <div>
@@ -760,7 +753,7 @@ export default function GeofencingContent() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search zones..."
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-10 pr-3 py-2 border border-[#001f3f]/20 rounded-2xl focus:ring-2 focus:ring-[#0d7a8c] bg-white/70 backdrop-blur-sm"
                   />
                 </div>
               </div>
@@ -772,7 +765,7 @@ export default function GeofencingContent() {
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-[#001f3f]/20 rounded-2xl focus:ring-2 focus:ring-[#0d7a8c] bg-white/70 backdrop-blur-sm"
                 >
                   <option value="all">All Types</option>
                   <option value="authorized">Authorized</option>
@@ -789,7 +782,7 @@ export default function GeofencingContent() {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-[#001f3f]/20 rounded-2xl focus:ring-2 focus:ring-[#0d7a8c] bg-white/70 backdrop-blur-sm"
                 >
                   <option value="all">All Status</option>
                   <option value="active">Active</option>
@@ -800,8 +793,8 @@ export default function GeofencingContent() {
           </div>
 
           {/* Geofence List */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-white/50 backdrop-blur-sm rounded-3xl border border-[#001f3f]/10 p-6 shadow-sm">
+            <h3 className="text-lg font-light text-[#001f3f] mb-4">
               Geofence Zones ({filteredGeofences.length})
             </h3>
             
@@ -809,17 +802,17 @@ export default function GeofencingContent() {
               {filteredGeofences.map((geofence) => (
                 <div
                   key={geofence.id}
-                  className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                  className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 backdrop-blur-sm ${
                     selectedGeofence?.id === geofence.id
-                      ? 'border-blue-300 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      ? 'border-[#0d7a8c]/30 bg-[#0d7a8c]/5'
+                      : 'border-[#001f3f]/10 hover:border-[#001f3f]/20 hover:bg-white/70'
                   }`}
                   onClick={() => setSelectedGeofence(geofence)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-gray-900 text-sm">{geofence.name}</h4>
+                        <h4 className="font-medium text-[#001f3f] text-sm">{geofence.name}</h4>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           geofence.type === 'restricted' ? 'bg-red-100 text-red-800' :
                           geofence.type === 'high-security' ? 'bg-amber-100 text-amber-800' :

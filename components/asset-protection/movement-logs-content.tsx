@@ -246,31 +246,31 @@ export default function MovementLogsContent() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="p-8 bg-[#f8fafc] min-h-screen">
         <div className="animate-pulse space-y-8">
-          <div className="h-8 bg-gray-200 rounded w-64"></div>
+          <div className="h-8 bg-[#001f3f]/10 rounded-2xl w-64"></div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-32 bg-gray-200 rounded-2xl"></div>
+              <div key={i} className="h-32 bg-white/50 backdrop-blur-sm rounded-3xl border border-[#001f3f]/10"></div>
             ))}
           </div>
-          <div className="h-96 bg-gray-200 rounded-2xl"></div>
+          <div className="h-96 bg-white/50 backdrop-blur-sm rounded-3xl border border-[#001f3f]/10"></div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 bg-[#f8fafc] min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Activity className="w-8 h-8 text-blue-600" />
+          <h1 className="text-3xl font-light text-[#001f3f] flex items-center gap-3">
+            <Activity className="w-8 h-8 text-[#0d7a8c]" />
             Asset Movement Logs
           </h1>
-          <p className="text-gray-600 mt-2">
-            Historical records of asset movement across zones for compliance and investigation
+          <p className="text-gray-600 mt-2 font-light">
+            Monitor and analyze asset movement patterns across your facility
           </p>
         </div>
         
@@ -333,9 +333,9 @@ export default function MovementLogsContent() {
 
       {/* Advanced Filters */}
       {showFilters && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+        <div className="bg-white/50 backdrop-blur-sm rounded-3xl border border-[#001f3f]/10 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Advanced Filters</h3>
+            <h3 className="text-lg font-light text-[#001f3f]">Advanced Filters</h3>
             <button
               onClick={clearFilters}
               className="text-sm text-blue-600 hover:text-blue-800"
@@ -455,8 +455,8 @@ export default function MovementLogsContent() {
       )}
 
       {/* Risk Breakdown */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Risk Distribution</h3>
+      <div className="bg-white/50 backdrop-blur-sm rounded-3xl border border-[#001f3f]/10 p-6 shadow-sm">
+        <h3 className="text-lg font-light text-[#001f3f] mb-4">Risk Distribution</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {Object.entries(data?.summary.riskBreakdown || {}).map(([level, count]) => (
             <div key={level} className="text-center">
@@ -470,7 +470,7 @@ export default function MovementLogsContent() {
       </div>
 
       {/* Movement Logs Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white/50 backdrop-blur-sm rounded-3xl border border-[#001f3f]/10 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">
@@ -696,7 +696,7 @@ export default function MovementLogsContent() {
       {/* Log Detail Modal */}
       {selectedLog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#001f3f]/10">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Movement Log Details</h3>
