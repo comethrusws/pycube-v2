@@ -566,3 +566,193 @@ export interface AssetActionResponse {
   }
 }
 
+// Asset Protection Module Types
+export interface GeofenceZone {
+  id: string
+  name: string
+  description?: string
+  type: "restricted" | "authorized" | "high-security" | "maintenance-only"
+  zoneIds: string[] // Array of zone IDs that make up this geofence
+  assetIds: string[] // Assets assigned to this geofence
+  priority: "low" | "medium" | "high" | "critical"
+  active: boolean
+  createdAt: string
+  createdBy: string
+  updatedAt?: string
+  updatedBy?: string
+  alertOnEntry: boolean
+  alertOnExit: boolean
+  allowedRoles: string[] // User roles allowed in this geofence
+  workingHours?: {
+    enabled: boolean
+    startTime: string // HH:MM format
+    endTime: string // HH:MM format
+    daysOfWeek: number[] // 0-6, Sunday = 0
+  }
+  coordinates?: {
+    x: number
+    y: number
+    width: number
+    height: number
+  }
+}
+
+export interface GeofenceViolation {
+  id: string
+  geofenceZoneId: string
+  geofenceZoneName: string
+  assetId: string
+  assetName: string
+  assetType: string
+  violationType: "entry" | "exit" | "unauthorized_presence" | "after_hours"
+  severity: "low" | "medium" | "high" | "critical"
+  timestamp: string
+  fromZoneId: string
+  fromZoneName: string
+  toZoneId: string
+  toZoneName: string
+  detectedBy?: string // Reader or system that detected
+  resolvedAt?: string
+  resolvedBy?: string
+  resolution?: string
+  status: "active" | "investigating" | "resolved" | "false_positive"
+  alertSent: boolean
+  alertRecipients: string[]
+  responseTime?: number // Minutes to respond
+  actionTaken?: string
+  estimatedRisk: number // 1-10 risk score
+}
+
+export interface AssetProtectionAlert {
+  id: string
+  type: "geofence_violation" | "movement_anomaly" | "theft_risk" | "unauthorized_access" | "asset_missing"
+  assetId: string
+  assetName: string
+  assetType: string
+  assetValue?: number
+  message: string
+  description: string
+  severity: "low" | "medium" | "high" | "critical"
+  status: "new" | "acknowledged" | "investigating" | "resolved"
+  createdAt: string
+  acknowledgedAt?: string
+  acknowledgedBy?: string
+  resolvedAt?: string
+  resolvedBy?: string
+  targetRoles: TargetRole[]
+  location: {
+    buildingId: string
+    buildingName: string
+    floorId: string
+    floorName: string
+    zoneId: string
+    zoneName: string
+  }
+  relatedIds?: {
+    geofenceZoneId?: string
+    violationId?: string
+    movementLogId?: string
+  }
+  metadata?: {
+    riskScore: number
+    confidence: number
+    patternMatch?: string
+    triggerCondition?: string
+  }
+  actionRequired: boolean
+  urgency: "immediate" | "within_hour" | "within_day" | "routine"
+  estimatedImpact: "minimal" | "moderate" | "significant" | "critical"
+}
+
+export interface AssetMovementPattern {
+  id: string
+  assetId: string
+  assetName: string
+  assetType: string
+  patternType: "normal" | "unusual" | "suspicious" | "emergency"
+  description: string
+  detectedAt: string
+  confidence: number // 0-100%
+  riskLevel: "low" | "medium" | "high" | "critical"
+  movements: {
+    timestamp: string
+    fromZoneId: string
+    fromZoneName: string
+    toZoneId: string
+    toZoneName: string
+    duration: number // minutes spent in zone
+    velocity?: number // movement speed if available
+  }[]
+  anomalyIndicators: {
+    afterHours: boolean
+    unauthorizedZones: boolean
+    rapidMovement: boolean
+    patternDeviation: boolean
+    frequencyAnomaly: boolean
+  }
+  alertGenerated: boolean
+  reviewStatus: "pending" | "reviewed" | "cleared" | "escalated"
+  reviewedBy?: string
+  reviewedAt?: string
+  notes?: string
+}
+
+export interface AssetProtectionMetrics {
+  totalProtectedAssets: number
+  activeGeofences: number
+  violationsToday: number
+  violationsThisWeek: number
+  violationsThisMonth: number
+  highValueAssetsAtRisk: number
+  averageResponseTime: number // minutes
+  falsePositiveRate: number // percentage
+  alertsGenerated: {
+    today: number
+    thisWeek: number
+    thisMonth: number
+  }
+  complianceScore: number // percentage
+  topViolationTypes: {
+    type: string
+    count: number
+    percentage: number
+  }[]
+  violationTrend: {
+    date: string
+    violations: number
+    resolved: number
+  }[]
+  geofenceEffectiveness: {
+    zoneId: string
+    zoneName: string
+    violationCount: number
+    responseRate: number
+    averageResponseTime: number
+  }[]
+}
+
+export interface AssetProtectionDashboardData {
+  metrics: AssetProtectionMetrics
+  recentViolations: GeofenceViolation[]
+  activeAlerts: AssetProtectionAlert[]
+  movementPatterns: AssetMovementPattern[]
+  riskAssets: {
+    assetId: string
+    assetName: string
+    assetType: string
+    value: number
+    riskScore: number
+    location: string
+    lastViolation?: string
+    violationCount: number
+  }[]
+  protectionCoverage: {
+    departmentId: string
+    departmentName: string
+    totalAssets: number
+    protectedAssets: number
+    coverage: number // percentage
+    violations: number
+  }[]
+}
+

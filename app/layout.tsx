@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
+import { Toaster } from "react-hot-toast"
 import "./globals.css"
 
 const geistSans = Geist({ subsets: ["latin"] })
@@ -18,7 +19,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.className} bg-background text-foreground`}>{children}</body>
+      <body className={`${geistSans.className} bg-background text-foreground`}>
+        {children}
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#fff',
+              color: '#333',
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            },
+          }}
+        />
+      </body>
     </html>
   )
 }

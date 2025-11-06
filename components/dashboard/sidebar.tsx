@@ -91,6 +91,20 @@ const menuSections = [
   {
     items: [
       {
+        icon: Shield,
+        label: "Asset Protection",
+        href: "/asset-protection",
+        submenu: [
+          { label: "Dashboard", href: "/asset-protection" },
+          { label: "Geofencing", href: "/asset-protection/geofencing" },
+          { label: "Movement Logs", href: "/asset-protection/movement-logs" },
+        ],
+      },
+    ] as MenuItem[],
+  },
+  {
+    items: [
+      {
         icon: Wrench,
         label: "Preventative Maintenance",
         href: "/preventative-maintenance",
@@ -124,7 +138,7 @@ const menuSections = [
         label: "Asset Protection",
         href: "",
         submenu: [
-          { label: "Dashboard", href: "" },
+          { label: "Dashboard", href: "/asset-protection" },
           { label: "Assets", href: "" },
         ],
       },
