@@ -133,19 +133,6 @@ const menuSections = [
   },
   {
     items: [
-      {
-        icon: Shield,
-        label: "Asset Protection",
-        href: "",
-        submenu: [
-          { label: "Dashboard", href: "/asset-protection" },
-          { label: "Assets", href: "" },
-        ],
-      },
-    ] as MenuItem[],
-  },
-  {
-    items: [
       { icon: Warehouse, label: "Facilities", href: "/facilities" },
     ] as MenuItem[],
   },
