@@ -211,6 +211,45 @@ export default function AssetProtectionDashboard() {
       duration: 5000,
       icon: '🚨'
     })
+    
+    // Notify biomedical leaders
+    setTimeout(() => {
+      toast.success('Biomedical leaders notified for this asset', {
+        duration: 4000,
+        icon: '📧',
+        style: {
+          background: '#DCFCE7',
+          border: '1px solid #BBF7D0',
+          color: '#166534'
+        }
+      })
+    }, 1000)
+  }
+
+  const handleHighRiskAssetClick = (asset: any) => {
+    // First show the risk details
+    toast.error(`HIGH RISK: ${asset.assetName} requires immediate attention (Risk Score: ${asset.riskScore})`, {
+      duration: 6000,
+      icon: '⚠️',
+      style: {
+        background: '#FEF3C7',
+        border: '1px solid #FDE68A',
+        color: '#92400E'
+      }
+    })
+    
+    // Then notify biomedical leaders
+    setTimeout(() => {
+      toast.success('Biomedical leaders notified for this asset', {
+        duration: 4000,
+        icon: '📧',
+        style: {
+          background: '#DCFCE7',
+          border: '1px solid #BBF7D0',
+          color: '#166534'
+        }
+      })
+    }, 1500)
   }
 
   const handleGeofenceAlert = () => {
@@ -426,31 +465,64 @@ export default function AssetProtectionDashboard() {
             {data?.recentViolations?.slice(0, 6).map((violation, idx) => (
               <div 
                 key={idx} 
-                className={`p-4 rounded-2xl border cursor-pointer hover:shadow-md transition-all duration-200 backdrop-blur-sm ${
-                  violation.severity === 'critical' ? 'bg-red-500/5 border-red-500/20' :
-                  violation.severity === 'high' ? 'bg-orange-500/5 border-orange-500/20' :
-                  violation.severity === 'medium' ? 'bg-yellow-500/5 border-yellow-500/20' :
-                  'bg-[#0d7a8c]/5 border-[#0d7a8c]/20'
+                className={`p-4 rounded-2xl border cursor-pointer hover:shadow-lg hover:border-[#0d7a8c]/30 transition-all duration-200 backdrop-blur-sm transform hover:-translate-y-0.5 ${
+                  violation.severity === 'critical' ? 'bg-red-500/5 border-red-500/20 hover:bg-red-500/10' :
+                  violation.severity === 'high' ? 'bg-orange-500/5 border-orange-500/20 hover:bg-orange-500/10' :
+                  violation.severity === 'medium' ? 'bg-yellow-500/5 border-yellow-500/20 hover:bg-yellow-500/10' :
+                  'bg-[#0d7a8c]/5 border-[#0d7a8c]/20 hover:bg-[#0d7a8c]/10'
                 }`}
                 onClick={() => handleViolationClick(violation)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-[#001f3f] text-sm">{violation.assetName}</h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        violation.severity === 'critical' ? 'bg-red-100 text-red-800' :
-                        violation.severity === 'high' ? 'bg-orange-100 text-orange-800' :
-                        violation.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-blue-100 text-blue-800'
+                      <h4 className="font-medium text-[#001f3f] text-sm hover:text-[#0d7a8c] transition-colors">
+                        {violation.assetName}
+                      </h4>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                        violation.severity === 'critical' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+                        violation.severity === 'high' ? 'bg-orange-100 text-orange-800 hover:bg-orange-200' :
+                        violation.severity === 'medium' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' :
+                        'bg-blue-100 text-blue-800 hover:bg-blue-200'
                       }`}>
                         {violation.severity}
                       </span>
+                      {violation.severity === 'critical' && (
+                        <span className="animate-pulse text-red-500 text-xs">●</span>
+                      )}
                     </div>
-                    <p className="text-sm text-gray-600">{violation.geofenceZoneName}</p>
+                    <p className="text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                      {violation.geofenceZoneName}
+                    </p>
                     <p className="text-xs text-gray-500 mt-1">
                       {violation.violationType} • Risk: {violation.estimatedRisk}/10
                     </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <button 
+                        className="text-xs px-2 py-1 bg-[#0d7a8c] text-white rounded-lg hover:bg-[#003d5c] transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toast.success(`Action taken for ${violation.assetName}`, { 
+                            icon: '✅',
+                            duration: 3000 
+                          })
+                        }}
+                      >
+                        Take Action
+                      </button>
+                      <button 
+                        className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toast(`Viewing details for ${violation.assetName}`, { 
+                            icon: 'ℹ️',
+                            duration: 2000 
+                          })
+                        }}
+                      >
+                        Details
+                      </button>
+                    </div>
                   </div>
                   <div className="text-right ml-4">
                     <p className="text-xs text-gray-500">
@@ -554,23 +626,30 @@ export default function AssetProtectionDashboard() {
         >
           <div className="space-y-3 max-h-80 overflow-y-auto">
             {data?.riskAssets?.slice(0, 8).map((asset, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 bg-white/50 backdrop-blur-sm rounded-2xl border border-[#001f3f]/10 hover:bg-white/70 transition-all duration-200 cursor-pointer">
+              <div 
+                key={idx} 
+                className="flex items-center justify-between p-3 bg-white/50 backdrop-blur-sm rounded-2xl border border-[#001f3f]/10 hover:bg-white/70 hover:shadow-lg hover:border-[#0d7a8c]/30 transition-all duration-200 cursor-pointer transform hover:-translate-y-0.5"
+                onClick={() => handleHighRiskAssetClick(asset)}
+              >
                 <div className="flex-1">
                   <h4 className="font-medium text-[#001f3f] text-sm">{asset.assetName}</h4>
                   <p className="text-xs text-gray-600">{asset.assetType} • {asset.location}</p>
                   <p className="text-xs text-gray-500">Value: ${asset.value.toLocaleString()}</p>
+                  {asset.riskScore >= 70 && (
+                    <p className="text-xs text-red-600 font-medium mt-1">⚠️ Immediate attention required</p>
+                  )}
                 </div>
                 <div className="text-right">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                    asset.riskScore >= 80 ? 'bg-red-100 text-red-800' :
-                    asset.riskScore >= 60 ? 'bg-orange-100 text-orange-800' :
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
+                    asset.riskScore >= 80 ? 'bg-red-100 text-red-800 shadow-md' :
+                    asset.riskScore >= 60 ? 'bg-orange-100 text-orange-800 shadow-md' :
                     asset.riskScore >= 40 ? 'bg-yellow-100 text-yellow-800' :
                     'bg-green-100 text-green-800'
                   }`}>
                     {asset.riskScore}
                   </div>
                   {asset.violationCount > 0 && (
-                    <p className="text-xs text-red-600 mt-1">{asset.violationCount} violations</p>
+                    <p className="text-xs text-red-600 mt-1 font-medium">{asset.violationCount} violations</p>
                   )}
                 </div>
               </div>
@@ -615,15 +694,15 @@ export default function AssetProtectionDashboard() {
           <Zap className="w-5 h-5 text-[#0d7a8c]" />
           Quick Actions
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link 
             href="/asset-protection/geofencing"
-            className="p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-[#001f3f]/10 hover:shadow-md transition-all duration-200 group"
+            className="p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-[#001f3f]/10 hover:shadow-lg hover:border-[#0d7a8c]/30 transition-all duration-200 group transform hover:-translate-y-0.5"
           >
             <div className="flex items-center gap-3">
-              <MapPin className="w-6 h-6 text-[#0d7a8c] group-hover:text-[#003d5c]" />
+              <MapPin className="w-6 h-6 text-[#0d7a8c] group-hover:text-[#003d5c] transition-colors" />
               <div>
-                <h4 className="font-medium text-[#001f3f]">Manage Geofences</h4>
+                <h4 className="font-medium text-[#001f3f] group-hover:text-[#0d7a8c] transition-colors">Manage Geofences</h4>
                 <p className="text-sm text-gray-600 font-light">Configure virtual boundaries</p>
               </div>
             </div>
@@ -631,26 +710,73 @@ export default function AssetProtectionDashboard() {
           
           <Link 
             href="/asset-protection/movement-logs"
-            className="p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-[#001f3f]/10 hover:shadow-md transition-all duration-200 group"
+            className="p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-[#001f3f]/10 hover:shadow-lg hover:border-[#0d7a8c]/30 transition-all duration-200 group transform hover:-translate-y-0.5"
           >
             <div className="flex items-center gap-3">
-              <Activity className="w-6 h-6 text-[#0d7a8c] group-hover:text-[#003d5c]" />
+              <Activity className="w-6 h-6 text-[#0d7a8c] group-hover:text-[#003d5c] transition-colors" />
               <div>
-                <h4 className="font-medium text-[#001f3f]">Movement Logs</h4>
+                <h4 className="font-medium text-[#001f3f] group-hover:text-[#0d7a8c] transition-colors">Movement Logs</h4>
                 <p className="text-sm text-gray-600 font-light">View asset movement history</p>
               </div>
             </div>
           </Link>
           
           <button
-            onClick={() => toast.success('Downloading protection report...', { icon: '📊' })}
-            className="p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-[#001f3f]/10 hover:shadow-md transition-all duration-200 group text-left"
+            onClick={() => {
+              toast.success('Downloading protection report...', { icon: '📊', duration: 3000 })
+              setTimeout(() => {
+                toast.success('Biomedical leaders included in report distribution', { 
+                  icon: '📧',
+                  duration: 4000,
+                  style: {
+                    background: '#DCFCE7',
+                    border: '1px solid #BBF7D0',
+                    color: '#166534'
+                  }
+                })
+              }, 2000)
+            }}
+            className="p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-[#001f3f]/10 hover:shadow-lg hover:border-[#0d7a8c]/30 transition-all duration-200 group text-left transform hover:-translate-y-0.5"
           >
             <div className="flex items-center gap-3">
-              <Download className="w-6 h-6 text-[#0d7a8c] group-hover:text-[#003d5c]" />
+              <Download className="w-6 h-6 text-[#0d7a8c] group-hover:text-[#003d5c] transition-colors" />
               <div>
-                <h4 className="font-medium text-[#001f3f]">Export Report</h4>
+                <h4 className="font-medium text-[#001f3f] group-hover:text-[#0d7a8c] transition-colors">Export Report</h4>
                 <p className="text-sm text-gray-600 font-light">Download security analytics</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              toast.error('EMERGENCY: Initiating security lockdown protocol', { 
+                icon: '🚨',
+                duration: 6000,
+                style: {
+                  background: '#FEE2E2',
+                  border: '1px solid #FECACA',
+                  color: '#991B1B'
+                }
+              })
+              setTimeout(() => {
+                toast.success('Security team and biomedical leaders notified', { 
+                  icon: '📢',
+                  duration: 4000,
+                  style: {
+                    background: '#DCFCE7',
+                    border: '1px solid #BBF7D0',
+                    color: '#166534'
+                  }
+                })
+              }, 1500)
+            }}
+            className="p-4 bg-red-50 backdrop-blur-sm rounded-2xl border border-red-200 hover:shadow-lg hover:border-red-300 transition-all duration-200 group text-left transform hover:-translate-y-0.5"
+          >
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-6 h-6 text-red-600 group-hover:text-red-700 transition-colors" />
+              <div>
+                <h4 className="font-medium text-red-700 group-hover:text-red-800 transition-colors">Emergency Lock</h4>
+                <p className="text-sm text-red-600 font-light">Activate security protocol</p>
               </div>
             </div>
           </button>

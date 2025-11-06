@@ -64,7 +64,7 @@ interface GeofencingData {
   inactiveZones: number
 }
 
-import toast from "react-hot-toast"
+import toast, { Toaster } from "react-hot-toast"
 
 const FloorPlanMap = ({ 
   geofences, 
@@ -147,8 +147,8 @@ const FloorPlanMap = ({
           <img 
             src="/plan.png" 
             alt="Floor Plan"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ filter: 'brightness(0.95) contrast(1.1)' }}
+            className="absolute inset-0 w-full h-full object-cover grayscale"
+            style={{ filter: 'brightness(0.95) contrast(1.1) grayscale' }}
           />
           
           {/* Overlay for interactions */}
@@ -586,6 +586,22 @@ export default function GeofencingContent() {
     try {
       // In a real app, this would make an API call
       toast.success('Geofence zone saved successfully')
+      
+      // Notify biomedical leaders about critical/high security zones
+      if (formData.type === 'high-security' || formData.priority === 'critical') {
+        setTimeout(() => {
+          toast.success('Biomedical leaders notified about new security zone', {
+            icon: '📧',
+            duration: 4000,
+            style: {
+              background: '#DCFCE7',
+              border: '1px solid #BBF7D0',
+              color: '#166534'
+            }
+          })
+        }, 1500)
+      }
+      
       setShowForm(false)
       setCreateCoordinates(null)
       setSelectedGeofence(null)
@@ -601,6 +617,22 @@ export default function GeofencingContent() {
     try {
       // In a real app, this would make an API call
       toast.success('Geofence zone deleted successfully')
+      
+      // Notify biomedical leaders about security zone changes
+      if (geofence.type === 'high-security' || geofence.priority === 'critical') {
+        setTimeout(() => {
+          toast.success('Biomedical leaders notified about security zone removal', {
+            icon: '📧',
+            duration: 4000,
+            style: {
+              background: '#DCFCE7',
+              border: '1px solid #BBF7D0',
+              color: '#166534'
+            }
+          })
+        }, 1500)
+      }
+      
       setSelectedGeofence(null)
       loadData()
     } catch (error) {
@@ -611,10 +643,52 @@ export default function GeofencingContent() {
   const handleGeofenceToggle = async (geofence: GeofenceZone) => {
     try {
       // In a real app, this would make an API call
-      toast.success(`Geofence zone ${geofence.active ? 'disabled' : 'enabled'}`)
+      const action = geofence.active ? 'disabled' : 'enabled'
+      toast.success(`Geofence zone ${action}`)
+      
+      // Notify biomedical leaders about critical security zone changes
+      if (geofence.type === 'high-security' || geofence.priority === 'critical') {
+        setTimeout(() => {
+          toast.success(`Biomedical leaders notified: Security zone ${action}`, {
+            icon: '📧',
+            duration: 4000,
+            style: {
+              background: '#DCFCE7',
+              border: '1px solid #BBF7D0',
+              color: '#166534'
+            }
+          })
+        }, 1500)
+      }
+      
       loadData()
     } catch (error) {
       toast.error('Failed to update geofence zone')
+    }
+  }
+
+  const handleGeofenceClick = (geofence: GeofenceZone) => {
+    setSelectedGeofence(geofence)
+    
+    // Show geofence details
+    toast(`Viewing ${geofence.name} - ${geofence.assetIds.length} assets protected`, {
+      icon: 'ℹ️',
+      duration: 3000
+    })
+    
+    // Notify if high-risk zone
+    if (geofence.type === 'high-security' || geofence.priority === 'critical') {
+      setTimeout(() => {
+        toast.error(`HIGH SECURITY ZONE: ${geofence.name} requires special authorization`, {
+          icon: '🔒',
+          duration: 5000,
+          style: {
+            background: '#FEF3C7',
+            border: '1px solid #FDE68A',
+            color: '#92400E'
+          }
+        })
+      }, 1000)
     }
   }
 
@@ -631,6 +705,7 @@ export default function GeofencingContent() {
 
   return (
     <div className="p-8 space-y-8 bg-[#f8fafc] min-h-screen">
+      <Toaster />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -645,17 +720,37 @@ export default function GeofencingContent() {
         
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setIsCreating(true)}
+            onClick={() => {
+              setIsCreating(true)
+              toast.success('Click and drag on the map to create a new geofence', { 
+                icon: '🎯',
+                duration: 4000 
+              })
+            }}
             disabled={isCreating}
-            className="px-4 py-2 bg-[#0d7a8c] text-white rounded-2xl hover:bg-[#003d5c] disabled:opacity-50 flex items-center gap-2 transition-colors duration-200"
+            className="px-4 py-2 bg-[#0d7a8c] text-white rounded-2xl hover:bg-[#003d5c] disabled:opacity-50 flex items-center gap-2 transition-all duration-200 hover:shadow-lg"
           >
             <Plus className="w-4 h-4" />
             {isCreating ? 'Click & Drag on Map' : 'Create Geofence'}
           </button>
           
+          <button
+            onClick={() => {
+              loadData()
+              toast.success('Geofence data refreshed', { icon: '🔄', duration: 2000 })
+            }}
+            className="px-4 py-2 bg-white border border-[#0d7a8c]/20 text-[#0d7a8c] rounded-2xl hover:bg-[#0d7a8c]/5 flex items-center gap-2 transition-all duration-200 hover:shadow-md"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+          
           {isCreating && (
             <button
-              onClick={() => setIsCreating(false)}
+              onClick={() => {
+                setIsCreating(false)
+                toast('Geofence creation cancelled', { icon: 'ℹ️', duration: 2000 })
+              }}
               className="px-4 py-2 bg-gray-500 text-white rounded-2xl hover:bg-gray-600 flex items-center gap-2 transition-colors duration-200"
             >
               <X className="w-4 h-4" />
@@ -739,7 +834,20 @@ export default function GeofencingContent() {
         <div className="space-y-6">
           {/* Filters */}
           <div className="bg-white/50 backdrop-blur-sm rounded-3xl border border-[#001f3f]/10 p-6 shadow-sm">
-            <h3 className="text-lg font-light text-[#001f3f] mb-4">Filters</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-light text-[#001f3f]">Filters</h3>
+              <button
+                onClick={() => {
+                  setSearchTerm('')
+                  setFilterType('all')
+                  setFilterStatus('all')
+                  toast.success('Filters cleared', { icon: '🔄', duration: 2000 })
+                }}
+                className="text-xs px-3 py-1 text-gray-600 hover:text-[#0d7a8c] hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
             
             <div className="space-y-4">
               <div>
@@ -802,30 +910,40 @@ export default function GeofencingContent() {
               {filteredGeofences.map((geofence) => (
                 <div
                   key={geofence.id}
-                  className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 backdrop-blur-sm ${
+                  className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 backdrop-blur-sm transform hover:-translate-y-0.5 hover:shadow-lg ${
                     selectedGeofence?.id === geofence.id
-                      ? 'border-[#0d7a8c]/30 bg-[#0d7a8c]/5'
-                      : 'border-[#001f3f]/10 hover:border-[#001f3f]/20 hover:bg-white/70'
+                      ? 'border-[#0d7a8c]/30 bg-[#0d7a8c]/5 shadow-md'
+                      : 'border-[#001f3f]/10 hover:border-[#0d7a8c]/30 hover:bg-white/80'
                   }`}
-                  onClick={() => setSelectedGeofence(geofence)}
+                  onClick={() => handleGeofenceClick(geofence)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-[#001f3f] text-sm">{geofence.name}</h4>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          geofence.type === 'restricted' ? 'bg-red-100 text-red-800' :
-                          geofence.type === 'high-security' ? 'bg-amber-100 text-amber-800' :
-                          geofence.type === 'maintenance-only' ? 'bg-orange-100 text-orange-800' :
-                          'bg-green-100 text-green-800'
+                        <h4 className="font-medium text-[#001f3f] text-sm hover:text-[#0d7a8c] transition-colors">
+                          {geofence.name}
+                        </h4>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                          geofence.type === 'restricted' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+                          geofence.type === 'high-security' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' :
+                          geofence.type === 'maintenance-only' ? 'bg-orange-100 text-orange-800 hover:bg-orange-200' :
+                          'bg-green-100 text-green-800 hover:bg-green-200'
                         }`}>
                           {geofence.type.replace('-', ' ')}
                         </span>
+                        {!geofence.active && (
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            Inactive
+                          </span>
+                        )}
+                        {(geofence.type === 'high-security' || geofence.priority === 'critical') && (
+                          <span className="animate-pulse text-red-500 text-xs">●</span>
+                        )}
                       </div>
-                      <p className="text-xs text-gray-600 mb-2">
+                      <p className="text-xs text-gray-600 mb-2 hover:text-gray-800 transition-colors">
                         {geofence.description || 'No description'}
                       </p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 text-xs text-gray-500 mb-2">
                         <span className={`flex items-center gap-1 ${
                           geofence.priority === 'critical' ? 'text-red-600' :
                           geofence.priority === 'high' ? 'text-orange-600' :
@@ -840,7 +958,38 @@ export default function GeofencingContent() {
                           }`}></div>
                           {geofence.priority}
                         </span>
-                        <span>{geofence.assetIds.length} assets</span>
+                        <span className="hover:text-gray-700 transition-colors">
+                          {geofence.assetIds.length} assets
+                        </span>
+                        <span className="text-gray-400">
+                          {geofence.zoneIds.length} zones
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <button 
+                          className="text-xs px-2 py-1 bg-[#0d7a8c] text-white rounded-lg hover:bg-[#003d5c] transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toast.success(`Viewing details for ${geofence.name}`, { 
+                              icon: 'ℹ️',
+                              duration: 3000 
+                            })
+                          }}
+                        >
+                          View Details
+                        </button>
+                        <button 
+                          className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toast(`Managing ${geofence.assetIds.length} assets in ${geofence.name}`, { 
+                              icon: '🔧',
+                              duration: 3000 
+                            })
+                          }}
+                        >
+                          Manage Assets
+                        </button>
                       </div>
                     </div>
                     
