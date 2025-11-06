@@ -1417,15 +1417,15 @@ function generateAssetLocatorData(
     }
   ]
 
-  // Asset Movement Alerts (from recent movement logs)
+  // Asset Movement Alerts (from recent movement logs) - More realistic for 6734 assets
   const recentMovements = movementLogs
     .filter(log => {
       const logDate = new Date(log.timestamp)
       const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
-      return logDate > twoDaysAgo && (!log.authorized || Math.random() < 0.15) // 15% are flagged as abnormal
+      return logDate > twoDaysAgo && (!log.authorized || Math.random() < 0.05) // Only 5% flagged as abnormal
     })
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    .slice(0, 15)
+    .slice(0, Math.min(25, Math.floor(totalAssets * 0.001))) // Max 0.1% of total assets or 25
     .map(log => {
       const asset = assets.find(a => a.id === log.assetId)
       const fromZone = zones.find(z => z.id === log.fromZoneId)
@@ -1442,7 +1442,7 @@ function generateAssetLocatorData(
         alertType: !log.authorized ? "Unauthorized Movement" : 
                   Math.random() < 0.6 ? "Out-of-Zone Event" : "Abnormal Movement Pattern",
         severity: !log.authorized ? "high" : "medium",
-        status: Math.random() < 0.3 ? "resolved" : "pending",
+        status: Math.random() < 0.7 ? "resolved" : "pending", // Most resolved
         movedBy: log.movedBy || "Unknown User"
       }
     })

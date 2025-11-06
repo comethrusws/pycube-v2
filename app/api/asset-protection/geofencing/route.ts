@@ -5,15 +5,61 @@ import { GeofenceZone } from "@/lib/types"
 export async function GET(request: NextRequest) {
   try {
     const data = await loadSeedData()
+    const totalAssets = data.assets.length
     
-    // Generate geofence zones
-    const geofenceZones: GeofenceZone[] = generateGeofenceZones(data)
+    // Generate realistic geofence zones based on asset count
+    const zoneCount = Math.max(8, Math.min(15, Math.floor(totalAssets / 500))) // 8-15 zones for 6734 assets
+    const activeZones = Math.floor(zoneCount * 0.85) // 85% active
+    const inactiveZones = zoneCount - activeZones
+    
+    const geofenceTypes = ['restricted', 'authorized', 'high-security', 'maintenance-only']
+    const priorities = ['low', 'medium', 'high', 'critical']
+    const zones = []
+    
+    for (let i = 0; i < zoneCount; i++) {
+      const type = geofenceTypes[Math.floor(Math.random() * geofenceTypes.length)]
+      const priority = priorities[Math.floor(Math.random() * priorities.length)]
+      const active = i < activeZones
+      
+      // Realistic asset assignment - 10-30% of assets per zone
+      const assetsInZone = Math.floor(Math.random() * Math.floor(totalAssets * 0.2)) + Math.floor(totalAssets * 0.1)
+      const zoneAssets = data.assets
+        .sort(() => Math.random() - 0.5)
+        .slice(0, assetsInZone)
+        .map(a => a.id)
+      
+      zones.push({
+        id: `geofence-zone-${i + 1}`,
+        name: `${type === 'restricted' ? 'Restricted' : 
+                type === 'high-security' ? 'High Security' : 
+                type === 'maintenance-only' ? 'Maintenance' : 'Authorized'} Zone ${i + 1}`,
+        description: `${type.replace('-', ' ')} zone for ${type === 'maintenance-only' ? 'maintenance operations' : 'asset protection'}`,
+        type,
+        zoneIds: data.zones.slice(i * 2, (i + 1) * 2).map(z => z.id), // 2 physical zones per geofence
+        assetIds: zoneAssets,
+        priority,
+        active,
+        createdAt: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString(),
+        createdBy: 'Security Admin',
+        alertOnEntry: type === 'restricted' || type === 'high-security',
+        alertOnExit: type === 'high-security',
+        allowedRoles: type === 'restricted' ? ['admin', 'security'] : 
+                     type === 'high-security' ? ['admin', 'security', 'biomedical'] :
+                     ['admin', 'biomedical', 'nursing', 'maintenance'],
+        workingHours: {
+          enabled: type === 'maintenance-only',
+          startTime: '06:00',
+          endTime: '22:00',
+          daysOfWeek: [1, 2, 3, 4, 5, 6, 7]
+        }
+      })
+    }
     
     return NextResponse.json({
-      zones: geofenceZones,
-      totalZones: geofenceZones.length,
-      activeZones: geofenceZones.filter(z => z.active).length,
-      inactiveZones: geofenceZones.filter(z => !z.active).length
+      zones,
+      totalZones: zoneCount,
+      activeZones,
+      inactiveZones
     })
   } catch (error) {
     console.error('Geofencing API error:', error)

@@ -79,27 +79,52 @@ function generateGeofenceViolations(data: any, startDate: Date): GeofenceViolati
   const severities = ['low', 'medium', 'high', 'critical']
   const statuses = ['active', 'investigating', 'resolved', 'false_positive']
   
-  // Generate violations from recent movement logs
+  // Generate violations from recent movement logs - realistic numbers
   const recentMovements = data.movementLogs.filter((log: any) => 
     new Date(log.timestamp) >= startDate
   )
   
+  // Only 2-3% of movements should generate violations for 6734 assets
+  const violationChance = Math.min(0.03, 150 / recentMovements.length) // Cap at 150 violations max
+  
   recentMovements.forEach((movement: any, index: number) => {
-    // 25% chance of generating a violation for each movement
-    if (Math.random() < 0.25) {
+    if (Math.random() < violationChance) {
       const asset = data.assets.find((a: any) => a.id === movement.assetId)
       const fromZone = data.zones.find((z: any) => z.id === movement.fromZoneId)
       const toZone = data.zones.find((z: any) => z.id === movement.toZoneId)
       
       if (asset && fromZone && toZone) {
         const violationType = violationTypes[Math.floor(Math.random() * violationTypes.length)]
-        const severity = severities[Math.floor(Math.random() * severities.length)]
-        const status = statuses[Math.floor(Math.random() * statuses.length)]
+        // Weight severity towards lower levels for realism
+        const severityWeights = [0.5, 0.3, 0.15, 0.05] // low, medium, high, critical
+        const severityRandom = Math.random()
+        let severity = 'low'
+        let cumulative = 0
+        for (let i = 0; i < severityWeights.length; i++) {
+          cumulative += severityWeights[i]
+          if (severityRandom < cumulative) {
+            severity = severities[i]
+            break
+          }
+        }
+        
+        // Most violations should be resolved (80%)
+        const statusWeights = [0.05, 0.1, 0.8, 0.05] // active, investigating, resolved, false_positive
+        const statusRandom = Math.random()
+        let status = 'resolved'
+        cumulative = 0
+        for (let i = 0; i < statusWeights.length; i++) {
+          cumulative += statusWeights[i]
+          if (statusRandom < cumulative) {
+            status = statuses[i]
+            break
+          }
+        }
         
         violations.push({
           id: `violation-${Date.now()}-${index}`,
-          geofenceZoneId: `geo-zone-${Math.floor(Math.random() * 5) + 1}`,
-          geofenceZoneName: `High Security Zone ${Math.floor(Math.random() * 5) + 1}`,
+          geofenceZoneId: `geo-zone-${Math.floor(Math.random() * 8) + 1}`,
+          geofenceZoneName: `Security Zone ${Math.floor(Math.random() * 8) + 1}`,
           assetId: asset.id,
           assetName: asset.name,
           assetType: asset.type,
@@ -110,14 +135,14 @@ function generateGeofenceViolations(data: any, startDate: Date): GeofenceViolati
           fromZoneName: fromZone.name,
           toZoneId: movement.toZoneId,
           toZoneName: toZone.name,
-          detectedBy: `Reader-${Math.floor(Math.random() * 10) + 1}`,
+          detectedBy: `Reader-${Math.floor(Math.random() * 20) + 1}`,
           status: status as any,
-          alertSent: Math.random() > 0.2,
-          alertRecipients: ['biomedical-team@hospital.com', 'security@hospital.com'],
-          responseTime: status === 'resolved' ? Math.floor(Math.random() * 120) + 5 : undefined,
+          alertSent: Math.random() > 0.1, // 90% have alerts sent
+          alertRecipients: ['security@hospital.com', 'biomedical@hospital.com'],
+          responseTime: status === 'resolved' ? Math.floor(Math.random() * 45) + 5 : undefined, // 5-50 minutes
           actionTaken: status === 'resolved' ? 'Asset relocated to authorized zone' : undefined,
-          estimatedRisk: Math.floor(Math.random() * 10) + 1,
-          resolvedAt: status === 'resolved' ? new Date(Date.now() - Math.random() * 3600000).toISOString() : undefined,
+          estimatedRisk: Math.floor(Math.random() * 6) + 1, // 1-6 risk score (lower average)
+          resolvedAt: status === 'resolved' ? new Date(Date.now() - Math.random() * 86400000).toISOString() : undefined,
           resolvedBy: status === 'resolved' ? 'Security Team' : undefined
         })
       }
@@ -134,26 +159,39 @@ function generateProtectionAlerts(data: any, violations: GeofenceViolation[]): A
   const urgencies = ['immediate', 'within_hour', 'within_day', 'routine']
   const impacts = ['minimal', 'moderate', 'significant', 'critical']
   
-  // Generate alerts from violations
+  // Generate alerts from violations - only 60% generate alerts to be realistic
   violations.forEach((violation, index) => {
-    if (Math.random() < 0.8) { // 80% of violations generate alerts
+    if (Math.random() < 0.6) {
       const asset = data.assets.find((a: any) => a.id === violation.assetId)
       const building = data.buildings.find((b: any) => b.id === asset?.location.buildingId)
       const floor = data.floors.find((f: any) => f.id === asset?.location.floorId)
       const zone = data.zones.find((z: any) => z.id === asset?.location.zoneId)
       
       if (asset && building && floor && zone) {
+        // Most alerts should be resolved or acknowledged
+        const statusWeights = [0.1, 0.3, 0.15, 0.45] // new, acknowledged, investigating, resolved
+        const statusRandom = Math.random()
+        let status = 'resolved'
+        let cumulative = 0
+        for (let i = 0; i < statusWeights.length; i++) {
+          cumulative += statusWeights[i]
+          if (statusRandom < cumulative) {
+            status = statuses[i]
+            break
+          }
+        }
+
         alerts.push({
           id: `alert-${Date.now()}-${index}`,
           type: 'geofence_violation',
           assetId: asset.id,
           assetName: asset.name,
           assetType: asset.type,
-          assetValue: Math.floor(Math.random() * 50000) + 5000,
-          message: `Geofence violation detected for ${asset.name}`,
-          description: `Asset ${asset.name} violated ${violation.geofenceZoneName} boundary`,
+          assetValue: asset.value || Math.floor(Math.random() * 30000) + 5000,
+          message: `Security boundary violation: ${asset.name}`,
+          description: `Asset ${asset.name} violated ${violation.geofenceZoneName} security boundary`,
           severity: violation.severity,
-          status: statuses[Math.floor(Math.random() * statuses.length)] as any,
+          status: status as any,
           createdAt: violation.timestamp,
           targetRoles: ['biomedical', 'admin'],
           location: {
@@ -169,39 +207,50 @@ function generateProtectionAlerts(data: any, violations: GeofenceViolation[]): A
             violationId: violation.id
           },
           metadata: {
-            riskScore: violation.estimatedRisk * 10,
-            confidence: Math.floor(Math.random() * 30) + 70,
-            patternMatch: 'unauthorized_zone_entry',
-            triggerCondition: 'asset_entered_restricted_zone'
+            riskScore: violation.estimatedRisk * 15, // Scale to 0-90
+            confidence: Math.floor(Math.random() * 20) + 75, // 75-95% confidence
+            patternMatch: 'boundary_violation',
+            triggerCondition: 'asset_zone_boundary_crossed'
           },
           actionRequired: violation.severity === 'high' || violation.severity === 'critical',
-          urgency: urgencies[Math.floor(Math.random() * urgencies.length)] as any,
-          estimatedImpact: impacts[Math.floor(Math.random() * impacts.length)] as any
+          urgency: violation.severity === 'critical' ? 'immediate' : 
+                  violation.severity === 'high' ? 'within_hour' : 
+                  violation.severity === 'medium' ? 'within_day' : 'routine',
+          estimatedImpact: violation.severity === 'critical' ? 'critical' : 
+                          violation.severity === 'high' ? 'significant' : 
+                          'moderate'
         })
       }
     }
   })
   
-  // Generate additional standalone alerts
-  for (let i = 0; i < 5; i++) {
+  // Generate fewer additional standalone alerts - only 8-12 total
+  const additionalAlerts = Math.floor(Math.random() * 5) + 3 // 3-7 additional alerts
+  for (let i = 0; i < additionalAlerts; i++) {
     const asset = data.assets[Math.floor(Math.random() * data.assets.length)]
     const building = data.buildings.find((b: any) => b.id === asset.location.buildingId)
     const floor = data.floors.find((f: any) => f.id === asset.location.floorId)
     const zone = data.zones.find((z: any) => z.id === asset.location.zoneId)
     
     if (building && floor && zone) {
+      const alertType = alertTypes[Math.floor(Math.random() * alertTypes.length)]
+      const severity = ['low', 'medium', 'high', 'critical'][Math.floor(Math.random() * 4)]
+      
+      // Most should be resolved
+      const status = Math.random() < 0.7 ? 'resolved' : statuses[Math.floor(Math.random() * 3)]
+      
       alerts.push({
         id: `alert-standalone-${i}`,
-        type: alertTypes[Math.floor(Math.random() * alertTypes.length)] as any,
+        type: alertType as any,
         assetId: asset.id,
         assetName: asset.name,
         assetType: asset.type,
-        assetValue: Math.floor(Math.random() * 50000) + 5000,
-        message: `Security alert for ${asset.name}`,
-        description: `Automated security system detected anomalous behavior`,
-        severity: ['low', 'medium', 'high', 'critical'][Math.floor(Math.random() * 4)] as any,
-        status: statuses[Math.floor(Math.random() * statuses.length)] as any,
-        createdAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+        assetValue: asset.value || Math.floor(Math.random() * 30000) + 5000,
+        message: `Security alert: ${asset.name}`,
+        description: `Automated security monitoring detected ${alertType.replace('_', ' ')} for ${asset.name}`,
+        severity: severity as any,
+        status: status as any,
+        createdAt: new Date(Date.now() - Math.random() * 172800000).toISOString(), // Last 2 days
         targetRoles: ['biomedical', 'admin'],
         location: {
           buildingId: building.id,
@@ -212,12 +261,16 @@ function generateProtectionAlerts(data: any, violations: GeofenceViolation[]): A
           zoneName: zone.name
         },
         metadata: {
-          riskScore: Math.floor(Math.random() * 100),
-          confidence: Math.floor(Math.random() * 30) + 70
+          riskScore: Math.floor(Math.random() * 60) + 20, // 20-80
+          confidence: Math.floor(Math.random() * 25) + 70 // 70-95%
         },
-        actionRequired: Math.random() > 0.4,
-        urgency: urgencies[Math.floor(Math.random() * urgencies.length)] as any,
-        estimatedImpact: impacts[Math.floor(Math.random() * impacts.length)] as any
+        actionRequired: severity === 'high' || severity === 'critical',
+        urgency: severity === 'critical' ? 'immediate' : 
+                severity === 'high' ? 'within_hour' : 
+                severity === 'medium' ? 'within_day' : 'routine',
+        estimatedImpact: severity === 'critical' ? 'critical' : 
+                        severity === 'high' ? 'significant' : 
+                        'moderate'
       })
     }
   }
@@ -346,20 +399,23 @@ function calculateProtectionMetrics(data: any, violations: GeofenceViolation[], 
   
   const topViolationTypes = Object.entries(violationTypeCounts)
     .map(([type, count]) => ({
-      type,
+      type: type.replace('_', ' '),
       count,
-      percentage: Math.round((count / violations.length) * 100)
+      percentage: violations.length > 0 ? Math.round((count / violations.length) * 100) : 0
     }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5)
   
+  // Realistic numbers for 6734 assets
+  const totalAssets = data.assets.length
+  
   return {
-    totalProtectedAssets: data.assets.length,
-    activeGeofences: 5, // Mock number
+    totalProtectedAssets: totalAssets,
+    activeGeofences: Math.floor(totalAssets / 800) + 5, // ~8-13 geofences for 6734 assets
     violationsToday,
     violationsThisWeek,
     violationsThisMonth,
-    highValueAssetsAtRisk: Math.floor(data.assets.length * 0.15), // 15% of assets
+    highValueAssetsAtRisk: Math.floor(totalAssets * 0.08), // 8% of assets at risk
     averageResponseTime: Math.round(averageResponseTime),
     falsePositiveRate: Math.round(falsePositiveRate * 100) / 100,
     alertsGenerated: {
@@ -367,7 +423,7 @@ function calculateProtectionMetrics(data: any, violations: GeofenceViolation[], 
       thisWeek: alertsThisWeek,
       thisMonth: alertsThisMonth
     },
-    complianceScore: Math.floor(Math.random() * 20) + 80, // 80-100%
+    complianceScore: Math.floor(Math.random() * 10) + 88, // 88-98% compliance
     topViolationTypes,
     violationTrend,
     geofenceEffectiveness: generateGeofenceEffectiveness()
@@ -401,19 +457,37 @@ function generateGeofenceEffectiveness() {
 }
 
 function generateRiskAssets(data: any, violations: GeofenceViolation[]) {
+  const totalAssets = data.assets.length
+  const riskAssetCount = Math.min(50, Math.floor(totalAssets * 0.12)) // 12% at risk, max 50 shown
+  
   return data.assets
-    .filter((asset: any) => Math.random() < 0.3) // 30% of assets are at risk
+    .filter(() => Math.random() < 0.12) // 12% of assets are at risk
+    .slice(0, riskAssetCount)
     .map((asset: any) => {
       const assetViolations = violations.filter(v => v.assetId === asset.id)
       const zone = data.zones.find((z: any) => z.id === asset.location.zoneId)
       const lastViolation = assetViolations.length > 0 ? assetViolations[0].timestamp : undefined
       
+      // More realistic risk scores - weighted towards lower values
+      const riskWeights = [0.4, 0.35, 0.2, 0.05] // 0-25, 26-50, 51-75, 76-100
+      const riskRandom = Math.random()
+      let riskScore = 25
+      let cumulative = 0
+      const ranges = [25, 50, 75, 100]
+      for (let i = 0; i < riskWeights.length; i++) {
+        cumulative += riskWeights[i]
+        if (riskRandom < cumulative) {
+          riskScore = Math.floor(Math.random() * 25) + (ranges[i] - 24)
+          break
+        }
+      }
+      
       return {
         assetId: asset.id,
         assetName: asset.name,
         assetType: asset.type,
-        value: Math.floor(Math.random() * 75000) + 5000,
-        riskScore: Math.floor(Math.random() * 100),
+        value: asset.value || Math.floor(Math.random() * 50000) + 10000,
+        riskScore,
         location: zone?.name || 'Unknown Location',
         lastViolation,
         violationCount: assetViolations.length
