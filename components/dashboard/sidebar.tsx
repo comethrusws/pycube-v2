@@ -133,7 +133,6 @@ const menuSections = [
   {
     items: [
       { icon: Warehouse, label: "Facilities", href: "/facilities" },
-      { icon: Users, label: "Departments", href: "" },
     ] as MenuItem[],
   },
 ]
