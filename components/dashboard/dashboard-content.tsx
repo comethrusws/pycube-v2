@@ -9,6 +9,7 @@ import type { DashboardData } from "@/lib/types"
 import ComplianceSummaryCard from "./compliance-summary-card"
 import AssetsByFloorCard from "./assets-by-floor-card"
 import MaintenanceImpactCard from "./maintenance-impact-card"
+import AssetProtectionCards from "./asset-protection-cards"
 
 function DashboardContent() {
   const [data, setData] = useState<DashboardData>()
@@ -172,6 +173,13 @@ function DashboardContent() {
             )}
           </div>
         ))}
+      </div>
+
+      {/* Asset Protection Overview Cards */}
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <AssetProtectionCards />
+        </div>
       </div>
 
       {/* Charts Section - Updated Layout */}
