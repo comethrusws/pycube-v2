@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useEffect } from "react"
 import {
   X,
   Search,
@@ -52,7 +53,6 @@ const menuSections = [
         label: "Asset Protection",
         href: "/asset-protection",
         submenu: [
-          { label: "Dashboard", href: "/asset-protection" },
           { label: "Geofencing", href: "/asset-protection/geofencing" },
           { label: "Movement Logs", href: "/asset-protection/movement-logs" },
         ],
@@ -67,7 +67,6 @@ const menuSections = [
         label: "Asset Utilization",
         href: "/asset-utilization",
         submenu: [
-          { label: "Dashboard", href: "/asset-utilization/dashboard" },
           { label: "Location Lists", href: "/asset-utilization/location-lists" }
         ],
       },
@@ -89,7 +88,6 @@ const menuSections = [
         label: "Compliance & Risk",
         href: "/compliance",
         submenu: [
-          { label: "Dashboard", href: "/compliance" },
           { label: "Reports", href: "/compliance/reports" },
         ],
       },
@@ -102,7 +100,6 @@ const menuSections = [
         label: "Preventative Maintenance",
         href: "/preventative-maintenance",
         submenu: [
-          { label: "Dashboard", href: "/preventative-maintenance/dashboard" },
           { label: "Maintenance Requests", href: "/preventative-maintenance/requests" },
         ],
       },
@@ -113,9 +110,8 @@ const menuSections = [
       {
         icon: Building2,
         label: "Space Management",
-        href: "",
+        href: "/space-management",
         submenu: [
-          { label: "Overview", href: "/space-management" },
           { label: "Buildings", href: "/space-management/buildings" },
           { label: "Floors", href: "/space-management/floors" },
           { label: "Zones", href: "/space-management/zones" },
@@ -142,8 +138,38 @@ const menuSections = [
 
 export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const pathname = usePathname()
-  const [expandedItems, setExpandedItems] = useState<string[]>(["Asset Locator"])
+  const [expandedItems, setExpandedItems] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+
+  // Auto-expand items based on current path
+  useEffect(() => {
+    const currentSection = menuSections.find(section => 
+      section.items.some(item => 
+        item.href === pathname || 
+        (item.submenu && item.submenu.some(sub => sub.href === pathname))
+      )
+    )
+    
+    if (currentSection) {
+      const activeItem = currentSection.items.find(item => 
+        item.href === pathname || 
+        (item.submenu && item.submenu.some(sub => sub.href === pathname))
+      )
+      
+      if (activeItem && activeItem.submenu && !expandedItems.includes(activeItem.label)) {
+        setExpandedItems(prev => [...prev, activeItem.label])
+      }
+    }
+  }, [pathname])
+
+  const handleMenuItemClick = (item: MenuItem, e: React.MouseEvent) => {
+    if (item.submenu && item.submenu.length > 0) {
+      // Auto-expand the submenu when navigating to the main page
+      setExpandedItems((prev) => 
+        prev.includes(item.label) ? prev : [...prev, item.label]
+      )
+    }
+  }
 
   const toggleSubmenu = (label: string, e: React.MouseEvent) => {
     e.preventDefault()
@@ -203,20 +229,22 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                   return (
                     <div key={item.label}>
                       {'submenu' in item && item.submenu ? (
-                        <button
-                          onClick={(e) => toggleSubmenu(item.label, e)}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-xs text-left"
-                          style={{
-                            backgroundColor: active ? "#0d7a8c" : "transparent",
-                            color: "white",
-                          }}
-                        >
-                          <Icon className="w-4 h-4 flex-shrink-0" />
-                          <span className="flex-1 font-light">{item.label}</span>
-                          <ChevronRight
-                            className={`w-4 h-4 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`}
-                          />
-                        </button>
+                        <Link href={item.href}>
+                          <button
+                            onClick={(e) => handleMenuItemClick(item, e)}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-xs text-left"
+                            style={{
+                              backgroundColor: active ? "#0d7a8c" : "transparent",
+                              color: "white",
+                            }}
+                          >
+                            <Icon className="w-4 h-4 flex-shrink-0" />
+                            <span className="flex-1 font-light">{item.label}</span>
+                            <ChevronRight
+                              className={`w-4 h-4 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`}
+                            />
+                          </button>
+                        </Link>
                       ) : (
                         <Link href={item.href}>
                           <button
