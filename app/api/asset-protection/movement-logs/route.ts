@@ -19,9 +19,15 @@ export async function GET(request: NextRequest) {
     const unauthorized = url.searchParams.get('unauthorized') || ''
     const riskLevel = url.searchParams.get('riskLevel') || ''
     
-    // Generate realistic movement logs based on actual data
-    const movementLogs = data.movementLogs.map((log: any) => {
-      const asset = data.assets.find((a: any) => a.id === log.assetId)
+    // Only process movement logs for tagged assets
+    const taggedAssets = data.assets.filter((a: any) => a.tagId)
+    const taggedAssetIds = new Set(taggedAssets.map((a: any) => a.id))
+    
+    // Generate realistic movement logs based on tagged assets only
+    const movementLogs = data.movementLogs
+      .filter((log: any) => taggedAssetIds.has(log.assetId))
+      .map((log: any) => {
+      const asset = taggedAssets.find((a: any) => a.id === log.assetId)
       const fromZone = data.zones.find((z: any) => z.id === log.fromZoneId)
       const toZone = data.zones.find((z: any) => z.id === log.toZoneId)
       const department = data.departments.find((d: any) => d.id === asset?.departmentId)

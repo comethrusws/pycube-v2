@@ -60,24 +60,48 @@ export async function POST(request: NextRequest) {
       case "retrieve":
         asset.status = "in-use"
         asset.lastActive = timestamp
-        result.message = `${asset.name} has been marked as retrieved and is now in use.`
+        result.message = notes || `${asset.name} has been checked out and is now in use.`
+        break
+
+      case "return":
+        asset.status = "available"
+        asset.lastActive = timestamp
+        result.message = notes || `${asset.name} has been returned and is now available.`
         break
 
       case "report_missing":
         asset.status = "lost"
         asset.lastActive = timestamp
-        result.message = `${asset.name} has been reported as missing. Biomedical team has been notified.`
+        result.message = notes || `${asset.name} has been reported as missing. Security and Biomedical teams have been notified.`
+        break
+
+      case "schedule_maintenance":
+        // Update maintenance due date to next month
+        const nextMonth = new Date()
+        nextMonth.setMonth(nextMonth.getMonth() + 1)
+        asset.maintenanceDue = nextMonth.toISOString()
+        result.message = notes || `Preventive maintenance has been scheduled for ${asset.name}.`
+        break
+
+      case "urgent_maintenance":
+        asset.status = "maintenance"
+        asset.lastActive = timestamp
+        result.message = notes || `Urgent maintenance request submitted for ${asset.name}. Asset marked for immediate attention.`
         break
 
       case "maintenance_request":
-        result.message = `Maintenance request submitted for ${asset.name}.`
+        result.message = notes || `Maintenance request submitted for ${asset.name}.`
+        break
+
+      case "request_relocation":
+        result.message = notes || `Relocation request submitted for ${asset.name}. Facilities team will coordinate the move.`
         break
 
       case "locate":
         const zone = data.zones.find((z: any) => z.id === asset.location.zoneId)
         const floor = data.floors.find((f: any) => f.id === zone?.floorId)
         const building = data.buildings.find((b: any) => b.id === floor?.buildingId)
-        result.message = `${asset.name} is located in ${zone?.name}, ${floor?.name}, ${building?.name}`
+        result.message = notes || `${asset.name} is located in ${zone?.name}, ${floor?.name}, ${building?.name}. Last seen: ${new Date(asset.lastActive).toLocaleString()}`
         break
 
       default:

@@ -10,22 +10,23 @@ export async function GET() {
       return NextResponse.json(data.assetLocatorData)
     }
 
-    // Fallback: compute asset-locator data on-demand with enhanced utilization analytics
-    const totalAssets = data.assets.length
-    const locatedAssets = data.assets.filter(a => a.status !== "lost").length
+    // Fallback: compute asset-locator data on-demand with enhanced utilization analytics (tagged assets only)
+    const taggedAssets = data.assets.filter(a => a.tagId)
+    const totalAssets = taggedAssets.length
+    const locatedAssets = taggedAssets.filter(a => a.status !== "lost").length
     const assetsToLocate = totalAssets - locatedAssets
-    const flaggedAssets = data.assets.filter(a => 
+    const flaggedAssets = taggedAssets.filter(a => 
       a.status === "lost" || 
       data.maintenanceTasks.some(m => m.assetId === a.id && m.status === "overdue")
     ).length
 
-    // Enhanced utilization analytics
-    const underutilizedAssets = data.assets.filter(a => a.utilization < 40)
+    // Enhanced utilization analytics (tagged assets only)
+    const underutilizedAssets = taggedAssets.filter(a => a.utilization < 40)
     const underutilizedCount = underutilizedAssets.length
-    const avgUtilization = Math.round(data.assets.reduce((sum, a) => sum + a.utilization, 0) / data.assets.length)
+    const avgUtilization = Math.round(taggedAssets.reduce((sum, a) => sum + a.utilization, 0) / taggedAssets.length)
 
-    // Department-level utilization analysis with enhanced data
-    const deptUtilization = data.assets.reduce((acc, asset) => {
+    // Department-level utilization analysis with enhanced data (tagged assets only)
+    const deptUtilization = taggedAssets.reduce((acc, asset) => {
       if (!acc[asset.departmentId]) {
         acc[asset.departmentId] = {
           assets: [],
@@ -65,7 +66,7 @@ export async function GET() {
     }>)
 
     data.maintenanceTasks.forEach(task => {
-      const asset = data.assets.find(a => a.id === task.assetId)
+      const asset = taggedAssets.find(a => a.id === task.assetId)
       if (asset && task.status === 'pending') {
         if (deptUtilization[asset.departmentId]) {
           deptUtilization[asset.departmentId].pendingMaintenance++
@@ -192,10 +193,13 @@ export async function GET() {
       }
     })
 
-    // Maintenance Impact on Availability
-    const availableAssets = data.assets.filter(a => a.status === "available").length
-    const underMaintenanceAssets = data.assets.filter(a => a.status === "maintenance").length
-    const pendingMaintenanceAssets = data.maintenanceTasks.filter(t => t.status === "pending").length
+    // Maintenance Impact on Availability (tagged assets only)
+    const availableAssets = taggedAssets.filter(a => a.status === "available").length
+    const underMaintenanceAssets = taggedAssets.filter(a => a.status === "maintenance").length
+    const pendingMaintenanceAssets = data.maintenanceTasks.filter(t => {
+      const asset = taggedAssets.find(a => a.id === t.assetId)
+      return asset && t.status === "pending"
+    }).length
     
     const maintenanceImpact = [
       { 
@@ -218,17 +222,18 @@ export async function GET() {
       }
     ]
 
-    // Asset Movement Alerts (from recent movement logs)
+    // Asset Movement Alerts (from recent movement logs of tagged assets only)
+    const taggedAssetIds = new Set(taggedAssets.map(a => a.id))
     const recentMovements = data.movementLogs
       .filter(log => {
         const logDate = new Date(log.timestamp)
         const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
-        return logDate > twoDaysAgo && (!log.authorized || Math.random() < 0.15) // 15% are flagged as abnormal
+        return taggedAssetIds.has(log.assetId) && logDate > twoDaysAgo && (!log.authorized || Math.random() < 0.15) // 15% are flagged as abnormal
       })
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, 15)
       .map(log => {
-        const asset = data.assets.find(a => a.id === log.assetId)
+        const asset = taggedAssets.find(a => a.id === log.assetId)
         const fromZone = data.zones.find(z => z.id === log.fromZoneId)
         const toZone = data.zones.find(z => z.id === log.toZoneId)
         
@@ -248,8 +253,8 @@ export async function GET() {
         }
       })
 
-    // Monitored categories from actual data
-    const categoryCounts = data.assets.reduce((acc, asset) => {
+    // Monitored categories from tagged assets only
+    const categoryCounts = taggedAssets.reduce((acc, asset) => {
       const category = asset.category || asset.type
       acc[category] = (acc[category] || 0) + 1
       return acc
@@ -280,8 +285,8 @@ export async function GET() {
       }
     })
 
-    // Zone distribution
-    const zoneCounts = data.assets.reduce((acc, asset) => {
+    // Zone distribution (tagged assets only)
+    const zoneCounts = taggedAssets.reduce((acc, asset) => {
       const zone = data.zones.find(z => z.id === asset.location.zoneId)
       const zoneName = zone?.name || "Unknown"
       acc[zoneName] = (acc[zoneName] || 0) + 1
@@ -310,8 +315,8 @@ export async function GET() {
       { name: "Geofence Violation", value: 8, color: "#1e40af" }
     ]
 
-    // Asset type utilization breakdown
-    const typeUtilization = data.assets.reduce((acc, asset) => {
+    // Asset type utilization breakdown (tagged assets only)
+    const typeUtilization = taggedAssets.reduce((acc, asset) => {
       if (!acc[asset.type]) {
         acc[asset.type] = { total: 0, utilization: 0, underutilized: 0 }
       }
@@ -341,7 +346,7 @@ export async function GET() {
       const highDept = highUtilDepts[i % highUtilDepts.length] || highUtilDepts[0]
       
       if (highDept) {
-        const lowDeptAssets = data.assets.filter(a => a.departmentId === lowDept.departmentId && a.utilization < 30)
+        const lowDeptAssets = taggedAssets.filter(a => a.departmentId === lowDept.departmentId && a.utilization < 30)
         if (lowDeptAssets.length > 0) {
           const suggestedAsset = lowDeptAssets[Math.floor(Math.random() * lowDeptAssets.length)]
           redistributionSuggestions.push({
@@ -363,8 +368,8 @@ export async function GET() {
       }
     }
 
-    // Idle asset alerts
-    const idleAssets = data.assets
+    // Idle asset alerts (tagged assets only)
+    const idleAssets = taggedAssets
       .filter(a => a.utilization < 20 && a.status === "available")
       .sort((a, b) => a.utilization - b.utilization)
       .slice(0, 10)
