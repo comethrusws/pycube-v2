@@ -169,7 +169,7 @@ export default function ComplianceDashboard() {
         {/* Risk Donut by overall buckets */}
         <div className="bg-white rounded-2xl border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-light" style={{ color: "#001f3f" }}>Risk Distribution</h3>
+            <h3 className="text-lg font-light" style={{ color: "#001f3f" }}>Risk Distribution (Non-compliant Assets)</h3>
             <div className="flex items-center gap-2">
               <button onClick={() => setReportOpen(true)} className="px-3 py-2 text-sm text-white rounded-lg" style={{ backgroundColor: Accent }}>Generate Report</button>
               <button onClick={() => exportCSV(false)} className="px-3 py-2 text-sm text-gray-700 border rounded-lg flex items-center gap-2"><Download className="w-4 h-4"/>Export CSV</button>

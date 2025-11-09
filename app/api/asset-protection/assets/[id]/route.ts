@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { loadData } from "@/lib/data"
+import { loadSeedData } from "@/lib/data-loader"
 
 export async function GET(
   request: NextRequest,
@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id: assetId } = await params
-    const data = loadData()
+    const data = await loadSeedData()
     
     const asset = data.assets.find((a: any) => a.id === assetId)
     if (!asset) {

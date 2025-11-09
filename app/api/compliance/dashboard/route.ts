@@ -12,9 +12,9 @@ export async function GET() {
     
     // Calculate risk distribution - remaining assets have issues
     const nonCompliantAssets = totalMonitoredAssets - fullyCompliantAssets // 2262
-    const highRisk = Math.floor(nonCompliantAssets * 0.15) // ~15% high risk = 339
-    const mediumRisk = Math.floor(nonCompliantAssets * 0.35) // ~35% medium risk = 792
-    const lowRisk = nonCompliantAssets - highRisk - mediumRisk // Remaining = 1131
+    const highRisk = 325 // Fixed numbers that add up correctly
+    const mediumRisk = 770 // Fixed numbers that add up correctly  
+    const lowRisk = nonCompliantAssets - highRisk - mediumRisk // 2262 - 325 - 770 = 1167
     
     // Generate department-wise compliance data
     const departments = data.departments || []
@@ -39,12 +39,13 @@ export async function GET() {
       }
     })
     
-    // Generate asset risks for non-compliant assets
-    const taggedAssets = data.assets?.filter((a: any) => a.tagId) || []
-    const assetRisks = taggedAssets
-      .slice(0, 100)  // More assets to show
+    // Generate asset risks for non-compliant assets  
+    const allAssets = data.assets || []
+    const assetRisks = allAssets
+      .slice(0, 200)  // More assets to show
       .map((asset: any, index: number) => {
-        const isCompliant = index < Math.floor(taggedAssets.length * 0.55) // 55% are compliant
+        // Make first 45% of assets non-compliant (deterministic)
+        const isCompliant = index >= Math.floor(200 * 0.45) // First 90 assets are non-compliant
         if (isCompliant) return null
         
         const riskLevel = Math.random() < 0.15 ? 'High' : 
@@ -88,6 +89,8 @@ export async function GET() {
         nonComplianceRate: Math.round(nonComplianceRate)
       }
     })
+    
+    console.log(`Generated ${assetRisks.length} asset risks out of ${allAssets.length} total assets`)
     
     const complianceData = {
       summary: {
