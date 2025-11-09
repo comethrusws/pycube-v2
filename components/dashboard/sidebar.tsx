@@ -47,20 +47,14 @@ const menuSections = [
   },
   {
     items: [
-      { icon: Package, label: "Product Categories", href: "/product-categories" },
-      { icon: List, label: "Products", href: "/products" },
-      { icon: Database, label: "Assets", href: "/assets" },
-    ] as MenuItem[],
-  },
-  {
-    items: [
       {
-        icon: ListCheckIcon,
-        label: "Compliance & Risk",
-        href: "/compliance",
+        icon: Shield,
+        label: "Asset Protection",
+        href: "/asset-protection",
         submenu: [
-          { label: "Dashboard", href: "/compliance" },
-          { label: "Reports", href: "/compliance/reports" },
+          { label: "Dashboard", href: "/asset-protection" },
+          { label: "Geofencing", href: "/asset-protection/geofencing" },
+          { label: "Movement Logs", href: "/asset-protection/movement-logs" },
         ],
       },
     ] as MenuItem[],
@@ -91,13 +85,12 @@ const menuSections = [
   {
     items: [
       {
-        icon: Shield,
-        label: "Asset Protection",
-        href: "/asset-protection",
+        icon: ListCheckIcon,
+        label: "Compliance & Risk",
+        href: "/compliance",
         submenu: [
-          { label: "Dashboard", href: "/asset-protection" },
-          { label: "Geofencing", href: "/asset-protection/geofencing" },
-          { label: "Movement Logs", href: "/asset-protection/movement-logs" },
+          { label: "Dashboard", href: "/compliance" },
+          { label: "Reports", href: "/compliance/reports" },
         ],
       },
     ] as MenuItem[],
@@ -136,6 +129,15 @@ const menuSections = [
       { icon: Warehouse, label: "Facilities", href: "/facilities" },
     ] as MenuItem[],
   },
+
+  {
+    items: [
+      { icon: Package, label: "Product Categories", href: "/product-categories" },
+      { icon: List, label: "Products", href: "/products" },
+      { icon: Database, label: "Assets", href: "/assets" },
+    ] as MenuItem[],
+  },
+
 ]
 
 export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
@@ -203,13 +205,13 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                       {'submenu' in item && item.submenu ? (
                         <button
                           onClick={(e) => toggleSubmenu(item.label, e)}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-xs text-left"
                           style={{
                             backgroundColor: active ? "#0d7a8c" : "transparent",
                             color: "white",
                           }}
                         >
-                          <Icon className="w-5 h-5 flex-shrink-0" />
+                          <Icon className="w-4 h-4 flex-shrink-0" />
                           <span className="flex-1 font-light">{item.label}</span>
                           <ChevronRight
                             className={`w-4 h-4 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`}
@@ -218,7 +220,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                       ) : (
                         <Link href={item.href}>
                           <button
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm text-left"
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-xs text-left"
                             style={{
                               backgroundColor: active ? "#0d7a8c" : "transparent",
                               color: "white",
@@ -237,7 +239,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                             return (
                               <Link key={subitem.label} href={subitem.href}>
                                 <button
-                                  className="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm text-left"
+                                  className="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-xs text-left"
                                   style={{
                                     backgroundColor: subActive ? "#0d7a8c" : "transparent",
                                     color: "white",
