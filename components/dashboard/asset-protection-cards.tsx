@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Shield, AlertTriangle, MapPin, Clock } from "lucide-react"
 import { apiGet } from "@/lib/fetcher"
 import toast from "react-hot-toast"
@@ -25,6 +26,7 @@ interface AssetProtectionData {
 export default function AssetProtectionCards() {
   const [data, setData] = useState<AssetProtectionData | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     let isCancelled = false
@@ -62,7 +64,7 @@ export default function AssetProtectionCards() {
             icon: '🚨'
           })
         }
-        window.open('/asset-protection/movement-logs', '_blank')
+        router.push('/asset-protection/movement-logs')
         break
       case 'alerts':
         if (data?.metrics.alertsGenerated.today && data.metrics.alertsGenerated.today > 0) {
@@ -71,21 +73,21 @@ export default function AssetProtectionCards() {
             icon: '⚠️'
           })
         }
-        window.open('/asset-protection', '_blank')
+        router.push('/asset-protection')
         break
       case 'geofences':
         toast.success(`${data?.metrics.activeGeofences || 0} security zones are actively monitoring assets`, {
           duration: 3000,
           icon: '🛡️'
         })
-        window.open('/asset-protection/geofencing', '_blank')
+        router.push('/asset-protection/geofencing')
         break
       case 'compliance':
         toast(`Asset protection compliance score: ${data?.metrics.complianceScore || 0}%`, {
           duration: 3000,
           icon: '📊'
         })
-        window.open('/asset-protection', '_blank')
+        router.push('/asset-protection')
         break
     }
   }
