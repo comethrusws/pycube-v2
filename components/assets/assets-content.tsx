@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo, memo } from "react"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Search, Filter, Download, Plus, Eye, Edit, Trash2 } from "lucide-react"
 import { apiGet } from "@/lib/fetcher"
+import { useDebounce } from "@/lib/hooks/useDebounce"
+import { useApi } from "@/lib/hooks/useApi"
 
 interface Asset {
   id: string
@@ -22,9 +24,8 @@ interface Asset {
   purchaseDate: string
 }
 
-export default function AssetsContent() {
+const AssetsContent = memo(function AssetsContent() {
   const [data, setData] = useState<Asset[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [showFilters, setShowFilters] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -33,6 +34,9 @@ export default function AssetsContent() {
 
   const searchParams = useSearchParams()
   const router = useRouter()
+
+  // Debounce search term to prevent excessive API calls
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
   // Filter states
   const [filters, setFilters] = useState({
@@ -56,46 +60,41 @@ export default function AssetsContent() {
     purchaseDate: "",
   })
 
-  useEffect(() => {
-    // Apply productId from query if present
+  // Memoize query parameters to prevent unnecessary API calls
+  const queryParams = useMemo(() => {
     const productId = searchParams.get("productId")
+    const params = new URLSearchParams({
+      page: currentPage.toString(),
+      limit: itemsPerPage.toString(),
+      ...Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== "all"))
+    })
+
     if (productId) {
-      // Trigger load with productId filter embedded in query params
-      loadAssets(productId)
-    } else {
-      loadAssets()
+      params.set("productId", productId)
     }
-  }, [currentPage, filters, searchParams])
 
-  const loadAssets = async (productId?: string | null) => {
-    try {
-      setIsLoading(true)
-      const queryParams = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: itemsPerPage.toString(),
-        ...Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== "all"))
-      })
-
-      if (productId) {
-        queryParams.set("productId", productId)
-      }
-
-      const response = await apiGet<{
-        assets: Asset[]
-        total: number
-        totalPages: number
-      }>(`/api/assets/list?${queryParams}`)
-
-      setData(response.assets)
-    } catch (error) {
-      console.error("Failed to load assets:", error)
-      setData([])
-    } finally {
-      setIsLoading(false)
+    if (debouncedSearchTerm) {
+      params.set("search", debouncedSearchTerm)
     }
-  }
 
-  const clearFilters = () => {
+    return params.toString()
+  }, [currentPage, itemsPerPage, filters, searchParams, debouncedSearchTerm])
+
+  // Use optimized API hook
+  const { data: apiResponse, loading: isLoading, error } = useApi<{
+    assets: Asset[]
+    total: number
+    totalPages: number
+  }>(`/api/assets/list?${queryParams}`, { dependencies: [queryParams] })
+
+  // Update local data when API response changes
+  useEffect(() => {
+    if (apiResponse?.assets) {
+      setData(apiResponse.assets)
+    }
+  }, [apiResponse])
+
+  const clearFilters = useCallback(() => {
     setFilters({
       status: "all",
       type: "all", 
@@ -103,9 +102,9 @@ export default function AssetsContent() {
     })
     setSearchTerm("")
     setCurrentPage(1)
-  }
+  }, [])
 
-  const exportData = () => {
+  const exportData = useCallback(() => {
     const csv = [
       "Asset ID,Name,Type,Category,Status,Department,Location,Utilization,Value,Serial Number,Purchase Date",
       ...data.map(item => 
@@ -120,9 +119,9 @@ export default function AssetsContent() {
     a.download = "assets.csv"
     a.click()
     URL.revokeObjectURL(url)
-  }
+  }, [data])
 
-  const handleAddAsset = () => {
+  const handleAddAsset = useCallback(() => {
     const storedAssets = JSON.parse(localStorage.getItem("assets") || "[]");
     const updatedAssets = [...storedAssets, { ...newAsset, id: `asset-${Date.now()}` }];
     localStorage.setItem("assets", JSON.stringify(updatedAssets));
@@ -142,13 +141,37 @@ export default function AssetsContent() {
       purchaseDate: "",
     });
     console.log("Asset added:", newAsset);
-  };
+  }, [newAsset])
 
-  const filteredData = data.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const handleToggleFilters = useCallback(() => {
+    setShowFilters(prev => !prev)
+  }, [])
+
+  const handleOpenModal = useCallback(() => {
+    setIsModalOpen(true)
+  }, [])
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false)
+  }, [])
+
+  const handleAssetClick = useCallback((assetId: string) => {
+    router.push(`/assets/${assetId}`)
+  }, [router])
+
+  // Memoize filtered data to prevent unnecessary recalculations
+  const filteredData = useMemo(() => {
+    if (!searchTerm) {
+      return data
+    }
+    
+    const lowerSearchTerm = searchTerm.toLowerCase()
+    return data.filter(item =>
+      item.name.toLowerCase().includes(lowerSearchTerm) ||
+      item.type.toLowerCase().includes(lowerSearchTerm) ||
+      item.serialNumber.toLowerCase().includes(lowerSearchTerm)
+    )
+  }, [data, searchTerm])
 
   if (isLoading && data.length === 0) {
     return (
@@ -171,8 +194,8 @@ export default function AssetsContent() {
   }
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="p-8 bg-gray-50 min-h-screen gpu-accelerated">
+      <div className="max-w-7xl mx-auto space-y-6 contain-layout">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-light mb-2" style={{ color: "#001f3f" }}>
@@ -204,22 +227,22 @@ export default function AssetsContent() {
               Clear Filters
             </button>
             <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-sm transition-colors duration-200 flex items-center gap-2"
+              onClick={handleToggleFilters}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-sm smooth-transition flex items-center gap-2"
             >
               <Filter size={16} />
               {showFilters ? "Hide Filters" : "Show Filters"}
             </button>
             <button 
               onClick={exportData}
-              className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-sm transition-colors duration-200 flex items-center gap-2"
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-sm smooth-transition flex items-center gap-2"
             >
               <Download size={16} />
               Export CSV
             </button>
             <button
-              onClick={() => setIsModalOpen(true)}
-              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm transition-colors duration-200 flex items-center gap-2"
+              onClick={handleOpenModal}
+              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm smooth-transition flex items-center gap-2"
             >
               <Plus size={16} />
               Add Asset
@@ -297,7 +320,11 @@ export default function AssetsContent() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredData.map((asset) => (
-                  <tr key={asset.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => router.push(`/assets/${asset.id}`)}>
+                  <tr 
+                    key={asset.id} 
+                    className="hover:bg-gray-50 cursor-pointer smooth-transition contain-layout" 
+                    onClick={() => handleAssetClick(asset.id)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{asset.name}</div>
@@ -306,7 +333,7 @@ export default function AssetsContent() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.type}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full smooth-transition ${
                         asset.status === 'available' ? 'bg-green-100 text-green-800' :
                         asset.status === 'in-use' ? 'bg-blue-100 text-blue-800' :
                         asset.status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
@@ -321,7 +348,7 @@ export default function AssetsContent() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${asset.value.toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
-                        <Link href={`/assets/${asset.id}`} className="text-teal-600 hover:text-teal-900">View</Link>
+                        <Link href={`/assets/${asset.id}`} className="text-teal-600 hover:text-teal-900 smooth-transition">View</Link>
                       </div>
                     </td>
                   </tr>
@@ -425,14 +452,14 @@ export default function AssetsContent() {
             </div>
             <div className="flex justify-end gap-4 mt-6">
               <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
+                onClick={handleCloseModal}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover-lift"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddAsset}
-                className="px-4 py-2 bg-teal-600 text-white rounded-lg"
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover-lift"
               >
                 Add Asset
               </button>
@@ -442,4 +469,6 @@ export default function AssetsContent() {
       )}
     </div>
   )
-}
+})
+
+export default AssetsContent

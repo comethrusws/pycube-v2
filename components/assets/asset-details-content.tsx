@@ -14,6 +14,7 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
   const [assetRisk, setAssetRisk] = useState<any | null>(null)
   const [predicted, setPredicted] = useState<any | null>(null)
   const [assetTasks, setAssetTasks] = useState<{ overdue: number; pending: number } | null>(null)
+  const [assetProtection, setAssetProtection] = useState<any | null>(null)
   const [isActionLoading, setIsActionLoading] = useState(false)
   const [actionMessage, setActionMessage] = useState("")
   const [degradationTrend, setDegradationTrend] = useState<Array<{ date: string; score: number }>>([])
@@ -67,13 +68,14 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
               .catch((err) => console.error('Failed to fetch zone', err))
           }
 
-          // Load compliance, PM predictive, and maintenance tasks for metrics
+          // Load compliance, PM predictive, maintenance tasks, and asset protection metrics
           Promise.all([
             apiGet<any>(`/api/compliance/dashboard`).catch(() => null),
             apiGet<any>(`/api/preventative-maintenance/tasks`).catch(() => null),
             apiGet<any>(`/api/preventative-maintenance/predictive`).catch(() => null),
+            apiGet<any>(`/api/asset-protection/assets/${data.id}`).catch(() => null),
           ])
-            .then(([complianceData, tasksData, predictiveData]) => {
+            .then(([complianceData, tasksData, predictiveData, protectionData]) => {
               if (complianceData) {
                 setCompliance(complianceData)
                 const risk = (complianceData.assetRisks || []).find((r: any) => r.assetId === data.id)
@@ -102,6 +104,9 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
                   setDegradationTrend(series)
                 }
               }
+              if (protectionData) {
+                setAssetProtection(protectionData)
+              }
             })
             .catch((err) => console.error('Failed to load metrics', err))
         })
@@ -126,7 +131,7 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
         <div className="bg-white rounded-2xl p-6 border">
           <p className="text-xs text-gray-500">Compliance Risk</p>
           <div className="flex items-center gap-3 mt-1">
@@ -137,11 +142,28 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
           </div>
         </div>
         <div className="bg-white rounded-2xl p-6 border">
-          <p className="text-xs text-gray-500">Predicted Issues</p>
-          <p className="text-2xl font-light" style={{ color: "#001f3f" }}>
-            {((predicted?.insights?.length || 0) + (predicted?.atRisk ? 1 : 0))}
-          </p>
-          <p className="text-[10px] text-gray-500 mt-1">From predictive maintenance</p>
+          <p className="text-xs text-gray-500">Protection Risk</p>
+          <div className="flex items-center gap-3 mt-1">
+            <div className="w-28 bg-gray-200 rounded-full h-2">
+              <div className="h-2 rounded-full" style={{ 
+                width: `${assetProtection?.riskScore ?? 0}%`, 
+                backgroundColor: (assetProtection?.riskScore ?? 0) >= 75 ? '#dc2626' : 
+                               (assetProtection?.riskScore ?? 0) >= 50 ? '#ea580c' : 
+                               (assetProtection?.riskScore ?? 0) >= 25 ? '#f59e0b' : '#059669' 
+              }} />
+            </div>
+            <span className="text-lg font-medium">{assetProtection?.riskScore ?? 0}</span>
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl p-6 border">
+          <p className="text-xs text-gray-500">Security Violations</p>
+          <p className="text-2xl font-light text-red-600">{assetProtection?.summary?.totalViolations ?? 0}</p>
+          <p className="text-[10px] text-gray-500 mt-1">Last 30 days</p>
+        </div>
+        <div className="bg-white rounded-2xl p-6 border">
+          <p className="text-xs text-gray-500">Active Alerts</p>
+          <p className="text-2xl font-light text-orange-600">{assetProtection?.summary?.activeAlerts ?? 0}</p>
+          <p className="text-[10px] text-gray-500 mt-1">Require attention</p>
         </div>
         <div className="bg-white rounded-2xl p-6 border">
           <p className="text-xs text-gray-500">Overdue Maintenance</p>
@@ -177,6 +199,80 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
               </div>
             </div>
           </div>
+
+                    {/* Asset Protection */}
+          {asset.tagId && (
+            <div className="bg-white rounded-2xl p-6 border">
+              <h2 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Asset Protection</h2>
+              {assetProtection ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Compliance Status</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className={`w-3 h-3 rounded-full ${
+                          assetProtection.complianceStatus === 'compliant' ? 'bg-green-500' :
+                          assetProtection.complianceStatus === 'at-risk' ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}></div>
+                        <span className="text-lg font-medium capitalize">{assetProtection.complianceStatus?.replace('-', ' ')}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Movement Activity</p>
+                      <p className="text-lg font-medium">{assetProtection.summary?.recentMovements} movements</p>
+                      <p className="text-xs text-gray-400">Last 30 days</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Zone Status</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className={`w-3 h-3 rounded-full ${assetProtection.geofenceStatus?.inAuthorizedZone ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                        <span className="text-lg font-medium">{assetProtection.geofenceStatus?.inAuthorizedZone ? 'Authorized' : 'Unauthorized'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {(assetProtection.violations?.length > 0 || assetProtection.alerts?.length > 0) && (
+                    <div className="mt-6">
+                      <h3 className="text-md font-medium mb-3" style={{ color: "#001f3f" }}>Recent Security Events</h3>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {assetProtection.violations?.slice(0, 3).map((violation: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
+                            <div>
+                              <p className="text-sm font-medium text-red-800">{violation.description}</p>
+                              <p className="text-xs text-red-600">
+                                {violation.fromZoneName} → {violation.toZoneName} • {new Date(violation.timestamp).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              violation.status === 'resolved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {violation.status}
+                            </span>
+                          </div>
+                        ))}
+                        {assetProtection.alerts?.slice(0, 2).map((alert: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                            <div>
+                              <p className="text-sm font-medium text-orange-800">{alert.message}</p>
+                              <p className="text-xs text-orange-600">{new Date(alert.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              alert.status === 'resolved' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                            }`}>
+                              {alert.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">Loading asset protection data...</p>
+              )}
+            </div>
+          )}
+
 
           <div className="bg-white rounded-2xl p-6 border">
             <div className="flex items-center justify-between mb-4">
@@ -253,12 +349,13 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
               <p className="text-sm text-gray-500">No predicted issues at the moment.</p>
             )}
           </div>
+
         </div>
 
         {/* Column 2: Status and Location */}
         <div className="space-y-6">
         <div className="bg-white rounded-2xl p-6 border">
-            <h2 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Actions</h2>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: "#001f3f" }}>Asset Actions</h2>
             {actionMessage && (
               <div className="mb-4 px-3 py-2 text-sm rounded bg-blue-50 text-blue-700 border border-blue-200">
                 {actionMessage}
@@ -266,51 +363,87 @@ export default function AssetDetailsContent({ assetId }: { assetId: string }) {
             )}
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => handleAssetAction(asset.id, "locate")}
+                onClick={() => handleAssetAction(asset.id, "locate", `Location requested for ${asset.name}`)}
                 disabled={isActionLoading}
                 className="bg-[#003d5c] text-white py-2.5 px-3 rounded-lg font-medium hover:bg-opacity-90 transition-colors disabled:opacity-50 text-sm"
               >
                 <MapPin className="w-4 h-4 inline mr-2" />
-                Locate
+                Locate Asset
               </button>
 
               {asset.status === "available" && (
                 <button
-                  onClick={() => handleAssetAction(asset.id, "retrieve")}
+                  onClick={() => handleAssetAction(asset.id, "retrieve", `${asset.name} checked out for use`)}
                   disabled={isActionLoading}
                   className="bg-blue-600 text-white py-2.5 px-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
                 >
                   <CheckCircle className="w-4 h-4 inline mr-2" />
-                  Retrieve
+                  Check Out
+                </button>
+              )}
+
+              {asset.status === "in-use" && (
+                <button
+                  onClick={() => handleAssetAction(asset.id, "return", `${asset.name} returned and available`)}
+                  disabled={isActionLoading}
+                  className="bg-green-600 text-white py-2.5 px-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 text-sm"
+                >
+                  <CheckCircle className="w-4 h-4 inline mr-2" />
+                  Return Asset
                 </button>
               )}
 
               <button
-                onClick={() => handleAssetAction(asset.id, "maintenance_request", "Issue reported via web")}
+                onClick={() => handleAssetAction(asset.id, "schedule_maintenance", `Preventive maintenance scheduled for ${asset.name}`)}
                 disabled={isActionLoading}
                 className="bg-orange-600 text-white py-2.5 px-3 rounded-lg font-medium hover:bg-orange-700 transition-colors disabled:opacity-50 text-sm"
               >
                 <Wrench className="w-4 h-4 inline mr-2" />
-                Request Maintenance
+                Schedule Maintenance
               </button>
 
               <button
-                onClick={() => handleAssetAction(asset.id, "report_missing", "Reported missing via web")}
+                onClick={() => handleAssetAction(asset.id, "urgent_maintenance", `Urgent maintenance request submitted for ${asset.name}`)}
                 disabled={isActionLoading}
                 className="bg-red-600 text-white py-2.5 px-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 text-sm"
               >
                 <AlertTriangle className="w-4 h-4 inline mr-2" />
-                Report Missing
+                Urgent Repair
               </button>
 
               <button
-                onClick={() => handleAssetAction(asset.id, "request_relocation", "Relocation requested via web")}
+                onClick={() => handleAssetAction(asset.id, "request_relocation", `Relocation request submitted for ${asset.name}`)}
                 disabled={isActionLoading}
-                className="bg-teal-600 text-white py-2.5 px-3 rounded-lg font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 text-sm col-span-2"
+                className="bg-teal-600 text-white py-2.5 px-3 rounded-lg font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 text-sm"
               >
                 <Navigation className="w-4 h-4 inline mr-2" />
-                Request Relocation
+                Request Move
               </button>
+
+              <button
+                onClick={() => handleAssetAction(asset.id, "report_missing", `${asset.name} reported as missing - Security notified`)}
+                disabled={isActionLoading}
+                className="bg-gray-600 text-white py-2.5 px-3 rounded-lg font-medium hover:bg-gray-700 transition-colors disabled:opacity-50 text-sm"
+              >
+                <AlertTriangle className="w-4 h-4 inline mr-2" />
+                Report Missing
+              </button>
+            </div>
+            
+            {/* Quick Action Status Info */}
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-600 mb-2">Quick Status Updates:</p>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className={`px-2 py-1 rounded-full ${asset.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                  Available: {asset.status === 'available' ? 'Yes' : 'No'}
+                </span>
+                <span className={`px-2 py-1 rounded-full ${asset.utilization > 70 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'}`}>
+                  High Usage: {asset.utilization > 70 ? 'Yes' : 'No'}
+                </span>
+                <span className={`px-2 py-1 rounded-full ${new Date(asset.maintenanceDue) < new Date() ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-600'}`}>
+                  Maintenance Due: {new Date(asset.maintenanceDue) < new Date() ? 'Overdue' : 'Current'}
+                </span>
+              </div>
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo, memo } from "react"
 import { 
   MapPin, 
   Plus, 
@@ -26,6 +26,7 @@ import {
   ChevronUp
 } from "lucide-react"
 import { apiGet } from "@/lib/fetcher"
+import { useDebounce } from "@/lib/hooks/useDebounce"
 
 interface GeofenceZone {
   id: string
@@ -538,7 +539,7 @@ const GeofenceForm = ({
   )
 }
 
-export default function GeofencingContent() {
+function GeofencingContent() {
   const [data, setData] = useState<GeofencingData | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedGeofence, setSelectedGeofence] = useState<GeofenceZone | null>(null)
@@ -549,8 +550,12 @@ export default function GeofencingContent() {
   const [filterType, setFilterType] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
 
-  const loadData = async () => {
+  // Debounce search term to reduce filtering operations
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+
+  const loadData = useCallback(async () => {
     try {
+      setLoading(true)
       const response = await apiGet('/api/asset-protection/geofencing')
       setData(response as GeofencingData)
     } catch (error) {
@@ -559,30 +564,56 @@ export default function GeofencingContent() {
     } finally {
       setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    loadData()
   }, [])
 
-  const filteredGeofences = data?.zones.filter(zone => {
-    const matchesSearch = zone.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         zone.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesType = filterType === 'all' || zone.type === filterType
-    const matchesStatus = filterStatus === 'all' || 
-                         (filterStatus === 'active' && zone.active) ||
-                         (filterStatus === 'inactive' && !zone.active)
+  useEffect(() => {
+    let isCancelled = false
     
-    return matchesSearch && matchesType && matchesStatus
-  }) || []
+    const fetchData = async () => {
+      try {
+        const response = await apiGet('/api/asset-protection/geofencing')
+        if (!isCancelled) {
+          setData(response as GeofencingData)
+          setLoading(false)
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          console.error('Failed to load geofencing data:', error)
+          setLoading(false)
+        }
+      }
+    }
 
-  const handleGeofenceCreate = (coordinates: any) => {
+    fetchData()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [])
+
+  // Memoize filtered results to prevent unnecessary recalculations
+  const filteredGeofences = useMemo(() => {
+    if (!data?.zones) return []
+    
+    return data.zones.filter(zone => {
+      const matchesSearch = zone.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+                           zone.description?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+      const matchesType = filterType === 'all' || zone.type === filterType
+      const matchesStatus = filterStatus === 'all' || 
+                           (filterStatus === 'active' && zone.active) ||
+                           (filterStatus === 'inactive' && !zone.active)
+      
+      return matchesSearch && matchesType && matchesStatus
+    })
+  }, [data?.zones, debouncedSearchTerm, filterType, filterStatus])
+
+  const handleGeofenceCreate = useCallback((coordinates: any) => {
     setCreateCoordinates(coordinates)
     setShowForm(true)
     setSelectedGeofence(null)
-  }
+  }, [])
 
-  const handleGeofenceSave = async (formData: any) => {
+  const handleGeofenceSave = useCallback(async (formData: any) => {
     try {
       // In a real app, this would make an API call
       toast.success('Geofence zone saved successfully')
@@ -609,7 +640,7 @@ export default function GeofencingContent() {
     } catch (error) {
       toast.error('Failed to save geofence zone')
     }
-  }
+  }, [loadData])
 
   const handleGeofenceDelete = async (geofence: GeofenceZone) => {
     if (!confirm(`Are you sure you want to delete "${geofence.name}"?`)) return
@@ -1068,3 +1099,5 @@ export default function GeofencingContent() {
     </div>
   )
 }
+
+export default memo(GeofencingContent)

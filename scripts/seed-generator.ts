@@ -104,7 +104,9 @@ function generatePredictiveMaintenanceData(
   maintenanceTasks: MaintenanceTask[],
   zones: Zone[]
 ): PredictiveMaintenanceData {
-  const monitoredAssets = assets.filter(a => a.status !== "lost").slice(0, Math.floor(assets.length * 0.8))
+  // Only monitor tagged assets for predictive maintenance
+  const taggedAssets = assets.filter(a => a.tagId && a.status !== "lost")
+  const monitoredAssets = taggedAssets.slice(0, Math.floor(taggedAssets.length * 0.8))
   
   const insights: PredictiveInsight[] = monitoredAssets.map(asset => {
     const zone = zones.find(z => z.id === asset.location.zoneId)
@@ -860,15 +862,18 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
   // Generate enhanced asset-locator data with location lists
   const assetLocatorData = generateAssetLocatorData(assets, movementLogs, zones, maintenanceTasks, locationLists)
 
-  // Generate predictive maintenance data
+  // Generate predictive maintenance data (only for tagged assets)
   const predictiveMaintenanceData = generatePredictiveMaintenanceData(assets, maintenanceTasks, zones)
 
   // Generate compliance data
   const complianceData: ComplianceData = (() => {
     const deptMap = new Map(departments.map(d => [d.id, d.name]))
-    const recallSet = new Set(assets.filter(() => Math.random() < 0.01).map(a => a.id))
+    
+    // Only consider tagged assets for compliance monitoring
+    const taggedAssets = assets.filter(a => a.tagId)
+    const recallSet = new Set(taggedAssets.filter(() => Math.random() < 0.01).map(a => a.id))
 
-    const assetRisks: ComplianceAssetRisk[] = assets.slice(0, Math.min(assets.length, 3000)).map(a => {
+    const assetRisks: ComplianceAssetRisk[] = taggedAssets.slice(0, Math.min(taggedAssets.length, 3000)).map(a => {
       const missedMaintenance = maintenanceTasks.filter(t => t.assetId === a.id && t.status === "overdue").length
       const overdueCalibration = Math.random() < 0.05 ? 1 : 0
       const recallFlag = recallSet.has(a.id)
@@ -890,9 +895,12 @@ function generateSeed(config: GeneratorConfig = DEFAULT_CONFIG): SeedData {
       }
     })
 
-    const totalAssets = assets.length
+    const totalAssets = taggedAssets.length // Only count tagged assets
     const fullyCompliant = assetRisks.filter(r => r.missedMaintenance === 0 && r.overdueCalibration === 0 && !r.recallFlag && r.riskScore >= 90).length
-    const overdueMaintenance = maintenanceTasks.filter(t => t.status === "overdue").length
+    const overdueMaintenance = maintenanceTasks.filter(t => {
+      const asset = taggedAssets.find(a => a.id === t.assetId)
+      return asset && t.status === "overdue"
+    }).length
     const recallActions = recallSet.size
     const avgRisk = Math.round(assetRisks.reduce((s, r) => s + r.riskScore, 0) / Math.max(1, assetRisks.length))
 

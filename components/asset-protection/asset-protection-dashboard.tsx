@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo, memo } from "react"
 import { 
   Shield, 
   AlertTriangle, 
@@ -175,13 +175,13 @@ const ChartCard = ({ title, children, action }: { title: string, children: React
   </div>
 )
 
-export default function AssetProtectionDashboard() {
+function AssetProtectionDashboard() {
   const [data, setData] = useState<AssetProtectionDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h')
   const [refreshing, setRefreshing] = useState(false)
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setRefreshing(true)
       const response = await apiGet(`/api/asset-protection/dashboard?timeRange=${selectedTimeRange}`)
@@ -193,20 +193,44 @@ export default function AssetProtectionDashboard() {
       setLoading(false)
       setRefreshing(false)
     }
-  }
-
-  useEffect(() => {
-    loadData()
   }, [selectedTimeRange])
 
-  const handleAlertClick = (alert: any) => {
+  useEffect(() => {
+    let isCancelled = false
+    
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const response = await apiGet(`/api/asset-protection/dashboard?timeRange=${selectedTimeRange}`)
+        if (!isCancelled) {
+          setData(response as AssetProtectionDashboardData)
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          console.error('Failed to load asset protection data:', error)
+        }
+      } finally {
+        if (!isCancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchData()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [selectedTimeRange])
+
+  const handleAlertClick = useCallback((alert: any) => {
     toast.success(`Alert acknowledged: ${alert.message}`, {
       duration: 4000,
       icon: '🔔'
     })
-  }
+  }, [])
 
-  const handleViolationClick = (violation: any) => {
+  const handleViolationClick = useCallback((violation: any) => {
     toast.error(`Security violation: ${violation.assetName} in ${violation.geofenceZoneName}`, {
       duration: 5000,
       icon: '🚨'
@@ -224,9 +248,9 @@ export default function AssetProtectionDashboard() {
         }
       })
     }, 1000)
-  }
+  }, [])
 
-  const handleHighRiskAssetClick = (asset: any) => {
+  const handleHighRiskAssetClick = useCallback((asset: any) => {
     // First show the risk details
     toast.error(`HIGH RISK: ${asset.assetName} requires immediate attention (Risk Score: ${asset.riskScore})`, {
       duration: 6000,
@@ -250,9 +274,9 @@ export default function AssetProtectionDashboard() {
         }
       })
     }, 1500)
-  }
+  }, [])
 
-  const handleGeofenceAlert = () => {
+  const handleGeofenceAlert = useCallback(() => {
     toast.error('CRITICAL: High-value asset detected outside authorized zone!', {
       duration: 8000,
       icon: '🚨',
@@ -262,25 +286,26 @@ export default function AssetProtectionDashboard() {
         color: '#991B1B'
       }
     })
-  }
+  }, [])
 
-  const handleEmergencyResponse = () => {
+  const handleEmergencyResponse = useCallback(() => {
     toast.success('Emergency response team notified. ETA: 3 minutes', {
       duration: 6000,
       icon: '🚑'
     })
-  }
+  }, [])
 
-  const simulateRealTimeAlert = () => {
-    const alerts = [
-      'MRI Machine #7 moved to unauthorized zone - ICU Floor 3',
-      'Surgical Robot detected outside operating theater',
-      'High-value ventilator moved after hours - Emergency response required',
-      'CT Scanner #2 geofence violation - Security investigating',
-      'Infusion pump cluster moved without authorization'
-    ]
-    
-    const randomAlert = alerts[Math.floor(Math.random() * alerts.length)]
+  // Memoize alerts array to prevent recreation on every render
+  const alertMessages = useMemo(() => [
+    'MRI Machine #7 moved to unauthorized zone - ICU Floor 3',
+    'Surgical Robot detected outside operating theater',
+    'High-value ventilator moved after hours - Emergency response required',
+    'CT Scanner #2 geofence violation - Security investigating',
+    'Infusion pump cluster moved without authorization'
+  ], [])
+
+  const simulateRealTimeAlert = useCallback(() => {
+    const randomAlert = alertMessages[Math.floor(Math.random() * alertMessages.length)]
     toast.error(randomAlert, {
       duration: 10000,
       icon: '🚨',
@@ -291,18 +316,18 @@ export default function AssetProtectionDashboard() {
         fontWeight: 'bold'
       }
     })
-  }
+  }, [alertMessages])
 
-  // Simulate real-time alerts every 15-30 seconds
+  // Optimize real-time alerts with less frequent intervals
   useEffect(() => {
     const interval = setInterval(() => {
-      if (Math.random() < 0.3) { // 30% chance every interval
+      if (Math.random() < 0.2) { // 20% chance every interval (reduced)
         simulateRealTimeAlert()
       }
-    }, Math.random() * 15000 + 15000) // 15-30 seconds
+    }, 30000) // Fixed 30 seconds instead of random
 
     return () => clearInterval(interval)
-  }, [])
+  }, [simulateRealTimeAlert])
 
   if (loading) {
     return (
@@ -785,3 +810,5 @@ export default function AssetProtectionDashboard() {
     </div>
   )
 }
+
+export default memo(AssetProtectionDashboard)

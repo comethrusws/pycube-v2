@@ -60,9 +60,13 @@ export async function GET() {
       })
     }
 
-    // Fallback: compute basic PM data on-demand using seed data
-    const total = data.assets.length
-    const tasks = data.maintenanceTasks
+    // Fallback: compute basic PM data on-demand using seed data (only tagged assets)
+    const taggedAssets = data.assets.filter(a => a.tagId)
+    const total = taggedAssets.length
+    const tasks = data.maintenanceTasks.filter(t => {
+      const asset = data.assets.find(a => a.id === t.assetId)
+      return asset && asset.tagId
+    })
     const completed = tasks.filter((t) => t.status === "completed").length
     const pending = tasks.filter((t) => t.status === "pending" || t.status === "in-progress").length
     const overdue = tasks.filter((t) => t.status === "overdue").length
@@ -90,14 +94,14 @@ export async function GET() {
       }
     ].filter(item => item.count > 0)
 
-    // Calculate risk distribution from actual asset data
-    const highRiskAssets = data.assets.filter(asset => {
+    // Calculate risk distribution from tagged assets only
+    const highRiskAssets = taggedAssets.filter(asset => {
       const ageInDays = asset.purchaseDate ? 
         Math.floor((Date.now() - new Date(asset.purchaseDate).getTime()) / (24 * 60 * 60 * 1000)) : 0
       return ageInDays > 1095 || asset.utilization > 85 || asset.status === "maintenance"
     }).length
 
-    const mediumRiskAssets = data.assets.filter(asset => {
+    const mediumRiskAssets = taggedAssets.filter(asset => {
       const ageInDays = asset.purchaseDate ? 
         Math.floor((Date.now() - new Date(asset.purchaseDate).getTime()) / (24 * 60 * 60 * 1000)) : 0
       return (ageInDays > 730 && ageInDays <= 1095) || (asset.utilization > 60 && asset.utilization <= 85)

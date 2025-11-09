@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo, memo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Plus, Search, Filter, Package, Tag, DollarSign } from "lucide-react"
 import { apiGet } from "@/lib/fetcher"
+import { useDebounce } from "@/lib/hooks/useDebounce"
+import { useApi } from "@/lib/hooks/useApi"
 
 interface Product {
   id: string
@@ -29,8 +31,8 @@ interface PaginationData {
   hasPrev: boolean
 }
 
-const StatusBadge = ({ status = "inactive" }: { status?: string }) => {
-  const getStatusStyle = (status: string) => {
+const StatusBadge = memo(({ status = "inactive" }: { status?: string }) => {
+  const getStatusStyle = useCallback((status: string) => {
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800 border-green-200"
@@ -41,14 +43,16 @@ const StatusBadge = ({ status = "inactive" }: { status?: string }) => {
       default:
         return "bg-gray-100 text-gray-800 border-gray-200"
     }
-  }
+  }, [])
+
+  const statusStyle = useMemo(() => getStatusStyle(status), [status, getStatusStyle])
 
   return (
-    <span className={`inline-block items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyle(status)}`}>
+    <span className={`inline-block items-center px-2.5 py-0.5 rounded-full text-xs font-medium border smooth-transition ${statusStyle}`}>
       {status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
     </span>
   )
-}
+})
 
 export default function ProductsContent() {
   const [data, setData] = useState<Product[]>([])

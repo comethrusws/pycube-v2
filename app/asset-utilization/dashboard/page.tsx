@@ -1,12 +1,14 @@
 "use client"
 
-import DashboardLayout from "@/components/dashboard/dashboard-layout"
-import AssetLocatorDashboard from "@/components/asset-locator/asset-locator-dashboard"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
-export default function AssetLocatorDashboardPage() {
-  return (
-    <DashboardLayout>
-      <AssetLocatorDashboard />
-    </DashboardLayout>
-  )
+export default function AssetUtilizationDashboardRedirect() {
+  const router = useRouter()
+  
+  useEffect(() => {
+    router.replace("/asset-utilization")
+  }, [router])
+
+  return null
 }

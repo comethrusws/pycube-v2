@@ -1,12 +1,14 @@
 "use client"
 
-import DashboardLayout from "@/components/dashboard/dashboard-layout"
-import PreventativeMaintenanceDashboard from "@/components/preventative-maintenance/preventative-maintenance-dashboard"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
-export default function PreventativeMaintenanceDashboardPage() {
-  return (
-    <DashboardLayout>
-      <PreventativeMaintenanceDashboard />
-    </DashboardLayout>
-  )
+export default function PreventativeMaintenanceDashboardRedirect() {
+  const router = useRouter()
+  
+  useEffect(() => {
+    router.replace("/preventative-maintenance")
+  }, [router])
+
+  return null
 }

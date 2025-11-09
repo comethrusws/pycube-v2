@@ -5,9 +5,6 @@ import {
   X,
   Search,
   Home,
-  Settings,
-  Zap,
-  Bot,
   Package,
   List,
   Database,
@@ -16,13 +13,12 @@ import {
   Building2,
   Shield,
   Warehouse,
-  Users,
   ChevronRight,
   ListCheckIcon,
   MapPinPlus,
   Share2,
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 
@@ -42,25 +38,17 @@ const menuSections = [
   {
     items: [
       { icon: Home, label: "Dashboard", href: "/dashboard" },
-      { icon: Share2, label: "Integrations", href: "/system-integrations" },
-    ] as MenuItem[],
-  },
-  {
-    items: [
-      { icon: Package, label: "Product Categories", href: "/product-categories" },
-      { icon: List, label: "Products", href: "/products" },
-      { icon: Database, label: "Assets", href: "/assets" },
     ] as MenuItem[],
   },
   {
     items: [
       {
-        icon: ListCheckIcon,
-        label: "Compliance & Risk",
-        href: "/compliance",
+        icon: Shield,
+        label: "Asset Protection",
+        href: "/asset-protection",
         submenu: [
-          { label: "Dashboard", href: "/compliance" },
-          { label: "Reports", href: "/compliance/reports" },
+          { label: "Geofencing", href: "/asset-protection/geofencing" },
+          { label: "Movement Logs", href: "/asset-protection/movement-logs" },
         ],
       },
     ] as MenuItem[],
@@ -73,7 +61,6 @@ const menuSections = [
         label: "Asset Utilization",
         href: "/asset-utilization",
         submenu: [
-          { label: "Dashboard", href: "/asset-utilization/dashboard" },
           { label: "Location Lists", href: "/asset-utilization/location-lists" }
         ],
       },
@@ -91,13 +78,11 @@ const menuSections = [
   {
     items: [
       {
-        icon: Shield,
-        label: "Asset Protection",
-        href: "/asset-protection",
+        icon: ListCheckIcon,
+        label: "Compliance & Risk",
+        href: "/compliance",
         submenu: [
-          { label: "Dashboard", href: "/asset-protection" },
-          { label: "Geofencing", href: "/asset-protection/geofencing" },
-          { label: "Movement Logs", href: "/asset-protection/movement-logs" },
+          { label: "Reports", href: "/compliance/reports" },
         ],
       },
     ] as MenuItem[],
@@ -109,7 +94,6 @@ const menuSections = [
         label: "Preventative Maintenance",
         href: "/preventative-maintenance",
         submenu: [
-          { label: "Dashboard", href: "/preventative-maintenance/dashboard" },
           { label: "Maintenance Requests", href: "/preventative-maintenance/requests" },
         ],
       },
@@ -120,9 +104,8 @@ const menuSections = [
       {
         icon: Building2,
         label: "Space Management",
-        href: "",
+        href: "/space-management",
         submenu: [
-          { label: "Overview", href: "/space-management" },
           { label: "Buildings", href: "/space-management/buildings" },
           { label: "Floors", href: "/space-management/floors" },
           { label: "Zones", href: "/space-management/zones" },
@@ -136,26 +119,81 @@ const menuSections = [
       { icon: Warehouse, label: "Facilities", href: "/facilities" },
     ] as MenuItem[],
   },
+
+  {
+    items: [
+      { icon: Package, label: "Product Categories", href: "/product-categories" },
+      { icon: List, label: "Products", href: "/products" },
+      { icon: Database, label: "Assets", href: "/assets" },
+      { icon: Share2, label: "Integrations", href: "/system-integrations" },
+    ] as MenuItem[],
+  },
+
 ]
 
 export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const pathname = usePathname()
-  const [expandedItems, setExpandedItems] = useState<string[]>(["Asset Locator"])
+  const [expandedItems, setExpandedItems] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
 
-  const toggleSubmenu = (label: string, e: React.MouseEvent) => {
+  // Auto-expand items based on current path
+  useEffect(() => {
+    const currentSection = menuSections.find(section => 
+      section.items.some(item => 
+        item.href === pathname || 
+        (item.submenu && item.submenu.some(sub => sub.href === pathname))
+      )
+    )
+    
+    if (currentSection) {
+      const activeItem = currentSection.items.find(item => 
+        item.href === pathname || 
+        (item.submenu && item.submenu.some(sub => sub.href === pathname))
+      )
+      
+      if (activeItem && activeItem.submenu && !expandedItems.includes(activeItem.label)) {
+        setExpandedItems(prev => [...prev, activeItem.label])
+      }
+    }
+  }, [pathname])
+
+  const handleMenuItemClick = useCallback((item: MenuItem, e: React.MouseEvent) => {
+    if (item.submenu && item.submenu.length > 0) {
+      // Auto-expand the submenu when navigating to the main page
+      setExpandedItems((prev) => 
+        prev.includes(item.label) ? prev : [...prev, item.label]
+      )
+    }
+  }, [])
+
+  const toggleSubmenu = useCallback((label: string, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setExpandedItems((prev) => (prev.includes(label) ? prev.filter((item) => item !== label) : [...prev, label]))
-  }
+  }, [])
 
-  const isItemActive = (item: MenuItem): boolean => {
+  const isItemActive = useCallback((item: MenuItem): boolean => {
     if (item.href === pathname) return true
     if (item.submenu) {
       return item.submenu.some((sub) => sub.href === pathname)
     }
     return false
-  }
+  }, [pathname])
+
+  // Memoize filtered menu sections to avoid recalculation on every render
+  const filteredMenuSections = useMemo(() => {
+    if (!searchQuery.trim()) return menuSections
+    
+    return menuSections.map(section => ({
+      ...section,
+      items: section.items.filter(item => 
+        item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.submenu && item.submenu.some(sub => 
+          sub.label.toLowerCase().includes(searchQuery.toLowerCase())
+        ))
+      )
+    })).filter(section => section.items.length > 0)
+  }, [searchQuery])
 
   return (
     <>
@@ -191,7 +229,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
           </div>
 
           <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
-            {menuSections.map((section, sectionIndex) => (
+            {filteredMenuSections.map((section, sectionIndex) => (
               <div key={sectionIndex}>
                 {section.items.map((item) => {
                   const Icon = item.icon
@@ -201,24 +239,26 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                   return (
                     <div key={item.label}>
                       {'submenu' in item && item.submenu ? (
-                        <button
-                          onClick={(e) => toggleSubmenu(item.label, e)}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm text-left"
-                          style={{
-                            backgroundColor: active ? "#0d7a8c" : "transparent",
-                            color: "white",
-                          }}
-                        >
-                          <Icon className="w-5 h-5 flex-shrink-0" />
-                          <span className="flex-1 font-light">{item.label}</span>
-                          <ChevronRight
-                            className={`w-4 h-4 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`}
-                          />
-                        </button>
+                        <Link href={item.href}>
+                          <button
+                            onClick={(e) => handleMenuItemClick(item, e)}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-xs text-left"
+                            style={{
+                              backgroundColor: active ? "#0d7a8c" : "transparent",
+                              color: "white",
+                            }}
+                          >
+                            <Icon className="w-4 h-4 flex-shrink-0" />
+                            <span className="flex-1 font-light">{item.label}</span>
+                            <ChevronRight
+                              className={`w-4 h-4 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`}
+                            />
+                          </button>
+                        </Link>
                       ) : (
                         <Link href={item.href}>
                           <button
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm text-left"
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-xs text-left"
                             style={{
                               backgroundColor: active ? "#0d7a8c" : "transparent",
                               color: "white",
@@ -237,7 +277,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                             return (
                               <Link key={subitem.label} href={subitem.href}>
                                 <button
-                                  className="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm text-left"
+                                  className="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-xs text-left"
                                   style={{
                                     backgroundColor: subActive ? "#0d7a8c" : "transparent",
                                     color: "white",
@@ -258,7 +298,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                   )
                 })}
 
-                {sectionIndex < menuSections.length - 1 && (
+                {sectionIndex < filteredMenuSections.length - 1 && (
                   <div className="my-2" style={{ borderTop: "1px solid rgba(13, 122, 140, 0.3)" }}></div>
                 )}
               </div>
