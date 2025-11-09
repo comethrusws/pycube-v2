@@ -66,14 +66,12 @@ export default function AssetProtectionCards() {
         }
         router.push('/asset-protection/movement-logs')
         break
-      case 'alerts':
-        if (data?.metrics.alertsGenerated.today && data.metrics.alertsGenerated.today > 0) {
-          toast(`${data.metrics.alertsGenerated.today} security alerts generated today`, {
-            duration: 4000,
-            icon: '⚠️'
-          })
-        }
-        router.push('/asset-protection')
+      case 'protected':
+        toast.success(`${data?.metrics.totalProtectedAssets || 0} assets are currently protected`, {
+          duration: 3000,
+          icon: '🛡️'
+        })
+        router.push('/assets')
         break
       case 'geofences':
         toast.success(`${data?.metrics.activeGeofences || 0} security zones are actively monitoring assets`, {
@@ -108,6 +106,23 @@ export default function AssetProtectionCards() {
 
   return (
     <>
+      {/* Protected Assets */}
+      <div 
+        className="bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 hover:shadow-lg hover:border-teal-300 cursor-pointer transform hover:-translate-y-1"
+        onClick={() => handleCardClick('protected')}
+      >
+        <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>
+          Protected Assets
+        </p>
+        <p className="text-xs text-gray-600 mb-4">Total</p>
+        <p className="text-4xl font-light" style={{ color: "#001f3f" }}>
+          {data?.metrics.totalProtectedAssets ?? 0}
+        </p>
+        <div className="mt-3 flex items-center text-xs text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity">
+          <span>Click to view details →</span>
+        </div>
+      </div>
+
       {/* Security Violations */}
       <div 
         className="bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 hover:shadow-lg hover:border-teal-300 cursor-pointer transform hover:-translate-y-1"
@@ -136,23 +151,6 @@ export default function AssetProtectionCards() {
         <p className="text-xs text-gray-600 mb-4">Security Zones</p>
         <p className="text-4xl font-light" style={{ color: "#001f3f" }}>
           {data?.metrics.activeGeofences ?? 0}
-        </p>
-        <div className="mt-3 flex items-center text-xs text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity">
-          <span>Click to view details →</span>
-        </div>
-      </div>
-
-      {/* Security Alerts */}
-      <div 
-        className="bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 hover:shadow-lg hover:border-teal-300 cursor-pointer transform hover:-translate-y-1"
-        onClick={() => handleCardClick('alerts')}
-      >
-        <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>
-          Security Alerts
-        </p>
-        <p className="text-xs text-gray-600 mb-4">Today</p>
-        <p className="text-4xl font-light" style={{ color: "#001f3f" }}>
-          {data?.metrics.alertsGenerated?.today ?? 0}
         </p>
         <div className="mt-3 flex items-center text-xs text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity">
           <span>Click to view details →</span>
