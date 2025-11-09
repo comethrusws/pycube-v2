@@ -712,6 +712,8 @@ export interface AssetProtectionMetrics {
     thisMonth: number
   }
   complianceScore: number // percentage
+  fullyCompliantAssets: number
+  totalMonitoredAssets: number
   topViolationTypes: {
     type: string
     count: number

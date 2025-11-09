@@ -15,6 +15,8 @@ interface AssetProtectionData {
     highValueAssetsAtRisk: number
     averageResponseTime: number
     complianceScore: number
+    fullyCompliantAssets: number
+    totalMonitoredAssets: number
     alertsGenerated: {
       today: number
       thisWeek: number
@@ -81,11 +83,18 @@ export default function AssetProtectionCards() {
         router.push('/asset-protection/geofencing')
         break
       case 'compliance':
-        toast(`Asset protection compliance score: ${data?.metrics.complianceScore || 0}%`, {
+        toast(`Overall compliance score: ${data?.metrics.complianceScore || 0}%`, {
           duration: 3000,
           icon: '📊'
         })
-        router.push('/asset-protection')
+        router.push('/compliance')
+        break
+      case 'compliant':
+        toast.success(`${data?.metrics.fullyCompliantAssets || 0} assets are fully compliant`, {
+          duration: 3000,
+          icon: '✅'
+        })
+        router.push('/compliance/reports')
         break
     }
   }
@@ -93,7 +102,7 @@ export default function AssetProtectionCards() {
   if (loading) {
     return (
       <>
-        {[1, 2, 3, 4].map(i => (
+        {[1, 2, 3, 4, 5, 6].map(i => (
           <div key={i} className="bg-white rounded-xl p-6 border border-gray-200 animate-pulse">
             <div className="h-4 bg-gray-200 rounded w-32 mb-1"></div>
             <div className="h-3 bg-gray-200 rounded w-16 mb-4"></div>
@@ -157,17 +166,34 @@ export default function AssetProtectionCards() {
         </div>
       </div>
 
-      {/* Compliance Score */}
+      {/* Overall Compliance Score */}
       <div 
         className="bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 hover:shadow-lg hover:border-teal-300 cursor-pointer transform hover:-translate-y-1"
         onClick={() => handleCardClick('compliance')}
       >
         <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>
-          Protection Score
+          Overall Compliance Score
         </p>
-        <p className="text-xs text-gray-600 mb-4">Compliance</p>
+        <p className="text-xs text-gray-600 mb-4">0-100</p>
         <p className="text-4xl font-light" style={{ color: "#001f3f" }}>
-          {data?.metrics.complianceScore ?? 0}%
+          {data?.metrics.complianceScore ?? 0}
+        </p>
+        <div className="mt-3 flex items-center text-xs text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity">
+          <span>Click to view details →</span>
+        </div>
+      </div>
+
+      {/* Fully Compliant Assets */}
+      <div 
+        className="bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 hover:shadow-lg hover:border-teal-300 cursor-pointer transform hover:-translate-y-1"
+        onClick={() => handleCardClick('compliant')}
+      >
+        <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>
+          Fully Compliant
+        </p>
+        <p className="text-xs text-gray-600 mb-4">No Issues</p>
+        <p className="text-4xl font-light" style={{ color: "#001f3f" }}>
+          {data?.metrics.fullyCompliantAssets ?? 0}
         </p>
         <div className="mt-3 flex items-center text-xs text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity">
           <span>Click to view details →</span>
