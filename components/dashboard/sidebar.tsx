@@ -1,14 +1,10 @@
 "use client"
 
 import type React from "react"
-import { useEffect } from "react"
 import {
   X,
   Search,
   Home,
-  Settings,
-  Zap,
-  Bot,
   Package,
   List,
   Database,
@@ -17,13 +13,12 @@ import {
   Building2,
   Shield,
   Warehouse,
-  Users,
   ChevronRight,
   ListCheckIcon,
   MapPinPlus,
   Share2,
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 
@@ -43,7 +38,6 @@ const menuSections = [
   {
     items: [
       { icon: Home, label: "Dashboard", href: "/dashboard" },
-      { icon: Share2, label: "Integrations", href: "/system-integrations" },
     ] as MenuItem[],
   },
   {
@@ -131,6 +125,7 @@ const menuSections = [
       { icon: Package, label: "Product Categories", href: "/product-categories" },
       { icon: List, label: "Products", href: "/products" },
       { icon: Database, label: "Assets", href: "/assets" },
+      { icon: Share2, label: "Integrations", href: "/system-integrations" },
     ] as MenuItem[],
   },
 
@@ -162,28 +157,43 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
     }
   }, [pathname])
 
-  const handleMenuItemClick = (item: MenuItem, e: React.MouseEvent) => {
+  const handleMenuItemClick = useCallback((item: MenuItem, e: React.MouseEvent) => {
     if (item.submenu && item.submenu.length > 0) {
       // Auto-expand the submenu when navigating to the main page
       setExpandedItems((prev) => 
         prev.includes(item.label) ? prev : [...prev, item.label]
       )
     }
-  }
+  }, [])
 
-  const toggleSubmenu = (label: string, e: React.MouseEvent) => {
+  const toggleSubmenu = useCallback((label: string, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setExpandedItems((prev) => (prev.includes(label) ? prev.filter((item) => item !== label) : [...prev, label]))
-  }
+  }, [])
 
-  const isItemActive = (item: MenuItem): boolean => {
+  const isItemActive = useCallback((item: MenuItem): boolean => {
     if (item.href === pathname) return true
     if (item.submenu) {
       return item.submenu.some((sub) => sub.href === pathname)
     }
     return false
-  }
+  }, [pathname])
+
+  // Memoize filtered menu sections to avoid recalculation on every render
+  const filteredMenuSections = useMemo(() => {
+    if (!searchQuery.trim()) return menuSections
+    
+    return menuSections.map(section => ({
+      ...section,
+      items: section.items.filter(item => 
+        item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.submenu && item.submenu.some(sub => 
+          sub.label.toLowerCase().includes(searchQuery.toLowerCase())
+        ))
+      )
+    })).filter(section => section.items.length > 0)
+  }, [searchQuery])
 
   return (
     <>
@@ -219,7 +229,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
           </div>
 
           <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
-            {menuSections.map((section, sectionIndex) => (
+            {filteredMenuSections.map((section, sectionIndex) => (
               <div key={sectionIndex}>
                 {section.items.map((item) => {
                   const Icon = item.icon
@@ -288,7 +298,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                   )
                 })}
 
-                {sectionIndex < menuSections.length - 1 && (
+                {sectionIndex < filteredMenuSections.length - 1 && (
                   <div className="my-2" style={{ borderTop: "1px solid rgba(13, 122, 140, 0.3)" }}></div>
                 )}
               </div>

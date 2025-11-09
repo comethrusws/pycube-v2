@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback, useMemo, memo } from "react"
 import { useRouter } from "next/navigation"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
 import { apiGet } from "@/lib/fetcher"
@@ -10,21 +10,41 @@ import ComplianceSummaryCard from "./compliance-summary-card"
 import AssetsByFloorCard from "./assets-by-floor-card"
 import MaintenanceImpactCard from "./maintenance-impact-card"
 
-export default function DashboardContent() {
+function DashboardContent() {
   const [data, setData] = useState<DashboardData>()
-
+  const [isLoading, setIsLoading] = useState(true)
   const [range, setRange] = useState<"day" | "week" | "month">("week")
   const router = useRouter()
 
   useEffect(() => {
-    apiGet<DashboardData>(`/api/core/dashboard?range=${range}`)
-      .then((d) => setData(d as any))
-      .catch((error) => {
-        console.error("Failed to fetch dashboard data:", error)
-      })
+    let isCancelled = false
+    
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        const result = await apiGet<DashboardData>(`/api/core/dashboard?range=${range}`)
+        if (!isCancelled) {
+          setData(result as any)
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          console.error("Failed to fetch dashboard data:", error)
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    fetchData()
+
+    return () => {
+      isCancelled = true
+    }
   }, [range])
 
-  const handleCardClick = (cardType: string) => {
+  const handleCardClick = useCallback((cardType: string) => {
     switch (cardType) {
       case 'totalAssets':
         router.push('/assets')
@@ -36,12 +56,43 @@ export default function DashboardContent() {
         router.push('/facilities')
         break
       case 'utilization':
-        router.push('/asset-utilization/dashboard')
+        router.push('/asset-utilization')
         break
-      // Add more cases as needed for other cards
       default:
         break
     }
+  }, [router])
+
+  // Memoize chart data to prevent unnecessary recalculations
+  const chartData = useMemo(() => {
+    if (!data) return null
+    
+    return {
+      timelineData: (data as any).timeline?.map((item: any) => ({
+        ...item,
+        date: new Date(item.date).toLocaleDateString()
+      })) || [],
+      utilizationData: (data as any).utilization || []
+    }
+  }, [data])
+
+  if (isLoading) {
+    return (
+      <div className="p-8 space-y-8">
+        <div className="animate-pulse space-y-8">
+          <div className="h-8 bg-gray-200 rounded w-64"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-32 bg-gray-200 rounded-2xl"></div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="h-96 bg-gray-200 rounded-2xl"></div>
+            <div className="h-96 bg-gray-200 rounded-2xl"></div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -419,3 +470,5 @@ export default function DashboardContent() {
     </div>
   )
 }
+
+export default memo(DashboardContent)
