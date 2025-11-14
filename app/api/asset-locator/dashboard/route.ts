@@ -261,17 +261,29 @@ export async function GET() {
     }, {} as Record<string, number>)
 
     const totalCategoryAssets = Object.values(categoryCounts).reduce((sum, count) => sum + count, 0)
-    const monitoredCategories = Object.entries(categoryCounts)
+    const sortedCategories = Object.entries(categoryCounts)
       .sort(([,a], [,b]) => b - a)
       .slice(0, 6)
-      .map(([name, count], index) => ({
-        name,
-        value: Math.round((count / totalCategoryAssets) * 100),
-        color: [
-          "#0d7a8c", "#1e40af", "#7c3aed", "#dc2626", 
-          "#059669", "#d97706"
-        ][index % 6]
-      }))
+    
+    // Calculate percentages that sum to exactly 100%
+    const rawPercentages = sortedCategories.map(([, count]) => (count / totalCategoryAssets) * 100)
+    const roundedPercentages = rawPercentages.map(p => Math.round(p))
+    const sum = roundedPercentages.reduce((a, b) => a + b, 0)
+    
+    // Adjust the largest category to make the sum exactly 100%
+    if (sum !== 100 && roundedPercentages.length > 0) {
+      const maxIndex = roundedPercentages.findIndex(p => p === Math.max(...roundedPercentages))
+      roundedPercentages[maxIndex] += (100 - sum)
+    }
+    
+    const monitoredCategories = sortedCategories.map(([name], index) => ({
+      name,
+      value: roundedPercentages[index] || 0,
+      color: [
+        "#0d7a8c", "#1e40af", "#7c3aed", "#dc2626", 
+        "#059669", "#d97706"
+      ][index % 6]
+    }))
 
     // Location trends (simplified for fallback)
     const locationTrends = Array.from({ length: 30 }, (_, i) => {
@@ -294,17 +306,29 @@ export async function GET() {
     }, {} as Record<string, number>)
 
     const totalZoneAssets = Object.values(zoneCounts).reduce((sum, count) => sum + count, 0)
-    const recordedLocations = Object.entries(zoneCounts)
+    const sortedZones = Object.entries(zoneCounts)
       .sort(([,a], [,b]) => b - a)
       .slice(0, 8)
-      .map(([name, count], index) => ({
-        name,
-        value: Math.round((count / totalZoneAssets) * 100),
-        color: [
-          "#0d7a8c", "#1e40af", "#7c3aed", "#dc2626", 
-          "#059669", "#d97706", "#be123c", "#4338f5"
-        ][index % 8]
-      }))
+    
+    // Calculate zone percentages that sum to exactly 100%
+    const rawZonePercentages = sortedZones.map(([, count]) => (count / totalZoneAssets) * 100)
+    const roundedZonePercentages = rawZonePercentages.map(p => Math.round(p))
+    const zoneSum = roundedZonePercentages.reduce((a, b) => a + b, 0)
+    
+    // Adjust the largest zone to make the sum exactly 100%
+    if (zoneSum !== 100 && roundedZonePercentages.length > 0) {
+      const maxIndex = roundedZonePercentages.findIndex(p => p === Math.max(...roundedZonePercentages))
+      roundedZonePercentages[maxIndex] += (100 - zoneSum)
+    }
+    
+    const recordedLocations = sortedZones.map(([name], index) => ({
+      name,
+      value: roundedZonePercentages[index] || 0,
+      color: [
+        "#0d7a8c", "#1e40af", "#7c3aed", "#dc2626", 
+        "#059669", "#d97706", "#be123c", "#4338f5"
+      ][index % 8]
+    }))
 
     // Flagged reasons
     const flaggedReasons = [
