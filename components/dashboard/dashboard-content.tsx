@@ -259,7 +259,7 @@ function DashboardContent() {
       {data?.dashboardCards && <SubsectionCards data={data.dashboardCards} />}
 
        <div>
-        <h1 className="text-3xl font-light" style={{ color: "#001f3f" }}>
+        <h1 className="text-3xl font-medium" style={{ color: "#001f3f" }}>
           Additional Insights
         </h1>
       </div>
