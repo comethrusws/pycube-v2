@@ -27,39 +27,41 @@ export default function MaintenanceImpactCard() {
       <h3 className="text-sm font-medium uppercase tracking-wide mb-4" style={{ color: "#001f3f" }}>
         Maintenance Impact on Availability
       </h3>
-      <div className="flex flex-col lg:flex-row items-center h-full">
-        <div className="flex-1 min-h-[300px] h-full">
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie 
-                data={data?.utilization?.maintenanceImpact} 
-                cx="50%" 
-                cy="50%" 
-                innerRadius={60}
-                outerRadius={100} 
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {data?.utilization?.maintenanceImpact?.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip 
-                formatter={(value: any, name: any, props: any) => [
-                  `${value}% (${props.payload.count} assets)`, 
-                  name
-                ]}
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '12px'
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+      <div className="flex flex-col lg:flex-row items-start gap-6">
+        <div className="w-full lg:flex-1">
+          <div className="w-full h-80 lg:h-96">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie 
+                  data={data?.utilization?.maintenanceImpact} 
+                  cx="50%" 
+                  cy="50%" 
+                  innerRadius="45%"
+                  outerRadius="80%" 
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {data?.utilization?.maintenanceImpact?.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value: any, name: any, props: any) => [
+                    `${value}% (${props.payload.count} assets)`, 
+                    name
+                  ]}
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontSize: '12px'
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-        <div className="lg:ml-6 mt-4 lg:mt-0 space-y-3">
+        <div className="w-full lg:w-auto lg:min-w-[200px] space-y-3">
           {data?.utilization?.maintenanceImpact?.map((item: any, idx: number) => (
             <div key={idx} className="flex items-center gap-3 text-sm">
               <div 

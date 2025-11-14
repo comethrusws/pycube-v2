@@ -115,7 +115,7 @@ function DashboardContent() {
   return (
     <div className="p-6 lg:p-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-medium" style={{ color: "#001f3f" }}>
+        <h1 className="text-3xl font-light" style={{ color: "#001f3f" }}>
           Overview
         </h1>
       </div>
@@ -175,11 +175,11 @@ function DashboardContent() {
             }`}
             onClick={() => card.clickable && handleCardClick(card.type)}
           >
-            <p className="text-xs font-medium mb-1" style={{ color: "#001f3f" }}>
+            <p className="text-xs font-light mb-1" style={{ color: "#001f3f" }}>
               {card.title}
             </p>
             <p className="text-xs text-gray-600 mb-3">{card.subtitle}</p>
-            <p className="text-3xl font-medium" style={{ color: "#001f3f" }}>
+            <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
               {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
             </p>
             {card.clickable && (
@@ -239,11 +239,11 @@ function DashboardContent() {
             }`}
             onClick={() => card.clickable && handleCardClick(card.type)}
           >
-            <p className="text-xs font-medium mb-1" style={{ color: "#001f3f" }}>
+            <p className="text-xs font-light mb-1" style={{ color: "#001f3f" }}>
               {card.title}
             </p>
             <p className="text-xs text-gray-600 mb-3">{card.subtitle}</p>
-            <p className="text-3xl font-medium" style={{ color: "#001f3f" }}>
+            <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
               {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
             </p>
             {card.clickable && (
@@ -259,7 +259,7 @@ function DashboardContent() {
       {data?.dashboardCards && <SubsectionCards data={data.dashboardCards} />}
 
        <div>
-        <h1 className="text-3xl font-medium" style={{ color: "#001f3f" }}>
+        <h1 className="text-3xl font-light" style={{ color: "#001f3f" }}>
           Additional Insights
         </h1>
       </div>
@@ -270,7 +270,7 @@ function DashboardContent() {
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="space-y-6">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: "#0d7a8c" }}>
+              <p className="text-xs font-light uppercase tracking-wide mb-1" style={{ color: "#0d7a8c" }}>
                 Asset Tagged
               </p>
               <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
@@ -278,7 +278,7 @@ function DashboardContent() {
               </p>
             </div>
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: "#c41e3a" }}>
+              <p className="text-xs font-light uppercase tracking-wide mb-1" style={{ color: "#c41e3a" }}>
                 Untagged
               </p>
               <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
@@ -335,7 +335,7 @@ function DashboardContent() {
 
         {/* Assets Overview */}
         <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <h3 className="text-sm font-medium uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
+          <h3 className="text-sm font-light uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
             Assets Overview
           </h3>
           <div className="space-y-4">
@@ -360,7 +360,7 @@ function DashboardContent() {
                 text: "#1e3a8a",
               }].map((item, i) => (
                 <div key={i} className="p-4 rounded-xl" style={{ backgroundColor: item.accent, border: `1px solid ${item.border}` }}>
-                  <p className="text-xs font-medium mb-1" style={{ color: item.text }}>{item.label}</p>
+                  <p className="text-xs font-light mb-1" style={{ color: item.text }}>{item.label}</p>
                   <p className="text-3xl font-light" style={{ color: "#001f3f" }}>{(item.value ?? 0).toLocaleString()}</p>
                 </div>
               ))}
@@ -368,7 +368,7 @@ function DashboardContent() {
             
             {/* Recent Assets */}
             <div className="mt-6">
-              <p className="text-xs font-medium uppercase tracking-wide mb-3" style={{ color: "#0d7a8c" }}>
+              <p className="text-xs font-light uppercase tracking-wide mb-3" style={{ color: "#0d7a8c" }}>
                 Recent Assets
               </p>
               <div className="space-y-2 max-h-32 overflow-y-auto">
@@ -383,7 +383,7 @@ function DashboardContent() {
                     onClick={() => router.push(`/assets/${asset.id}`)}
                   >
                     <div>
-                      <p className="text-sm font-medium" style={{ color: "#001f3f" }}>{asset.name}</p>
+                      <p className="text-sm font-light" style={{ color: "#001f3f" }}>{asset.name}</p>
                       <p className="text-xs text-gray-500">{asset.location}</p>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded ${
@@ -400,7 +400,7 @@ function DashboardContent() {
 
             {/* Top Categories */}
             <div className="mt-4">
-              <p className="text-xs font-medium uppercase tracking-wide mb-3" style={{ color: "#0d7a8c" }}>
+              <p className="text-xs font-light uppercase tracking-wide mb-3" style={{ color: "#0d7a8c" }}>
                 Top Categories
               </p>
               <div className="space-y-2">
@@ -411,7 +411,7 @@ function DashboardContent() {
                 ]).slice(0, 3).map((category, i) => (
                   <div key={i} className="flex items-center justify-between">
                     <span className="text-sm" style={{ color: "#001f3f" }}>{category.name}</span>
-                    <span className="text-sm font-medium" style={{ color: "#0d7a8c" }}>{category.count}</span>
+                    <span className="text-sm font-light" style={{ color: "#0d7a8c" }}>{category.count}</span>
                   </div>
                 ))}
               </div>
@@ -421,12 +421,12 @@ function DashboardContent() {
 
         {/* Zones */}
         <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <h3 className="text-sm font-medium uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
+          <h3 className="text-sm font-light uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
             Zones Not Scanned
           </h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium" style={{ color: "#0d7a8c" }}>
+              <span className="text-sm font-light" style={{ color: "#0d7a8c" }}>
                 Today
               </span>
               <span className="text-xs text-gray-600">Status</span>
@@ -474,7 +474,7 @@ function DashboardContent() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: "#0d7a8c" }}>
+                <p className="text-xs font-light uppercase tracking-wide mb-1" style={{ color: "#0d7a8c" }}>
                   Assets Scanned
                 </p>
                 <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
@@ -482,7 +482,7 @@ function DashboardContent() {
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: "#c41e3a" }}>
+                <p className="text-xs font-light uppercase tracking-wide mb-1" style={{ color: "#c41e3a" }}>
                   Assets Not Scanned
                 </p>
                 <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
