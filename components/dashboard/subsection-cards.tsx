@@ -136,7 +136,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
       {/* Asset Protection Section */}
       <div>
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-xl font-light text-[#001f3f]">Asset Protection</h2>
+          <h2 className="text-3xl font-light text-[#001f3f]">Asset Protection</h2>
         </div>
         {/* First Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -208,7 +208,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
       {/* Asset Utilization Section */}
       <div>
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-xl font-light text-[#001f3f]">Asset Utilization</h2>
+          <h2 className="text-3xl font-light text-[#001f3f]">Asset Utilization</h2>
         </div>
         {/* Utilization Analytics Row */}
         <div className="flex items-center gap-2 mb-4">
@@ -283,7 +283,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
       {/* Asset Search and Retrieval Section */}
       <div>
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-xl font-light text-[#001f3f]">Asset Search & Retrieval</h2>
+          <h2 className="text-3xl font-light text-[#001f3f]">Asset Search & Retrieval</h2>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Asset Tagged Widget */}
@@ -549,7 +549,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
       {/* Compliance & Risk Section */}
       <div>
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-xl font-light text-[#001f3f]">Compliance & Risk</h2>
+          <h2 className="text-3xl font-light text-[#001f3f]">Compliance & Risk</h2>
         </div>
         {/* First Row - Main Compliance Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -655,7 +655,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
       {/* Preventative Maintenance Section */}
       <div>
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-xl font-light text-[#001f3f]">Preventative Maintenance</h2>
+          <h2 className="text-3xl font-light text-[#001f3f]">Preventative Maintenance</h2>
         </div>
         <div className="flex items-center gap-2 mb-4">
           <h2 className="text-[18px] font-light text-[#001f3f]">Overview</h2>
