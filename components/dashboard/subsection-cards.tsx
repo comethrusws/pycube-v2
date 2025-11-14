@@ -87,7 +87,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
       {/* Asset Protection Section */}
       <div>
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-xl font-semibold text-[#001f3f]">Asset Protection</h2>
+          <h2 className="text-xl font-medium text-[#001f3f]">Asset Protection</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <DashboardCard
@@ -126,7 +126,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
       {/* Compliance & Risk Section */}
       <div>
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-xl font-semibold text-[#001f3f]">Compliance & Risk</h2>
+          <h2 className="text-xl font-medium text-[#001f3f]">Compliance & Risk</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <DashboardCard
@@ -163,7 +163,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
       {/* Preventative Maintenance Section */}
       <div>
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-xl font-semibold text-[#001f3f]">Preventative Maintenance</h2>
+          <h2 className="text-xl font-medium text-[#001f3f]">Preventative Maintenance</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <DashboardCard
@@ -200,7 +200,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
       {/* Asset Utilization Section */}
       <div>
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-xl font-semibold text-[#001f3f]">Asset Utilization</h2>
+          <h2 className="text-xl font-medium text-[#001f3f]">Asset Utilization</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <DashboardCard
@@ -237,7 +237,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
       {/* Space Management Section */}
       <div>
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-xl font-semibold text-[#001f3f]">Space Management</h2>
+          <h2 className="text-xl font-medium text-[#001f3f]">Space Management</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <DashboardCard

@@ -60,6 +60,21 @@ function DashboardContent() {
       case 'utilization':
         router.push('/asset-utilization')
         break
+      case 'protected':
+        router.push('/asset-protection')
+        break
+      case 'violations':
+        router.push('/asset-protection/movement-logs')
+        break
+      case 'geofences':
+        router.push('/asset-protection/geofencing')
+        break
+      case 'compliance':
+        router.push('/compliance')
+        break
+      case 'compliant':
+        router.push('/compliance/reports')
+        break
       default:
         break
     }
@@ -101,28 +116,13 @@ function DashboardContent() {
     <div className="p-6 lg:p-8 space-y-8">
       <div>
         <h1 className="text-3xl font-light" style={{ color: "#001f3f" }}>
-          Dashboard Overview
+          Overview
         </h1>
-        <p className="text-gray-600 mt-2">Monitor all systems and key metrics from a centralized view</p>
       </div>
 
-      {/* Enhanced Utilization Cards - Keep these */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Overview Cards - Top row metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
         {[
-          {
-            title: "Avg Utilization",
-            subtitle: "System Wide",
-            value: data?.stats.avgUtilization ? `${data.stats.avgUtilization}%` : "-",
-            type: "utilization",
-            clickable: true
-          },
-          {
-            title: "Underutilized Assets",
-            subtitle: "< 40% Usage",
-            value: data?.stats.underutilizedAssets ?? "-",
-            type: "utilization",
-            clickable: true
-          },
           { 
             title: "Total Assets", 
             subtitle: "In System", 
@@ -131,12 +131,104 @@ function DashboardContent() {
             clickable: true 
           },
           { 
+            title: "Asset Categories", 
+            subtitle: "Category", 
+            value: data?.stats.categories ?? "-", 
+            type: "categories",
+            clickable: true 
+          },
+          { 
             title: "Total Facilities", 
-            subtitle: "Active", 
+            subtitle: "Facility", 
             value: data?.stats.totalFacilities ?? "-", 
             type: "facilities",
             clickable: true 
-          }
+          },
+          { 
+            title: "Total Users", 
+            subtitle: "Active", 
+            value: data?.stats.totalUsers ?? "-", 
+            type: "users",
+            clickable: false 
+          },
+          {
+            title: "Avg Utilization",
+            subtitle: "System Wide",
+            value: data?.stats.avgUtilization ? `${data.stats.avgUtilization}%` : "-",
+            type: "utilization",
+            clickable: true
+          },
+          {
+            title: "Underutilized",
+            subtitle: "Assets",
+            value: data?.stats.underutilizedAssets ?? "-",
+            type: "utilization",
+            clickable: true
+          },
+        ].map((card, i) => (
+          <div 
+            key={i} 
+            className={`bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 ${
+              card.clickable 
+                ? 'hover:shadow-lg hover:border-teal-300 cursor-pointer transform hover:-translate-y-1' 
+                : 'hover:shadow-md'
+            }`}
+            onClick={() => card.clickable && handleCardClick(card.type)}
+          >
+            <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>
+              {card.title}
+            </p>
+            <p className="text-xs text-gray-600 mb-4">{card.subtitle}</p>
+            <p className="text-4xl font-light" style={{ color: "#001f3f" }}>
+              {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
+            </p>
+            {card.clickable && (
+              <div className="mt-3 flex items-center text-xs text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span>Click to view details →</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Overview Cards - Second row metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {[
+          { 
+            title: "Protected Assets", 
+            subtitle: "Total", 
+            value: data?.dashboardCards?.assetProtection?.protectedAssets ?? "-", 
+            type: "protected",
+            clickable: true 
+          },
+          { 
+            title: "Security Violations", 
+            subtitle: "Today", 
+            value: data?.dashboardCards?.assetProtection?.violationsToday ?? "-", 
+            type: "violations",
+            clickable: true 
+          },
+          { 
+            title: "Active Geofences", 
+            subtitle: "Security Zones", 
+            value: data?.dashboardCards?.assetProtection?.activeGeofences ?? "-", 
+            type: "geofences",
+            clickable: true 
+          },
+          { 
+            title: "Overall Compliance Score", 
+            subtitle: "0-100", 
+            value: data?.dashboardCards?.compliance?.complianceScore ?? "-", 
+            type: "compliance",
+            clickable: true 
+          },
+          {
+            title: "Fully Compliant",
+            subtitle: "No Issues",
+            value: data?.dashboardCards?.compliance?.fullyCompliantAssets ?? "-",
+            type: "compliant",
+            clickable: true
+          },
         ].map((card, i) => (
           <div 
             key={i} 
