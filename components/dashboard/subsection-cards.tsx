@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Shield, BarChart3, Wrench, TrendingUp, Building2, Target, AlertTriangle, Clock, CheckCircle, Users, MapPin, Eye, Search, Activity } from "lucide-react"
+import { Shield, BarChart3, Wrench, TrendingUp, Building2, Target, AlertTriangle, Clock, CheckCircle, Users, MapPin, Eye, Search, Activity, Zap, DollarSign } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
 interface DashboardCardsData {
@@ -51,6 +51,11 @@ interface DashboardCardsData {
     highRiskAssets: number
     pmTasksCompleted: number
     potentialSavings: number
+    // Predictive Maintenance Insights
+    assetsMonitoredPredictive: number
+    highRiskAssetsPredictive: number
+    avgConfidence: number
+    costSavings: number
   }
   assetUtilization: {
     avgUtilization: number
@@ -561,7 +566,11 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         <div className="flex items-center gap-3 mb-6">
           <h2 className="text-xl font-light text-[#001f3f]">Preventative Maintenance</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-md font-light text-[#001f3f]">Overview</h2>
+        </div>
+        {/* First Row - Regular Maintenance Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <DashboardCard
             title="Total Monitored Assets"
             value={data.preventativeMaintenance.totalMonitoredAssets}
@@ -591,10 +600,45 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
             onClick={() => router.push('/preventative-maintenance')}
           />
         </div>
+        {/* Second Row - Predictive Maintenance Insights */}
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-md font-light text-[#001f3f]">Key Insights</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <DashboardCard
+            title="Assets Monitored"
+            value={data.preventativeMaintenance.assetsMonitoredPredictive}
+            subtitle="AI prediction enabled"
+            icon={Zap}
+            onClick={() => router.push('/preventative-maintenance')}
+          />
+          <DashboardCard
+            title="High Risk Assets"
+            value={data.preventativeMaintenance.highRiskAssetsPredictive}
+            subtitle="Requires immediate attention"
+            icon={AlertTriangle}
+            onClick={() => router.push('/preventative-maintenance')}
+          />
+          <DashboardCard
+            title="Avg Confidence"
+            value={`${data.preventativeMaintenance.avgConfidence}%`}
+            subtitle="Prediction accuracy"
+            icon={TrendingUp}
+            onClick={() => router.push('/preventative-maintenance')}
+          />
+          <DashboardCard
+            title="Cost Savings"
+            value={`$${data.preventativeMaintenance.costSavings.toLocaleString()}`}
+            subtitle="Prevented failures"
+            icon={DollarSign}
+            onClick={() => router.push('/preventative-maintenance')}
+          />
+        </div>
       </div>
 
 
       {/* Space Management Section */}
+      {/*
       <div>
         <div className="flex items-center gap-3 mb-6">
           <h2 className="text-xl font-light text-[#001f3f]">Space Management</h2>
@@ -644,6 +688,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
           />
         </div>
       </div>
+      */}
     </div>
   )
 }
