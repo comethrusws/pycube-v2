@@ -289,7 +289,11 @@ export async function GET(request: NextRequest) {
           assetsFound: assetsFoundOverview,
           zonesNotScannedCount,
           recentAssets,
-          topCategories: topCategoriesInsights
+          topCategories: topCategoriesInsights,
+          // Visibility data
+          scanned: visibility.scanned,
+          notScanned: visibility.notScanned,
+          visibilityTrend: visibility.trend
         },
         compliance: {
           complianceScore,

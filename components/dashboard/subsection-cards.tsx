@@ -1,8 +1,9 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Shield, BarChart3, Wrench, TrendingUp, Building2, Target, AlertTriangle, Clock, CheckCircle, Users, MapPin, Eye, Search, Activity, Zap, DollarSign } from "lucide-react"
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { Shield, BarChart3, Wrench, TrendingUp, Building2, Target, AlertTriangle, Clock, CheckCircle, Users, MapPin, Eye, Search, Activity, Zap, DollarSign,  } from "lucide-react"
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, CartesianGrid, Line, XAxis, YAxis } from 'recharts'
+import Link from "next/link"
 
 interface DashboardCardsData {
   assetProtection: {
@@ -34,6 +35,14 @@ interface DashboardCardsData {
     topCategories: Array<{
       name: string
       count: number
+    }>
+    // Visibility data
+    scanned: number
+    notScanned: number
+    visibilityTrend: Array<{
+      date: string
+      scanned: number
+      notScanned: number
     }>
   }
   compliance: {
@@ -203,7 +212,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         </div>
         {/* Utilization Analytics Row */}
         <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-md font-light text-[#001f3f]">Utilization</h2>
+          <h2 className="text-[18px] font-light text-[#001f3f]">Utilization</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <DashboardCard
@@ -236,7 +245,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
           />
         </div>
          <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-md font-light text-[#001f3f]">Location</h2>
+          <h2 className="text-[18px] font-light text-[#001f3f]">Location</h2>
         </div>
         {/* Location Overview Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -278,7 +287,8 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Asset Tagged Widget */}
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <Link href="/mobile/asset-search">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 hover:shadow-lg hover:border-[#0d7a8c] cursor-pointer transform hover:-translate-y-1">
             <div className="space-y-6">
               <div>
                 <p className="text-xs font-light uppercase tracking-wide mb-1" style={{ color: "#0d7a8c" }}>
@@ -339,9 +349,10 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
               <p className="text-xs text-gray-600 text-center">Asset tagging summary</p>
             </div>
           </div>
-
+          </Link>
           {/* Assets Overview Widget */}
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <Link href="/mobile/asset-search">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 hover:shadow-lg hover:border-[#0d7a8c] cursor-pointer transform hover:-translate-y-1">
             <h3 className="text-sm font-light uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
               Assets Overview
             </h3>
@@ -417,9 +428,11 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
               </div>
             </div>
           </div>
+          </Link>
 
           {/* Zones Not Scanned Widget */}
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <Link href="/mobile/asset-search">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 hover:shadow-lg hover:border-[#0d7a8c] cursor-pointer transform hover:-translate-y-1">
             <h3 className="text-sm font-light uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
               Zones Not Scanned
             </h3>
@@ -454,6 +467,82 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
               )}
             </div>
           </div>
+          </Link>
+          {/* Visibility & Scanning Widget */}
+          <Link href="/mobile/asset-search">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 hover:shadow-lg hover:border-[#0d7a8c] cursor-pointer transform hover:-translate-y-1">
+            <h3 className="text-sm font-light uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
+              Visibility & Scanning
+            </h3>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-light uppercase tracking-wide mb-1" style={{ color: "#0d7a8c" }}>
+                    Assets Scanned
+                  </p>
+                  <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
+                    {data.assetInsights.scanned.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-light uppercase tracking-wide mb-1" style={{ color: "#c41e3a" }}>
+                    Not Scanned
+                  </p>
+                  <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
+                    {data.assetInsights.notScanned.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r h-full rounded-full"
+                  style={{ 
+                    width: `${Math.min(100, Math.max(0, (data.assetInsights.scanned / (data.assetInsights.scanned + data.assetInsights.notScanned)) * 100))}%`, 
+                    backgroundImage: "linear-gradient(to right, #0d7a8c, #c41e3a)" 
+                  }}
+                ></div>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-0 min-h-32 border border-gray-200">
+                <ResponsiveContainer width="100%" height={130}>
+                  <LineChart data={data.assetInsights.visibilityTrend} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#94a3b8" 
+                      style={{ fontSize: "10px" }}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis stroke="#94a3b8" style={{ fontSize: "10px" }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: "#fff", 
+                        border: "1px solid #e5e7eb", 
+                        borderRadius: "8px",
+                        fontSize: "10px"
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="scanned" 
+                      stroke="#0d7a8c" 
+                      strokeWidth={2} 
+                      dot={{ r: 1 }} 
+                      name="Scanned"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="notScanned" 
+                      stroke="#c41e3a" 
+                      strokeWidth={2} 
+                      dot={{ r: 1 }} 
+                      name="Not Scanned"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+          </Link>
         </div>
       </div>
 
@@ -496,7 +585,8 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         {/* Second Row - Risk Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Risk Distribution Pie Chart Widget */}
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <Link href="/compliance">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 hover:shadow-lg hover:border-[#0d7a8c] cursor-pointer transform hover:-translate-y-1">
             <h3 className="text-sm font-light uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
               Risk Distribution Chart
             </h3>
@@ -558,6 +648,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
               </div>
             </div>
           </div>
+          </Link>
         </div>
       </div>
 
@@ -567,7 +658,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
           <h2 className="text-xl font-light text-[#001f3f]">Preventative Maintenance</h2>
         </div>
         <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-md font-light text-[#001f3f]">Overview</h2>
+          <h2 className="text-[18px] font-light text-[#001f3f]">Overview</h2>
         </div>
         {/* First Row - Regular Maintenance Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -602,7 +693,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         </div>
         {/* Second Row - Predictive Maintenance Insights */}
         <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-md font-light text-[#001f3f]">Key Insights</h2>
+          <h2 className="text-[18px] font-light text-[#001f3f]">Key Insights</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <DashboardCard

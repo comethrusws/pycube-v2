@@ -234,6 +234,14 @@ export interface DashboardData {
         name: string
         count: number
       }>
+      // Visibility data
+      scanned: number
+      notScanned: number
+      visibilityTrend: Array<{
+        date: string
+        scanned: number
+        notScanned: number
+      }>
     }
     compliance: {
       complianceScore: number
