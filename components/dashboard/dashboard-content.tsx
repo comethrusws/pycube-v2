@@ -175,7 +175,7 @@ function DashboardContent() {
             }`}
             onClick={() => card.clickable && handleCardClick(card.type)}
           >
-            <p className="text-xs font-light mb-1" style={{ color: "#001f3f" }}>
+            <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>
               {card.title}
             </p>
             <p className="text-xs text-gray-600 mb-3">{card.subtitle}</p>
@@ -239,7 +239,7 @@ function DashboardContent() {
             }`}
             onClick={() => card.clickable && handleCardClick(card.type)}
           >
-            <p className="text-xs font-light mb-1" style={{ color: "#001f3f" }}>
+            <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>
               {card.title}
             </p>
             <p className="text-xs text-gray-600 mb-3">{card.subtitle}</p>
