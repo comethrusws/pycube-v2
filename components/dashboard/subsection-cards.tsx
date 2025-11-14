@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { Shield, BarChart3, Wrench, TrendingUp, Building2, Target, AlertTriangle, Clock, CheckCircle, Users, MapPin, Eye, Search, Activity } from "lucide-react"
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
 interface DashboardCardsData {
   assetProtection: {
@@ -437,7 +438,8 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         <div className="flex items-center gap-2 mb-4">
           <h3 className="text-md font-light text-[#001f3f]">Risk Distribution (Non-compliant Assets)</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Risk Distribution Cards */}
           <DashboardCard
             title="High Risk Assets"
             value={data.compliance.highRiskAssets}
@@ -459,6 +461,70 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
             icon={CheckCircle}
             onClick={() => router.push('/compliance')}
           />
+          
+          {/* Risk Distribution Pie Chart Widget */}
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 className="text-sm font-light uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
+              Risk Distribution Chart
+            </h3>
+            <div className="flex flex-col items-center">
+              <div className="w-full h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'High Risk', value: data.compliance.highRiskAssets, color: '#dc2626' },
+                        { name: 'Medium Risk', value: data.compliance.mediumRiskAssets, color: '#d97706' },
+                        { name: 'Low Risk', value: data.compliance.lowRiskAssets, color: '#059669' }
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={30}
+                      outerRadius={70}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {[
+                        { name: 'High Risk', value: data.compliance.highRiskAssets, color: '#dc2626' },
+                        { name: 'Medium Risk', value: data.compliance.mediumRiskAssets, color: '#d97706' },
+                        { name: 'Low Risk', value: data.compliance.lowRiskAssets, color: '#059669' }
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value, name) => [`${value} assets`, name]}
+                      contentStyle={{
+                        backgroundColor: '#fff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Legend */}
+              <div className="mt-4 space-y-2 w-full">
+                {[
+                  { name: 'High Risk', value: data.compliance.highRiskAssets, color: '#dc2626' },
+                  { name: 'Medium Risk', value: data.compliance.mediumRiskAssets, color: '#d97706' },
+                  { name: 'Low Risk', value: data.compliance.lowRiskAssets, color: '#059669' }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: item.color }}
+                      ></div>
+                      <span className="text-gray-700">{item.name}</span>
+                    </div>
+                    <span className="font-medium text-gray-900">{item.value.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
