@@ -184,10 +184,18 @@ export async function GET(request: NextRequest) {
     const pmTasksCompleted = data.maintenanceTasks.filter(t => t.status === "completed").length
     const potentialSavings = Math.floor(Math.random() * 50000) + 150000 // $150k-200k
     
-    // Asset Utilization Cards
-    const underutilizedAssetsCount = data.assets.filter(a => a.utilization < 40).length
+    // Asset Utilization Cards - Use tagged assets for consistency
+    const taggedAssetsArray = data.assets.filter(a => a.tagId)
+    const totalMonitoredAssetsLocator = taggedAssetsArray.length
+    const locatedAssets = taggedAssetsArray.filter(a => a.status !== "lost").length
+    const assetsToLocate = totalMonitoredAssetsLocator - locatedAssets
+    const flaggedAssets = taggedAssetsArray.filter(a => 
+      a.status === "lost" || 
+      data.maintenanceTasks.some(m => m.assetId === a.id && m.status === "overdue")
+    ).length
+    const underutilizedAssetsCount = taggedAssetsArray.filter(a => a.utilization < 40).length
     const movementAlerts = Math.floor(Math.random() * 10) + 1 // 1-10 alerts
-    const idleCriticalAssets = data.assets.filter(a => {
+    const idleCriticalAssets = taggedAssetsArray.filter(a => {
       const daysSinceActive = (Date.now() - new Date(a.lastActive).getTime()) / (24 * 60 * 60 * 1000)
       return daysSinceActive > 30
     }).length
@@ -230,7 +238,12 @@ export async function GET(request: NextRequest) {
           avgUtilization,
           underutilizedAssets: underutilizedAssetsCount,
           movementAlerts,
-          idleCriticalAssets
+          idleCriticalAssets,
+          // Location overview data from asset utilization dashboard
+          totalMonitoredAssets: totalMonitoredAssetsLocator,
+          assetsToLocate,
+          totalAssetsLocated: locatedAssets,
+          totalAssetsFlagged: flaggedAssets
         },
         spaceManagement: {
           totalFloors,

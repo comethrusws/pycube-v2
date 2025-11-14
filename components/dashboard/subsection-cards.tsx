@@ -27,6 +27,11 @@ interface DashboardCardsData {
     underutilizedAssets: number
     movementAlerts: number
     idleCriticalAssets: number
+    // Location overview data
+    totalMonitoredAssets: number
+    assetsToLocate: number
+    totalAssetsLocated: number
+    totalAssetsFlagged: number
   }
   spaceManagement: {
     totalFloors: number
@@ -202,7 +207,8 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         <div className="flex items-center gap-3 mb-6">
           <h2 className="text-xl font-light text-[#001f3f]">Asset Utilization</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Utilization Analytics Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <DashboardCard
             title="Average Utilization"
             value={`${data.assetUtilization.avgUtilization}%`}
@@ -229,6 +235,37 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
             value={data.assetUtilization.idleCriticalAssets}
             subtitle="> 30 days idle"
             icon={Clock}
+            onClick={() => router.push('/asset-utilization')}
+          />
+        </div>
+        {/* Location Overview Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <DashboardCard
+            title="Total Monitored Assets"
+            value={data.assetUtilization.totalMonitoredAssets}
+            subtitle="Active Tracking"
+            icon={Eye}
+            onClick={() => router.push('/asset-utilization')}
+          />
+          <DashboardCard
+            title="Assets to be Located"
+            value={data.assetUtilization.assetsToLocate}
+            subtitle="Pending Location"
+            icon={MapPin}
+            onClick={() => router.push('/asset-utilization')}
+          />
+          <DashboardCard
+            title="Total Assets Located"
+            value={data.assetUtilization.totalAssetsLocated}
+            subtitle="Successfully Tracked"
+            icon={CheckCircle}
+            onClick={() => router.push('/asset-utilization')}
+          />
+          <DashboardCard
+            title="Total Assets Flagged"
+            value={data.assetUtilization.totalAssetsFlagged}
+            subtitle="Need Attention"
+            icon={AlertTriangle}
             onClick={() => router.push('/asset-utilization')}
           />
         </div>
