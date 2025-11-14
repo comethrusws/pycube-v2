@@ -148,7 +148,9 @@ const StatCard = ({
           <Icon className={`w-6 h-6 ${iconColorClasses[color as keyof typeof iconColorClasses]}`} />
           <div>
             <p className="text-sm font-light text-gray-600">{label}</p>
-            <p className="text-2xl font-semibold text-[#001f3f]">{value}</p>
+            <p className="text-2xl font-semibold text-[#001f3f]">
+              {typeof value === 'number' ? value.toLocaleString() : value}
+            </p>
             {trend && trendValue && (
               <p className={`text-xs font-light ${
                 trend === 'up' ? 'text-[#0d7a8c]' : 
