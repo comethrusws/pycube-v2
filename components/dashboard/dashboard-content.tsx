@@ -168,22 +168,22 @@ function DashboardContent() {
         ].map((card, i) => (
           <div 
             key={i} 
-            className={`bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 ${
+            className={`bg-white rounded-xl p-4 border border-gray-200 transition-all duration-200 ${
               card.clickable 
                 ? 'hover:shadow-lg hover:border-teal-300 cursor-pointer transform hover:-translate-y-1' 
                 : 'hover:shadow-md'
             }`}
             onClick={() => card.clickable && handleCardClick(card.type)}
           >
-            <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>
+            <p className="text-xs font-medium mb-1" style={{ color: "#001f3f" }}>
               {card.title}
             </p>
-            <p className="text-xs text-gray-600 mb-4">{card.subtitle}</p>
-            <p className="text-4xl font-light" style={{ color: "#001f3f" }}>
+            <p className="text-xs text-gray-600 mb-3">{card.subtitle}</p>
+            <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
               {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
             </p>
             {card.clickable && (
-              <div className="mt-3 flex items-center text-xs text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="mt-2 flex items-center text-xs text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity">
                 <span>Click to view details →</span>
               </div>
             )}
@@ -232,22 +232,22 @@ function DashboardContent() {
         ].map((card, i) => (
           <div 
             key={i} 
-            className={`bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 ${
+            className={`bg-white rounded-xl p-4 border border-gray-200 transition-all duration-200 ${
               card.clickable 
                 ? 'hover:shadow-lg hover:border-teal-300 cursor-pointer transform hover:-translate-y-1' 
                 : 'hover:shadow-md'
             }`}
             onClick={() => card.clickable && handleCardClick(card.type)}
           >
-            <p className="text-sm font-medium mb-1" style={{ color: "#001f3f" }}>
+            <p className="text-xs font-medium mb-1" style={{ color: "#001f3f" }}>
               {card.title}
             </p>
-            <p className="text-xs text-gray-600 mb-4">{card.subtitle}</p>
-            <p className="text-4xl font-light" style={{ color: "#001f3f" }}>
+            <p className="text-xs text-gray-600 mb-3">{card.subtitle}</p>
+            <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
               {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
             </p>
             {card.clickable && (
-              <div className="mt-3 flex items-center text-xs text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="mt-2 flex items-center text-xs text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity">
                 <span>Click to view details →</span>
               </div>
             )}
