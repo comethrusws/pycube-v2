@@ -24,6 +24,17 @@ interface DashboardCardsData {
     assetsInUse: number
     assetsFound: number
     zonesNotScannedCount: number
+    recentAssets: Array<{
+      id: string
+      name: string
+      type: string
+      location: string
+      status: string
+    }>
+    topCategories: Array<{
+      name: string
+      count: number
+    }>
   }
   compliance: {
     complianceScore: number
@@ -255,7 +266,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         </div>
       </div>
 
-      {/* Asset Insights Section */}
+      {/* Asset Search and Retrieval Section */}
       <div>
         <div className="flex items-center gap-3 mb-6">
           <h2 className="text-xl font-light text-[#001f3f]">Asset Search & Retrieval</h2>
@@ -355,6 +366,49 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
                     <p className="text-3xl font-light" style={{ color: "#001f3f" }}>{item.value.toLocaleString()}</p>
                   </div>
                 ))}
+              </div>
+              
+              {/* Recent Assets */}
+              <div className="mt-6">
+                <p className="text-xs font-light uppercase tracking-wide mb-3" style={{ color: "#0d7a8c" }}>
+                  Recent Assets
+                </p>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {data.assetInsights.recentAssets.map((asset, i) => (
+                    <div 
+                      key={i} 
+                      className="flex items-center justify-between p-2 bg-slate-50 rounded border border-gray-200 cursor-pointer hover:bg-slate-100 transition-colors"
+                      onClick={() => router.push(`/assets/${asset.id}`)}
+                    >
+                      <div>
+                        <p className="text-sm font-light" style={{ color: "#001f3f" }}>{asset.name}</p>
+                        <p className="text-xs text-gray-500">{asset.location}</p>
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        asset.status === 'available' ? 'bg-green-100 text-green-600' :
+                        asset.status === 'in-use' ? 'bg-blue-100 text-blue-600' : 
+                        'bg-orange-100 text-orange-600'
+                      }`}>
+                        {asset.status === 'in-use' ? 'in-use' : asset.status === 'available' ? 'available' : asset.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Top Categories */}
+              <div className="mt-4">
+                <p className="text-xs font-light uppercase tracking-wide mb-3" style={{ color: "#0d7a8c" }}>
+                  Top Categories
+                </p>
+                <div className="space-y-2">
+                  {data.assetInsights.topCategories.map((category, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <span className="text-sm" style={{ color: "#001f3f" }}>{category.name}</span>
+                      <span className="text-sm font-light" style={{ color: "#0d7a8c" }}>{category.count}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

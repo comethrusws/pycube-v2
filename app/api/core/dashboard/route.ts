@@ -215,6 +215,30 @@ export async function GET(request: NextRequest) {
     const assetsInUseOverview = Math.floor(totalAssets * 0.25) // ~25% (1,658 from image)
     const assetsFoundOverview = Math.floor(totalAssets * 0.55) // ~55% (3,727 from image)
     
+    // Recent assets (tagged assets only, sorted by lastActive)
+    const recentAssets = taggedAssetsArray
+      .sort((a, b) => new Date(b.lastActive).getTime() - new Date(a.lastActive).getTime())
+      .slice(0, 3)
+      .map((asset) => ({
+        id: asset.id,
+        name: asset.name,
+        type: asset.type,
+        location: data.zones.find(z => z.id === asset.location.zoneId)?.name || "Unknown",
+        status: asset.status
+      }))
+    
+    // Top categories (from tagged assets only)
+    const categoryCountsInsights = taggedAssetsArray.reduce((acc, asset) => {
+      const category = asset.category || asset.type
+      acc[category] = (acc[category] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+    
+    const topCategoriesInsights = Object.entries(categoryCountsInsights)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 3)
+      .map(([name, count]) => ({ name, count }))
+    
     // Zones not scanned data (from existing zones data)
     const zonesNotScannedCount = 7 // Fixed number from image
 
@@ -257,7 +281,9 @@ export async function GET(request: NextRequest) {
           assetsNotFound: assetsNotFoundOverview,
           assetsInUse: assetsInUseOverview,
           assetsFound: assetsFoundOverview,
-          zonesNotScannedCount
+          zonesNotScannedCount,
+          recentAssets,
+          topCategories: topCategoriesInsights
         },
         compliance: {
           complianceScore,
