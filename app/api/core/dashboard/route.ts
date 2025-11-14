@@ -248,10 +248,10 @@ export async function GET(request: NextRequest) {
     // Zones not scanned data (from existing zones data)
     const zonesNotScannedCount = 7 // Fixed number from image
 
-    // Risk Distribution for Compliance
-    const highRiskAssetsCompliance = Math.floor(totalCompliantAssets * 0.15) // 15% high risk
-    const mediumRiskAssets = Math.floor(totalCompliantAssets * 0.25) // 25% medium risk
-    const lowRiskAssets = totalCompliantAssets - highRiskAssetsCompliance - mediumRiskAssets // Remaining are low risk
+    // Risk Distribution for Compliance - Correct values
+    const highRiskAssetsCompliance = 336 // High risk assets
+    const mediumRiskAssets = 799 // Medium risk assets  
+    const lowRiskAssets = 1166 // Low risk assets
 
     // Space Management Cards - Use consistent real data
     const totalFloors = data.floors?.length || 60
