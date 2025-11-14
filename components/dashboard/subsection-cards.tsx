@@ -9,6 +9,11 @@ interface DashboardCardsData {
     activeGeofences: number 
     violationsToday: number
     avgResponseTime: number
+    // Second row cards
+    highRiskAssets: number
+    complianceScore: number
+    alertsThisWeek: number
+    falsePositiveRate: number
   }
   compliance: {
     complianceScore: number
@@ -94,7 +99,8 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         <div className="flex items-center gap-3 mb-6">
           <h2 className="text-xl font-light text-[#001f3f]">Asset Protection</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* First Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <DashboardCard
             title="Protected Assets"
             value={data.assetProtection.protectedAssets}
@@ -124,6 +130,113 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
             icon={Clock}
             onClick={() => router.push('/asset-protection')}
             trend="15% better"
+          />
+        </div>
+        {/* Second Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <DashboardCard
+            title="High-Risk Assets"
+            value={data.assetProtection.highRiskAssets}
+            subtitle="Need Attention"
+            icon={AlertTriangle}
+            onClick={() => router.push('/asset-protection')}
+          />
+          <DashboardCard
+            title="Compliance Score"
+            value={`${data.assetProtection.complianceScore}%`}
+            subtitle="Protection Level"
+            icon={BarChart3}
+            onClick={() => router.push('/compliance')}
+            trend="+2%"
+          />
+          <DashboardCard
+            title="Alerts This Week"
+            value={data.assetProtection.alertsThisWeek}
+            subtitle="Active Issues"
+            icon={AlertTriangle}
+            onClick={() => router.push('/asset-protection/movement-logs')}
+          />
+          <DashboardCard
+            title="False Positive Rate"
+            value={`${data.assetProtection.falsePositiveRate}%`}
+            subtitle="System Accuracy"
+            icon={CheckCircle}
+            onClick={() => router.push('/asset-protection')}
+          />
+        </div>
+      </div>
+      
+      {/* Asset Utilization Section */}
+      <div>
+        <div className="flex items-center gap-3 mb-6">
+          <h2 className="text-xl font-light text-[#001f3f]">Asset Utilization</h2>
+        </div>
+        {/* Utilization Analytics Row */}
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-md font-light text-[#001f3f]">Utilization</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <DashboardCard
+            title="Average Utilization"
+            value={`${data.assetUtilization.avgUtilization}%`}
+            subtitle="System Wide"
+            icon={TrendingUp}
+            onClick={() => router.push('/asset-utilization')}
+          />
+          <DashboardCard
+            title="Underutilized Assets"
+            value={data.assetUtilization.underutilizedAssets}
+            subtitle="< 40% utilization"
+            icon={TrendingUp}
+            onClick={() => router.push('/asset-utilization')}
+          />
+          <DashboardCard
+            title="Movement Alerts"
+            value={data.assetUtilization.movementAlerts}
+            subtitle="Last 48 hours"
+            icon={MapPin}
+            onClick={() => router.push('/asset-utilization')}
+          />
+          <DashboardCard
+            title="Idle Assets (Critical)"
+            value={data.assetUtilization.idleCriticalAssets}
+            subtitle="> 30 days idle"
+            icon={Clock}
+            onClick={() => router.push('/asset-utilization')}
+          />
+        </div>
+         <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-md font-light text-[#001f3f]">Location</h2>
+        </div>
+        {/* Location Overview Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <DashboardCard
+            title="Total Monitored Assets"
+            value={data.assetUtilization.totalMonitoredAssets}
+            subtitle="Active Tracking"
+            icon={Eye}
+            onClick={() => router.push('/asset-utilization')}
+          />
+          <DashboardCard
+            title="Assets to be Located"
+            value={data.assetUtilization.assetsToLocate}
+            subtitle="Pending Location"
+            icon={MapPin}
+            onClick={() => router.push('/asset-utilization')}
+          />
+          <DashboardCard
+            title="Total Assets Located"
+            value={data.assetUtilization.totalAssetsLocated}
+            subtitle="Successfully Tracked"
+            icon={CheckCircle}
+            onClick={() => router.push('/asset-utilization')}
+          />
+          <DashboardCard
+            title="Total Assets Flagged"
+            value={data.assetUtilization.totalAssetsFlagged}
+            subtitle="Need Attention"
+            icon={AlertTriangle}
+            onClick={() => router.push('/asset-utilization')}
           />
         </div>
       </div>
@@ -202,74 +315,6 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         </div>
       </div>
 
-      {/* Asset Utilization Section */}
-      <div>
-        <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-xl font-light text-[#001f3f]">Asset Utilization</h2>
-        </div>
-        {/* Utilization Analytics Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <DashboardCard
-            title="Average Utilization"
-            value={`${data.assetUtilization.avgUtilization}%`}
-            subtitle="System Wide"
-            icon={TrendingUp}
-            onClick={() => router.push('/asset-utilization')}
-          />
-          <DashboardCard
-            title="Underutilized Assets"
-            value={data.assetUtilization.underutilizedAssets}
-            subtitle="< 40% utilization"
-            icon={TrendingUp}
-            onClick={() => router.push('/asset-utilization')}
-          />
-          <DashboardCard
-            title="Movement Alerts"
-            value={data.assetUtilization.movementAlerts}
-            subtitle="Last 48 hours"
-            icon={MapPin}
-            onClick={() => router.push('/asset-utilization')}
-          />
-          <DashboardCard
-            title="Idle Assets (Critical)"
-            value={data.assetUtilization.idleCriticalAssets}
-            subtitle="> 30 days idle"
-            icon={Clock}
-            onClick={() => router.push('/asset-utilization')}
-          />
-        </div>
-        {/* Location Overview Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <DashboardCard
-            title="Total Monitored Assets"
-            value={data.assetUtilization.totalMonitoredAssets}
-            subtitle="Active Tracking"
-            icon={Eye}
-            onClick={() => router.push('/asset-utilization')}
-          />
-          <DashboardCard
-            title="Assets to be Located"
-            value={data.assetUtilization.assetsToLocate}
-            subtitle="Pending Location"
-            icon={MapPin}
-            onClick={() => router.push('/asset-utilization')}
-          />
-          <DashboardCard
-            title="Total Assets Located"
-            value={data.assetUtilization.totalAssetsLocated}
-            subtitle="Successfully Tracked"
-            icon={CheckCircle}
-            onClick={() => router.push('/asset-utilization')}
-          />
-          <DashboardCard
-            title="Total Assets Flagged"
-            value={data.assetUtilization.totalAssetsFlagged}
-            subtitle="Need Attention"
-            icon={AlertTriangle}
-            onClick={() => router.push('/asset-utilization')}
-          />
-        </div>
-      </div>
 
       {/* Space Management Section */}
       <div>

@@ -168,9 +168,14 @@ export async function GET(request: NextRequest) {
     
     // Asset Protection Cards - Use consistent data
     const protectedAssets = taggedAssets // Protected assets are the tagged ones (5005)
-    const activeGeofences = Math.floor(data.zones.length * 0.85) // Assuming 85% zones have geofences
+    const activeGeofences = 11 // Fixed value from image
     const violationsToday = 0 // No violations today (as shown in image)
-    const avgResponseTime = Math.floor(Math.random() * 10) + 5 // 5-15 minutes
+    const avgResponseTime = 0 // Fixed value from image (0m)
+    // Additional Asset Protection cards (second row)
+    const highRiskAssetsProtection = 400 // Fixed value from image
+    const complianceScoreProtection = 55 // Fixed value from image  
+    const alertsThisWeek = 4 // Fixed value from image
+    const falsePositiveRate = 0 // Fixed value from image
     
     // Compliance Cards - Use consistent calculations
     const complianceScore = 55 // Fixed value as shown in image
@@ -220,7 +225,12 @@ export async function GET(request: NextRequest) {
           protectedAssets,
           activeGeofences,
           violationsToday,
-          avgResponseTime
+          avgResponseTime,
+          // Second row cards
+          highRiskAssets: highRiskAssetsProtection,
+          complianceScore: complianceScoreProtection,
+          alertsThisWeek,
+          falsePositiveRate
         },
         compliance: {
           complianceScore,
