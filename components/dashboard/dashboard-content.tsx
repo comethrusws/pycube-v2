@@ -179,7 +179,7 @@ function DashboardContent() {
               {card.title}
             </p>
             <p className="text-xs text-gray-600 mb-3">{card.subtitle}</p>
-            <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
+            <p className="text-3xl font-normal" style={{ color: "#001f3f" }}>
               {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
             </p>
             {card.clickable && (
@@ -243,7 +243,7 @@ function DashboardContent() {
               {card.title}
             </p>
             <p className="text-xs text-gray-600 mb-3">{card.subtitle}</p>
-            <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
+            <p className="text-3xl font-normal" style={{ color: "#001f3f" }}>
               {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
             </p>
             {card.clickable && (
