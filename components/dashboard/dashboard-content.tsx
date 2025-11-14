@@ -115,7 +115,7 @@ function DashboardContent() {
   return (
     <div className="p-6 lg:p-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-light" style={{ color: "#001f3f" }}>
+        <h1 className="text-3xl font-medium" style={{ color: "#001f3f" }}>
           Overview
         </h1>
       </div>
@@ -179,7 +179,7 @@ function DashboardContent() {
               {card.title}
             </p>
             <p className="text-xs text-gray-600 mb-3">{card.subtitle}</p>
-            <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
+            <p className="text-3xl font-medium" style={{ color: "#001f3f" }}>
               {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
             </p>
             {card.clickable && (
@@ -243,7 +243,7 @@ function DashboardContent() {
               {card.title}
             </p>
             <p className="text-xs text-gray-600 mb-3">{card.subtitle}</p>
-            <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
+            <p className="text-3xl font-medium" style={{ color: "#001f3f" }}>
               {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
             </p>
             {card.clickable && (
