@@ -202,6 +202,40 @@ export interface DashboardData {
     trend: { date: string; scanned: number; notScanned: number }[]
   }
   zonesNotScanned: string[]
+  dashboardCards: {
+    assetProtection: {
+      protectedAssets: number
+      activeGeofences: number 
+      violationsToday: number
+      avgResponseTime: number
+    }
+    compliance: {
+      complianceScore: number
+      fullyCompliantAssets: number
+      totalCompliantAssets: number
+      avgRiskScore: number
+    }
+    preventativeMaintenance: {
+      totalMonitoredAssets: number
+      highRiskAssets: number
+      pmTasksCompleted: number
+      potentialSavings: number
+    }
+    assetUtilization: {
+      avgUtilization: number
+      underutilizedAssets: number
+      movementAlerts: number
+      idleCriticalAssets: number
+    }
+    spaceManagement: {
+      totalFloors: number
+      totalZones: number
+      readersOnline: number
+      readersOffline: number
+      assetsInUse: number
+      assetsAvailable: number
+    }
+  }
   assetDetails: {
     recentAssets: { id: string; name: string; type: string; location: string; status: string; lastActive: string }[]
     topCategories: { name: string; count: number }[]

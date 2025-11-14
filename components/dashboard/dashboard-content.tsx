@@ -10,6 +10,7 @@ import ComplianceSummaryCard from "./compliance-summary-card"
 import AssetsByFloorCard from "./assets-by-floor-card"
 import MaintenanceImpactCard from "./maintenance-impact-card"
 import AssetProtectionCards from "./asset-protection-cards"
+import SubsectionCards from "./subsection-cards"
 
 function DashboardContent() {
   const [data, setData] = useState<DashboardData>()
@@ -100,41 +101,14 @@ function DashboardContent() {
     <div className="p-6 lg:p-8 space-y-8">
       <div>
         <h1 className="text-3xl font-light" style={{ color: "#001f3f" }}>
-          Overview
+          Dashboard Overview
         </h1>
+        <p className="text-gray-600 mt-2">Monitor all systems and key metrics from a centralized view</p>
       </div>
 
-      {/* Enhanced Stat Cards with Utilization */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+      {/* Enhanced Utilization Cards - Keep these */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { 
-            title: "Total Assets", 
-            subtitle: "In System", 
-            value: data?.stats.totalAssets ?? "-", 
-            type: "totalAssets",
-            clickable: true 
-          },
-          { 
-            title: "Asset Categories", 
-            subtitle: "Category", 
-            value: data?.stats.categories ?? "-", 
-            type: "categories",
-            clickable: true 
-          },
-          { 
-            title: "Total Facilities", 
-            subtitle: "Facility", 
-            value: data?.stats.totalFacilities ?? "-", 
-            type: "facilities",
-            clickable: true 
-          },
-          { 
-            title: "Total Users", 
-            subtitle: "Active", 
-            value: data?.stats.totalUsers ?? "-", 
-            type: "users",
-            clickable: false 
-          },
           {
             title: "Avg Utilization",
             subtitle: "System Wide",
@@ -143,12 +117,26 @@ function DashboardContent() {
             clickable: true
           },
           {
-            title: "Underutilized",
-            subtitle: "Assets",
+            title: "Underutilized Assets",
+            subtitle: "< 40% Usage",
             value: data?.stats.underutilizedAssets ?? "-",
             type: "utilization",
             clickable: true
           },
+          { 
+            title: "Total Assets", 
+            subtitle: "In System", 
+            value: data?.stats.totalAssets ?? "-", 
+            type: "totalAssets",
+            clickable: true 
+          },
+          { 
+            title: "Total Facilities", 
+            subtitle: "Active", 
+            value: data?.stats.totalFacilities ?? "-", 
+            type: "facilities",
+            clickable: true 
+          }
         ].map((card, i) => (
           <div 
             key={i} 
@@ -175,12 +163,8 @@ function DashboardContent() {
         ))}
       </div>
 
-      {/* Asset Protection Overview Cards */}
-      <div className="space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          <AssetProtectionCards />
-        </div>
-      </div>
+      {/* Dashboard Subsection Cards */}
+      {data?.dashboardCards && <SubsectionCards data={data.dashboardCards} />}
 
        <div>
         <h1 className="text-3xl font-light" style={{ color: "#001f3f" }}>
