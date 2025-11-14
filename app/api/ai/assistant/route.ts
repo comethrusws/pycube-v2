@@ -74,8 +74,9 @@ export async function POST(request: Request) {
       break
 
     case "List assets nearing overuse or underuse thresholds.":
-      const overused = seedData.assets.filter((a: any) => a.utilization > 90).slice(0, 3)
-      const underused = seedData.assets.filter((a: any) => a.utilization < 15).slice(0, 3)
+      const taggedAssets = seedData.assets.filter((a: any) => a.tagId)
+      const overused = taggedAssets.filter((a: any) => a.utilization > 90).slice(0, 3)
+      const underused = taggedAssets.filter((a: any) => a.utilization < 15).slice(0, 3)
 
       let responseParts = []
       if (overused.length > 0) {

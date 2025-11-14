@@ -5,7 +5,8 @@ import { GeofenceZone } from "@/lib/types"
 export async function GET(request: NextRequest) {
   try {
     const data = await loadSeedData()
-    const totalAssets = data.assets.length
+    const taggedAssets = data.assets.filter((a: any) => a.tagId)
+    const totalAssets = taggedAssets.length
     
     // Generate realistic geofence zones based on asset count
     const zoneCount = Math.max(8, Math.min(15, Math.floor(totalAssets / 500))) // 8-15 zones for 6734 assets
