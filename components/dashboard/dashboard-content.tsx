@@ -457,13 +457,13 @@ function DashboardContent() {
         </div>
       </div>
 
-      <div>
+       {/* <div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <AssetsByFloorCard />
           <ComplianceSummaryCard />
           <MaintenanceImpactCard />
         </div>
-      </div>    
+      </div>    */}
 
       {/* Visibility */}
       <div className="bg-white rounded-xl p-6 border border-gray-200">

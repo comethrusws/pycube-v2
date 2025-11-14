@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Shield, BarChart3, Wrench, TrendingUp, Building2, Target, AlertTriangle, Clock, CheckCircle, Users, MapPin, Eye } from "lucide-react"
+import { Shield, BarChart3, Wrench, TrendingUp, Building2, Target, AlertTriangle, Clock, CheckCircle, Users, MapPin, Eye, Search, Activity } from "lucide-react"
 
 interface DashboardCardsData {
   assetProtection: {
@@ -15,11 +15,24 @@ interface DashboardCardsData {
     alertsThisWeek: number
     falsePositiveRate: number
   }
+  assetInsights: {
+    assetTagged: number
+    assetUntagged: number
+    percentTagged: number
+    assetsNotFound: number
+    assetsInUse: number
+    assetsFound: number
+    zonesNotScannedCount: number
+  }
   compliance: {
     complianceScore: number
     fullyCompliantAssets: number
     totalCompliantAssets: number
     avgRiskScore: number
+    // Risk Distribution data
+    highRiskAssets: number
+    mediumRiskAssets: number
+    lowRiskAssets: number
   }
   preventativeMaintenance: {
     totalMonitoredAssets: number
@@ -241,12 +254,156 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         </div>
       </div>
 
+      {/* Asset Insights Section */}
+      <div>
+        <div className="flex items-center gap-3 mb-6">
+          <h2 className="text-xl font-light text-[#001f3f]">Asset Search & Retrieval</h2>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Asset Tagged Widget */}
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
+            <div className="space-y-6">
+              <div>
+                <p className="text-xs font-light uppercase tracking-wide mb-1" style={{ color: "#0d7a8c" }}>
+                  Asset Tagged
+                </p>
+                <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
+                  {data.assetInsights.assetTagged.toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-light uppercase tracking-wide mb-1" style={{ color: "#c41e3a" }}>
+                  Untagged
+                </p>
+                <p className="text-3xl font-light" style={{ color: "#001f3f" }}>
+                  {data.assetInsights.assetUntagged.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="flex justify-center py-6">
+                <div className="relative w-96 h-56">
+                  {(() => {
+                    const pct = data.assetInsights.percentTagged
+                    return (
+                      <svg viewBox="0 0 100 60" className="w-full h-full">
+                        {/* Background arc */}
+                        <path 
+                          d="M10,50 A40,40 0 0 1 90,50" 
+                          fill="none" 
+                          stroke="#e5e7eb" 
+                          strokeWidth="8" 
+                          strokeLinecap="round"
+                        />
+                        {/* Progress arc */}
+                        <path 
+                          d="M10,50 A40,40 0 0 1 90,50" 
+                          fill="none" 
+                          stroke="#0d7a8c" 
+                          strokeWidth="8" 
+                          strokeLinecap="round"
+                          pathLength="100"
+                          strokeDasharray="100"
+                          strokeDashoffset={100 - pct}
+                          style={{
+                            transition: 'stroke-dashoffset 0.5s ease-in-out'
+                          }}
+                        />
+                      </svg>
+                    )
+                  })()}
+                  <div className="absolute left-0 right-0 top-24 flex flex-col items-center justify-center">
+                    <p className="text-4xl font-light" style={{ color: "#001f3f" }}>
+                      {data.assetInsights.percentTagged}%
+                    </p>
+                    <p className="text-base text-gray-600">Asset Tagged</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 text-center">Asset tagging summary</p>
+            </div>
+          </div>
+
+          {/* Assets Overview Widget */}
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 className="text-sm font-light uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
+              Assets Overview
+            </h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                {[{
+                  label: "Assets Not Found",
+                  value: data.assetInsights.assetsNotFound,
+                  accent: "#fee2e2",
+                  border: "#fecaca",
+                  text: "#c41e3a",
+                }, {
+                  label: "Assets In Use",
+                  value: data.assetInsights.assetsInUse,
+                  accent: "#e0f2f1",
+                  border: "#b2dfdb",
+                  text: "#0d7a8c",
+                }, {
+                  label: "Assets Found",
+                  value: data.assetInsights.assetsFound,
+                  accent: "#eef2ff",
+                  border: "#c7d2fe",
+                  text: "#1e3a8a",
+                }].map((item, i) => (
+                  <div key={i} className="p-4 rounded-xl" style={{ backgroundColor: item.accent, border: `1px solid ${item.border}` }}>
+                    <p className="text-xs font-light mb-1" style={{ color: item.text }}>{item.label}</p>
+                    <p className="text-3xl font-light" style={{ color: "#001f3f" }}>{item.value.toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Zones Not Scanned Widget */}
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
+            <h3 className="text-sm font-light uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
+              Zones Not Scanned
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-light" style={{ color: "#0d7a8c" }}>
+                  Today
+                </span>
+                <span className="text-xs text-gray-600">Status</span>
+              </div>
+              <div className="space-y-4 max-h-64 overflow-y-auto">
+                {[
+                  "ICU", "Emergency", "Radiology", "Surgery", "Orthopedics", "Pharmacy", "Neurology"
+                ].slice(0, 6).map((zone, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-gray-200">
+                    <span className="text-sm font-light" style={{ color: "#001f3f" }}>
+                      {zone}
+                    </span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">
+                      Unscanned
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {data.assetInsights.zonesNotScannedCount > 6 && (
+                <button
+                  className="w-full text-center text-sm transition-opacity hover:opacity-80 py-2"
+                  style={{ color: "#0d7a8c" }}
+                >
+                  +{data.assetInsights.zonesNotScannedCount - 6} more
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Compliance & Risk Section */}
       <div>
         <div className="flex items-center gap-3 mb-6">
           <h2 className="text-xl font-light text-[#001f3f]">Compliance & Risk</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* First Row - Main Compliance Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <DashboardCard
             title="Overall Compliance Score"
             value={`${data.compliance.complianceScore}`}
@@ -273,6 +430,33 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
             value={data.compliance.avgRiskScore}
             subtitle="All assets"
             icon={AlertTriangle}
+            onClick={() => router.push('/compliance')}
+          />
+        </div>
+        {/* Second Row - Risk Distribution */}
+        <div className="flex items-center gap-2 mb-4">
+          <h3 className="text-md font-light text-[#001f3f]">Risk Distribution (Non-compliant Assets)</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <DashboardCard
+            title="High Risk Assets"
+            value={data.compliance.highRiskAssets}
+            subtitle="Critical Issues"
+            icon={AlertTriangle}
+            onClick={() => router.push('/compliance')}
+          />
+          <DashboardCard
+            title="Medium Risk Assets"
+            value={data.compliance.mediumRiskAssets}
+            subtitle="Moderate Issues"
+            icon={AlertTriangle}
+            onClick={() => router.push('/compliance')}
+          />
+          <DashboardCard
+            title="Low Risk Assets"
+            value={data.compliance.lowRiskAssets}
+            subtitle="Minor Issues"
+            icon={CheckCircle}
             onClick={() => router.push('/compliance')}
           />
         </div>
