@@ -164,12 +164,83 @@ export async function GET(request: NextRequest) {
         }
       })
 
+    // Calculate dashboard subsection cards data
+    
+    // Asset Protection Cards
+    const protectedAssets = data.assets.filter(a => a.status !== "lost").length
+    const activeGeofences = Math.floor(data.zones.length * 0.85) // Assuming 85% zones have geofences
+    const violationsToday = Math.floor(Math.random() * 3) // Random violations for demo
+    const avgResponseTime = Math.floor(Math.random() * 10) + 5 // 5-15 minutes
+    
+    // Compliance Cards  
+    const complianceScore = Math.floor(Math.random() * 30) + 70 // 70-100%
+    const fullyCompliantAssets = data.assets.filter(a => a.status === "available" || a.status === "in-use").length
+    const totalCompliantAssets = data.assets.length
+    const avgRiskScore = Math.floor(Math.random() * 20) + 30 // 30-50
+    
+    // Preventative Maintenance Cards
+    const totalMonitoredAssets = Math.floor(data.assets.length * 0.76) // 76% monitored
+    const highRiskAssets = data.assets.filter(a => new Date(a.lastActive) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length
+    const pmTasksCompleted = data.maintenanceTasks.filter(t => t.status === "completed").length
+    const potentialSavings = Math.floor(Math.random() * 50000) + 150000 // $150k-200k
+    
+    // Asset Utilization Cards
+    const underutilizedAssetsCount = data.assets.filter(a => a.utilization < 40).length
+    const movementAlerts = Math.floor(Math.random() * 10) + 1 // 1-10 alerts
+    const idleCriticalAssets = data.assets.filter(a => {
+      const daysSinceActive = (Date.now() - new Date(a.lastActive).getTime()) / (24 * 60 * 60 * 1000)
+      return daysSinceActive > 30
+    }).length
+    
+    // Space Management Cards
+    const totalFloors = data.floors?.length || 60
+    const totalZones = data.zones?.length || 480
+    const readersOnline = Math.floor(data.readers?.length * 0.9) || 865
+    const readersOffline = (data.readers?.length || 960) - readersOnline
+    const assetsInUse = data.assets.filter(a => a.status === "in-use").length
+    const assetsAvailable = data.assets.filter(a => a.status === "available").length
+
     const responseData = {
       stats,
       tagging,
       overview,
       visibility,
       zonesNotScanned,
+      // Dashboard subsection cards data
+      dashboardCards: {
+        assetProtection: {
+          protectedAssets,
+          activeGeofences,
+          violationsToday,
+          avgResponseTime
+        },
+        compliance: {
+          complianceScore,
+          fullyCompliantAssets,
+          totalCompliantAssets,
+          avgRiskScore
+        },
+        preventativeMaintenance: {
+          totalMonitoredAssets,
+          highRiskAssets,
+          pmTasksCompleted,
+          potentialSavings
+        },
+        assetUtilization: {
+          avgUtilization,
+          underutilizedAssets: underutilizedAssetsCount,
+          movementAlerts,
+          idleCriticalAssets
+        },
+        spaceManagement: {
+          totalFloors,
+          totalZones,
+          readersOnline,
+          readersOffline,
+          assetsInUse,
+          assetsAvailable
+        }
+      },
       assetDetails: {
         recentAssets: data.assets
           .sort((a, b) => new Date(b.lastActive).getTime() - new Date(a.lastActive).getTime())
