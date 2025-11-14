@@ -5,10 +5,8 @@ export async function GET() {
   try {
     const data = await loadSeedData()
     
-    // Use pre-computed asset-locator data if available, otherwise compute on-demand
-    if (data.assetLocatorData) {
-      return NextResponse.json(data.assetLocatorData)
-    }
+    // Use pre-computed asset-locator data if available, but override categories and stats to ensure correct tagged asset calculations
+    let baseData = data.assetLocatorData
 
     // Fallback: compute asset-locator data on-demand with enhanced utilization analytics (tagged assets only)
     const taggedAssets = data.assets.filter(a => a.tagId)
@@ -411,6 +409,7 @@ export async function GET() {
         }
       })
 
+    // Always compute fresh stats and categories based on tagged assets, but use pre-computed utilization data if available
     const responseData = {
       stats: {
         total: totalAssets,
@@ -420,7 +419,7 @@ export async function GET() {
         underutilized: underutilizedCount,
         avgUtilization
       },
-      utilization: {
+      utilization: baseData?.utilization || {
         departmentUtilization,
         assetTypeUtilization,
         redistributionSuggestions,
@@ -430,10 +429,10 @@ export async function GET() {
         maintenanceImpact,
         movementAlerts: recentMovements
       },
-      monitoredCategories,
-      locationTrends,
-      recordedLocations,
-      flaggedReasons
+      monitoredCategories, // Always use fresh calculation to ensure 100% total
+      locationTrends: baseData?.locationTrends || locationTrends,
+      recordedLocations, // Always use fresh calculation to ensure 100% total
+      flaggedReasons: baseData?.flaggedReasons || flaggedReasons
     }
 
     return NextResponse.json(responseData)
