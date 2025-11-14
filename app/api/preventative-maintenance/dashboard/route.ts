@@ -5,7 +5,9 @@ export async function GET() {
   try {
     const data = await loadSeedData()
     
-    const totalAssets = data.assets.length
+    // Use only tagged assets for preventative maintenance calculations
+    const taggedAssets = data.assets.filter((a: any) => a.tagId)
+    const totalAssets = taggedAssets.length
     const maintenanceTasks = data.maintenanceTasks
     const collected = maintenanceTasks.filter((t) => t.status === "completed").length
     const pending = maintenanceTasks.filter((t) => t.status === "pending" || t.status === "overdue").length

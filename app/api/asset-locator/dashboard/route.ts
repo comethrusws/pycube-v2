@@ -125,8 +125,8 @@ export async function GET() {
       }
     }
 
-    // Top 10 Idle Assets with enhanced details
-    const top10IdleAssets = data.assets
+    // Top 10 Idle Assets with enhanced details (tagged assets only)
+    const top10IdleAssets = taggedAssets
       .filter(a => a.utilization < 30 && a.status === "available")
       .sort((a, b) => a.utilization - b.utilization)
       .slice(0, 10)

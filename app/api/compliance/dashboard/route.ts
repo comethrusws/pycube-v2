@@ -39,9 +39,9 @@ export async function GET() {
       }
     })
     
-    // Generate asset risks for non-compliant assets  
-    const allAssets = data.assets || []
-    const assetRisks = allAssets
+    // Generate asset risks for non-compliant assets (tagged assets only)
+    const taggedAssets = data.assets.filter((a: any) => a.tagId) || []
+    const assetRisks = taggedAssets
       .slice(0, 200)  // More assets to show
       .map((asset: any, index: number) => {
         // Make first 45% of assets non-compliant (deterministic)
@@ -90,7 +90,7 @@ export async function GET() {
       }
     })
     
-    console.log(`Generated ${assetRisks.length} asset risks out of ${allAssets.length} total assets`)
+    console.log(`Generated ${assetRisks.length} asset risks out of ${taggedAssets.length} tagged assets`)
     
     const complianceData = {
       summary: {
