@@ -208,24 +208,72 @@ export interface DashboardData {
       activeGeofences: number 
       violationsToday: number
       avgResponseTime: number
+      // Second row cards
+      highRiskAssets: number
+      complianceScore: number
+      alertsThisWeek: number
+      falsePositiveRate: number
+    }
+    assetInsights: {
+      assetTagged: number
+      assetUntagged: number
+      percentTagged: number
+      assetsNotFound: number
+      assetsInUse: number
+      assetsFound: number
+      zonesNotScannedCount: number
+      recentAssets: Array<{
+        id: string
+        name: string
+        type: string
+        location: string
+        status: string
+        lastActive: string
+      }>
+      topCategories: Array<{
+        name: string
+        count: number
+      }>
+      // Visibility data
+      scanned: number
+      notScanned: number
+      visibilityTrend: Array<{
+        date: string
+        scanned: number
+        notScanned: number
+      }>
     }
     compliance: {
       complianceScore: number
       fullyCompliantAssets: number
       totalCompliantAssets: number
       avgRiskScore: number
+      // Risk Distribution data
+      highRiskAssets: number
+      mediumRiskAssets: number
+      lowRiskAssets: number
     }
     preventativeMaintenance: {
       totalMonitoredAssets: number
       highRiskAssets: number
       pmTasksCompleted: number
       potentialSavings: number
+      // Predictive Maintenance Insights
+      assetsMonitoredPredictive: number
+      highRiskAssetsPredictive: number
+      avgConfidence: number
+      costSavings: number
     }
     assetUtilization: {
       avgUtilization: number
       underutilizedAssets: number
       movementAlerts: number
       idleCriticalAssets: number
+      // Location overview data from asset utilization dashboard
+      totalMonitoredAssets: number
+      assetsToLocate: number
+      totalAssetsLocated: number
+      totalAssetsFlagged: number
     }
     spaceManagement: {
       totalFloors: number

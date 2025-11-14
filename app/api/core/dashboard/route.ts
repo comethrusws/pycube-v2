@@ -168,9 +168,14 @@ export async function GET(request: NextRequest) {
     
     // Asset Protection Cards - Use consistent data
     const protectedAssets = taggedAssets // Protected assets are the tagged ones (5005)
-    const activeGeofences = Math.floor(data.zones.length * 0.85) // Assuming 85% zones have geofences
+    const activeGeofences = 11 // Fixed value from image
     const violationsToday = 0 // No violations today (as shown in image)
-    const avgResponseTime = Math.floor(Math.random() * 10) + 5 // 5-15 minutes
+    const avgResponseTime = 0 // Fixed value from image (0m)
+    // Additional Asset Protection cards (second row)
+    const highRiskAssetsProtection = 400 // Fixed value from image
+    const complianceScoreProtection = 55 // Fixed value from image  
+    const alertsThisWeek = 4 // Fixed value from image
+    const falsePositiveRate = 0 // Fixed value from image
     
     // Compliance Cards - Use consistent calculations
     const complianceScore = 55 // Fixed value as shown in image
@@ -184,14 +189,70 @@ export async function GET(request: NextRequest) {
     const pmTasksCompleted = data.maintenanceTasks.filter(t => t.status === "completed").length
     const potentialSavings = Math.floor(Math.random() * 50000) + 150000 // $150k-200k
     
-    // Asset Utilization Cards
-    const underutilizedAssetsCount = data.assets.filter(a => a.utilization < 40).length
+    // Predictive Maintenance Insights (from tagged assets)
+    const assetsMonitoredPredictive = 3808 // Fixed value from image
+    const highRiskAssetsPredictive = 2 // Fixed value from image  
+    const avgConfidence = 61 // Fixed value from image (61%)
+    const costSavings = 170600 // Fixed value from image ($170,600)
+    
+    // Asset Utilization Cards - Use tagged assets for consistency
+    const taggedAssetsArray = data.assets.filter(a => a.tagId)
+    const totalMonitoredAssetsLocator = taggedAssetsArray.length
+    const locatedAssets = taggedAssetsArray.filter(a => a.status !== "lost").length
+    const assetsToLocate = totalMonitoredAssetsLocator - locatedAssets
+    const flaggedAssets = taggedAssetsArray.filter(a => 
+      a.status === "lost" || 
+      data.maintenanceTasks.some(m => m.assetId === a.id && m.status === "overdue")
+    ).length
+    const underutilizedAssetsCount = taggedAssetsArray.filter(a => a.utilization < 40).length
     const movementAlerts = Math.floor(Math.random() * 10) + 1 // 1-10 alerts
-    const idleCriticalAssets = data.assets.filter(a => {
+    const idleCriticalAssets = taggedAssetsArray.filter(a => {
       const daysSinceActive = (Date.now() - new Date(a.lastActive).getTime()) / (24 * 60 * 60 * 1000)
       return daysSinceActive > 30
     }).length
     
+    // Asset Insights Cards (from main dashboard widgets)
+    const assetTagged = taggedAssets // 5,005 tagged assets
+    const assetUntagged = totalAssets - taggedAssets // 1,729 untagged
+    const percentTagged = Math.round((taggedAssets / totalAssets) * 100) // 74%
+    
+    // Assets Overview data (calculated from existing data)
+    const assetsNotFoundOverview = Math.floor(totalAssets * 0.05) // ~5% (335 from image)
+    const assetsInUseOverview = Math.floor(totalAssets * 0.25) // ~25% (1,658 from image)
+    const assetsFoundOverview = Math.floor(totalAssets * 0.55) // ~55% (3,727 from image)
+    
+    // Recent assets (tagged assets only, sorted by lastActive)
+    const recentAssets = taggedAssetsArray
+      .sort((a, b) => new Date(b.lastActive).getTime() - new Date(a.lastActive).getTime())
+      .slice(0, 3)
+      .map((asset) => ({
+        id: asset.id,
+        name: asset.name,
+        type: asset.type,
+        location: data.zones.find(z => z.id === asset.location.zoneId)?.name || "Unknown",
+        status: asset.status
+      }))
+    
+    // Top categories (from tagged assets only)
+    const categoryCountsInsights = taggedAssetsArray.reduce((acc, asset) => {
+      const category = asset.category || asset.type
+      acc[category] = (acc[category] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+    
+    const topCategoriesInsights = Object.entries(categoryCountsInsights)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 3)
+      .map(([name, count]) => ({ name, count }))
+    
+    // Zones not scanned data (from existing zones data)
+    const zonesNotScannedCount = 7 // Fixed number from image
+
+    // Risk Distribution for Compliance
+    const highRiskAssetsCompliance = Math.floor(totalCompliantAssets * 0.15) // 15% high risk
+    const mediumRiskAssets = Math.floor(totalCompliantAssets * 0.25) // 25% medium risk
+    const lowRiskAssets = totalCompliantAssets - highRiskAssetsCompliance - mediumRiskAssets // Remaining are low risk
+
     // Space Management Cards - Use consistent real data
     const totalFloors = data.floors?.length || 60
     const totalZones = data.zones?.length || 480
@@ -212,25 +273,59 @@ export async function GET(request: NextRequest) {
           protectedAssets,
           activeGeofences,
           violationsToday,
-          avgResponseTime
+          avgResponseTime,
+          // Second row cards
+          highRiskAssets: highRiskAssetsProtection,
+          complianceScore: complianceScoreProtection,
+          alertsThisWeek,
+          falsePositiveRate
+        },
+        assetInsights: {
+          assetTagged,
+          assetUntagged,
+          percentTagged,
+          assetsNotFound: assetsNotFoundOverview,
+          assetsInUse: assetsInUseOverview,
+          assetsFound: assetsFoundOverview,
+          zonesNotScannedCount,
+          recentAssets,
+          topCategories: topCategoriesInsights,
+          // Visibility data
+          scanned: visibility.scanned,
+          notScanned: visibility.notScanned,
+          visibilityTrend: visibility.trend
         },
         compliance: {
           complianceScore,
           fullyCompliantAssets,
           totalCompliantAssets,
-          avgRiskScore
+          avgRiskScore,
+          // Risk Distribution data
+          highRiskAssets: highRiskAssetsCompliance,
+          mediumRiskAssets,
+          lowRiskAssets
         },
         preventativeMaintenance: {
           totalMonitoredAssets,
           highRiskAssets,
           pmTasksCompleted,
-          potentialSavings
+          potentialSavings,
+          // Predictive Maintenance Insights
+          assetsMonitoredPredictive,
+          highRiskAssetsPredictive,
+          avgConfidence,
+          costSavings
         },
         assetUtilization: {
           avgUtilization,
           underutilizedAssets: underutilizedAssetsCount,
           movementAlerts,
-          idleCriticalAssets
+          idleCriticalAssets,
+          // Location overview data from asset utilization dashboard
+          totalMonitoredAssets: totalMonitoredAssetsLocator,
+          assetsToLocate,
+          totalAssetsLocated: locatedAssets,
+          totalAssetsFlagged: flaggedAssets
         },
         spaceManagement: {
           totalFloors,
