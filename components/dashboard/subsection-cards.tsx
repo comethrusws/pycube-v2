@@ -58,22 +58,22 @@ const DashboardCard = ({
   trend?: string
 }) => (
   <div 
-    className="bg-[#003d5c] rounded-xl p-6 text-white transition-all duration-200 hover:shadow-lg cursor-pointer transform hover:-translate-y-1 hover:bg-[#004a6b]"
+    className="bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 hover:shadow-lg hover:border-[#0d7a8c] cursor-pointer transform hover:-translate-y-1"
     onClick={onClick}
   >
     <div className="flex items-center justify-between mb-3">
-      <Icon className="w-6 h-6 text-white/80" />
+      <Icon className="w-6 h-6 text-[#0d7a8c]" />
       {trend && (
-        <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
+        <span className="text-xs bg-[#0d7a8c]/10 text-[#0d7a8c] px-2 py-1 rounded-full">
           {trend}
         </span>
       )}
     </div>
-    <p className="text-sm font-medium mb-1 text-white/90">
+    <p className="text-sm font-medium mb-1 text-[#001f3f]">
       {title}
     </p>
-    <p className="text-xs text-white/70 mb-4">{subtitle}</p>
-    <p className="text-3xl font-light text-white">
+    <p className="text-xs text-gray-600 mb-4">{subtitle}</p>
+    <p className="text-3xl font-light text-[#001f3f]">
       {typeof value === 'number' ? value.toLocaleString() : value}
     </p>
   </div>
