@@ -435,33 +435,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
           />
         </div>
         {/* Second Row - Risk Distribution */}
-        <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-md font-light text-[#001f3f]">Risk Distribution (Non-compliant Assets)</h3>
-        </div>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Risk Distribution Cards */}
-          <DashboardCard
-            title="High Risk Assets"
-            value={data.compliance.highRiskAssets}
-            subtitle="Critical Issues"
-            icon={AlertTriangle}
-            onClick={() => router.push('/compliance')}
-          />
-          <DashboardCard
-            title="Medium Risk Assets"
-            value={data.compliance.mediumRiskAssets}
-            subtitle="Moderate Issues"
-            icon={AlertTriangle}
-            onClick={() => router.push('/compliance')}
-          />
-          <DashboardCard
-            title="Low Risk Assets"
-            value={data.compliance.lowRiskAssets}
-            subtitle="Minor Issues"
-            icon={CheckCircle}
-            onClick={() => router.push('/compliance')}
-          />
-          
           {/* Risk Distribution Pie Chart Widget */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <h3 className="text-sm font-light uppercase tracking-wide mb-6" style={{ color: "#001f3f" }}>
