@@ -254,28 +254,28 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
             value={data.assetUtilization.totalMonitoredAssets}
             subtitle="Active Tracking"
             icon={Eye}
-            onClick={() => router.push('/asset-utilization')}
+            onClick={() => router.push('/asset-utilization?tab=location')}
           />
           <DashboardCard
             title="Assets to be Located"
             value={data.assetUtilization.assetsToLocate}
             subtitle="Pending Location"
             icon={MapPin}
-            onClick={() => router.push('/asset-utilization')}
+            onClick={() => router.push('/asset-utilization?tab=location')}
           />
           <DashboardCard
             title="Total Assets Located"
             value={data.assetUtilization.totalAssetsLocated}
             subtitle="Successfully Tracked"
             icon={CheckCircle}
-            onClick={() => router.push('/asset-utilization')}
+            onClick={() => router.push('/asset-utilization?tab=location')}
           />
           <DashboardCard
             title="Total Assets Flagged"
             value={data.assetUtilization.totalAssetsFlagged}
             subtitle="Need Attention"
             icon={AlertTriangle}
-            onClick={() => router.push('/asset-utilization')}
+            onClick={() => router.push('/asset-utilization?tab=location')}
           />
         </div>
       </div>

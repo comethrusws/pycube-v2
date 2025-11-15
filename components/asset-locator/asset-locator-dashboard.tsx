@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { 
   MapPin, Users, Building, AlertTriangle, CheckCircle, Clock, 
   TrendingUp, TrendingDown, RefreshCw, ExternalLink, PenToolIcon,
@@ -338,6 +339,7 @@ export default function AssetLocatorDashboard() {
     flaggedReasons: { name: string; value: number; color: string }[]
   }>()
 
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"overview" | "utilization">("utilization")
   const [selectedAsset, setSelectedAsset] = useState<any>(null)
@@ -362,6 +364,14 @@ export default function AssetLocatorDashboard() {
         setIsLoading(false)
       })
   }, [])
+
+  // Handle URL tab parameter
+  useEffect(() => {
+    const tabParam = searchParams.get("tab")
+    if (tabParam === "location") {
+      setActiveTab("overview")
+    }
+  }, [searchParams])
 
   const monitoredCategories = data?.monitoredCategories ?? []
   const locationTrends = data?.locationTrends ?? []
