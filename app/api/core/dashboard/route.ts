@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
     // Compliance Cards - Use consistent calculations
     const complianceScore = 55 // Fixed value as shown in image
     const fullyCompliantAssets = 2743 // Fixed value as shown in image
-    const totalCompliantAssets = totalAssets // Same as total assets
+    const totalCompliantAssets = taggedAssets // Use tagged assets (5,005) not total assets
     const avgRiskScore = 44 // Fixed average risk score
     
     // Preventative Maintenance Cards
