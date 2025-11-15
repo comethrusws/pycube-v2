@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
     const avgRiskScore = 44 // Fixed average risk score
     
     // Preventative Maintenance Cards
-    const totalMonitoredAssets = Math.floor(data.assets.length * 0.76) // 76% monitored
+    const totalMonitoredAssets = taggedAssets // Use tagged assets (5,005) for consistency
     const highRiskAssets = data.assets.filter(a => new Date(a.lastActive) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length
     const pmTasksCompleted = data.maintenanceTasks.filter(t => t.status === "completed").length
     const potentialSavings = Math.floor(Math.random() * 50000) + 150000 // $150k-200k
