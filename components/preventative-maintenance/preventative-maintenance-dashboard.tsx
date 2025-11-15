@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import {
   BarChart,
   Bar,
@@ -36,6 +37,7 @@ const StatCard = ({ title, value, color, textColor }: {
 )
 
 export default function PreventativeMaintenanceDashboard() {
+  const searchParams = useSearchParams()
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -65,6 +67,14 @@ export default function PreventativeMaintenanceDashboard() {
 
     fetchData()
   }, [])
+
+  // Handle URL tab parameter
+  useEffect(() => {
+    const tabParam = searchParams.get("tab")
+    if (tabParam === "predictive") {
+      setActiveTab("insights")
+    }
+  }, [searchParams])
 
   if (loading) {
     return (

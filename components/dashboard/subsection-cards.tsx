@@ -701,28 +701,28 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
             value={data.preventativeMaintenance.assetsMonitoredPredictive}
             subtitle="AI prediction enabled"
             icon={Zap}
-            onClick={() => router.push('/preventative-maintenance')}
+            onClick={() => router.push('/preventative-maintenance?tab=predictive')}
           />
           <DashboardCard
             title="High Risk Assets"
             value={data.preventativeMaintenance.highRiskAssetsPredictive}
             subtitle="Requires immediate attention"
             icon={AlertTriangle}
-            onClick={() => router.push('/preventative-maintenance')}
+            onClick={() => router.push('/preventative-maintenance?tab=predictive')}
           />
           <DashboardCard
             title="Avg Confidence"
             value={`${data.preventativeMaintenance.avgConfidence}%`}
             subtitle="Prediction accuracy"
             icon={TrendingUp}
-            onClick={() => router.push('/preventative-maintenance')}
+            onClick={() => router.push('/preventative-maintenance?tab=predictive')}
           />
           <DashboardCard
             title="Cost Savings"
             value={`$${data.preventativeMaintenance.costSavings.toLocaleString()}`}
             subtitle="Prevented failures"
             icon={DollarSign}
-            onClick={() => router.push('/preventative-maintenance')}
+            onClick={() => router.push('/preventative-maintenance?tab=predictive')}
           />
         </div>
       </div>
