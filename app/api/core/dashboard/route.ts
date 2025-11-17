@@ -209,10 +209,19 @@ export async function GET(request: NextRequest) {
     }
     
     const movementAlerts = Math.floor(Math.random() * 10) + 1 // 1-10 alerts
-    const idleCriticalAssets = taggedAssetsArray.filter(a => {
-      const daysSinceActive = (Date.now() - new Date(a.lastActive).getTime()) / (24 * 60 * 60 * 1000)
-      return daysSinceActive > 30
-    }).length
+    
+    // Calculate idle critical assets consistently with Asset Utilization dashboard
+    // First get top 10 idle assets, then filter for > 30 days idle
+    const top10IdleAssets = taggedAssetsArray
+      .filter(a => a.utilization < 20 && a.status === "available")
+      .sort((a, b) => a.utilization - b.utilization)
+      .slice(0, 10)
+      .map(asset => ({
+        ...asset,
+        idleDuration: Math.floor((Date.now() - new Date(asset.lastActive).getTime()) / (24 * 60 * 60 * 1000))
+      }))
+    
+    const idleCriticalAssets = top10IdleAssets.filter(a => a.idleDuration > 30).length
     
     // Asset Insights Cards (from main dashboard widgets)
     const assetTagged = taggedAssets // 5,005 tagged assets
