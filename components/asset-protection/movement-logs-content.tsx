@@ -499,7 +499,7 @@ export default function MovementLogsContent() {
               <p className="text-xl font-semibold text-red-600">
                 {(((data?.summary.riskBreakdown.critical || 0) + (data?.summary.riskBreakdown.high || 0)) / (data?.summary.totalMovements || 1) * 100).toFixed(1)}%
               </p>
-              <p className="text-xs text-gray-500 font-light">High Risk Events</p>
+              <p className="text-xs text-gray-500 font-light">Total Risk Events</p>
             </div>
             <div>
               <p className="text-xl font-semibold text-[#0d7a8c]">
