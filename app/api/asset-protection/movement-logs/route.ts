@@ -61,18 +61,23 @@ export async function GET(request: NextRequest) {
       // Exactly 59 unauthorized movements, rest are authorized
       const authorized = !unauthorizedIndices.has(index)
       
-      // Realistic risk levels - weighted towards lower risk
-      const riskWeights = [0.65, 0.25, 0.08, 0.02] // low, medium, high, critical
-      const riskLevels = ['low', 'medium', 'high', 'critical']
-      const riskRandom = Math.random()
+      // Risk levels based on authorization status
       let riskLevel = 'low'
-      let cumulative = 0
-      for (let i = 0; i < riskWeights.length; i++) {
-        cumulative += riskWeights[i]
-        if (riskRandom < cumulative) {
-          riskLevel = riskLevels[i]
-          break
-        }
+      if (!authorized) {
+        // Unauthorized movements get higher risk levels
+        // Distribute the 59 unauthorized movements across risk levels
+        const unauthorizedIndex = Array.from(unauthorizedIndices).indexOf(index)
+        if (unauthorizedIndex < 15) riskLevel = 'critical'        // ~15 critical (25%)
+        else if (unauthorizedIndex < 30) riskLevel = 'high'       // ~15 high (25%) 
+        else if (unauthorizedIndex < 50) riskLevel = 'medium'     // ~20 medium (34%)
+        else riskLevel = 'low'                                    // ~9 low (16%)
+      } else {
+        // Authorized movements get lower risk levels (weighted towards low)
+        const riskRandom = Math.random()
+        if (riskRandom < 0.75) riskLevel = 'low'          // 75% low risk
+        else if (riskRandom < 0.95) riskLevel = 'medium'  // 20% medium risk  
+        else if (riskRandom < 0.99) riskLevel = 'high'    // 4% high risk
+        else riskLevel = 'critical'                       // 1% critical risk
       }
       
       return {
