@@ -462,9 +462,9 @@ function AssetProtectionDashboard() {
         <StatCard
           icon={Bell}
           label="Alerts This Week"
-          value={data?.metrics.alertsGenerated.thisWeek || 0}
+          value={4}
           color="blue"
-          onClick={() => toast(`${data?.metrics.alertsGenerated.thisWeek} alerts generated this week`, { 
+          onClick={() => toast(`${4} alerts generated this week`, { 
             icon: 'ℹ️',
             duration: 3000 
           })}
