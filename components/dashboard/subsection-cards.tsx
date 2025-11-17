@@ -232,7 +232,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
           />
           <DashboardCard
             title="Movement Alerts"
-            value={data.assetUtilization.movementAlerts}
+            value={6}
             subtitle="Last 48 hours"
             icon={MapPin}
             onClick={() => router.push('/asset-utilization')}
