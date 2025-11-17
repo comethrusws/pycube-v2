@@ -17,16 +17,6 @@ export async function GET(request: NextRequest) {
 
     // Calculate utilization metrics
     const avgUtilization = Math.round(data.assets.reduce((sum, a) => sum + a.utilization, 0) / totalAssets)
-    const underutilizedAssets = data.assets.filter(a => a.utilization < 40).length
-
-    const stats = {
-      totalAssets,
-      totalFacilities: data.facilities.length,
-      totalUsers: data.users.length,
-      categories: [...new Set(data.assets.map((a) => a.category || a.type))].length,
-      avgUtilization,
-      underutilizedAssets,
-    }
 
     const tagging = {
       tagged: taggedAssets,
@@ -205,6 +195,17 @@ export async function GET(request: NextRequest) {
       data.maintenanceTasks.some(m => m.assetId === a.id && m.status === "overdue")
     ).length
     const underutilizedAssetsCount = taggedAssetsArray.filter(a => a.utilization < 40).length
+    
+    // Stats object using consistent tagged asset calculations
+    const stats = {
+      totalAssets,
+      totalFacilities: data.facilities.length,
+      totalUsers: data.users.length,
+      categories: [...new Set(data.assets.map((a) => a.category || a.type))].length,
+      avgUtilization,
+      underutilizedAssets: underutilizedAssetsCount, // Use tagged assets calculation
+    }
+    
     const movementAlerts = Math.floor(Math.random() * 10) + 1 // 1-10 alerts
     const idleCriticalAssets = taggedAssetsArray.filter(a => {
       const daysSinceActive = (Date.now() - new Date(a.lastActive).getTime()) / (24 * 60 * 60 * 1000)
