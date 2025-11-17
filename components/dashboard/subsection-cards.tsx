@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Shield, BarChart3, Wrench, TrendingUp, Building2, Target, AlertTriangle, Clock, CheckCircle, Users, MapPin, Eye, Search, Activity, Zap, DollarSign,  } from "lucide-react"
+import { Shield, BarChart3, Wrench, TrendingUp, Building2, Target, AlertTriangle, Clock, CheckCircle, Users, MapPin, Eye, Search, Activity, Zap, DollarSign, TrendingDown, ZapOff,  } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, CartesianGrid, Line, XAxis, YAxis } from 'recharts'
 import Link from "next/link"
 
@@ -199,7 +199,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
             title="False Positive Rate"
             value={`${data.assetProtection.falsePositiveRate}%`}
             subtitle="System Accuracy"
-            icon={CheckCircle}
+            icon={ZapOff}
             onClick={() => router.push('/asset-protection')}
           />
         </div>
@@ -226,7 +226,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
             title="Underutilized Assets"
             value={data.assetUtilization.underutilizedAssets}
             subtitle="< 40% utilization"
-            icon={TrendingUp}
+            icon={TrendingDown}
             onClick={() => router.push('/asset-utilization')}
           />
           <DashboardCard
