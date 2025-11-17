@@ -185,10 +185,13 @@ export async function GET(request: NextRequest) {
       ...movementLogs.map((l: any) => l.toZoneId)
     ]).size
     
-    const riskBreakdown = movementLogs.reduce((acc: any, log: any) => {
-      acc[log.riskLevel] = (acc[log.riskLevel] || 0) + 1
-      return acc
-    }, {})
+    // Risk breakdown should only include unauthorized movements (actual risk events)
+    const riskBreakdown = movementLogs
+      .filter((log: any) => !log.authorized) // Only unauthorized movements are risk events
+      .reduce((acc: any, log: any) => {
+        acc[log.riskLevel] = (acc[log.riskLevel] || 0) + 1
+        return acc
+      }, {})
     
     return NextResponse.json({
       logs: paginatedLogs,

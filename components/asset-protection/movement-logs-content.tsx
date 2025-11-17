@@ -456,7 +456,7 @@ export default function MovementLogsContent() {
 
       {/* Risk Breakdown - Minimal Design */}
       <div className="bg-white/50 backdrop-blur-sm rounded-3xl border border-[#001f3f]/10 p-6 shadow-sm">
-        <h3 className="text-lg font-light text-[#001f3f] mb-6">Risk Distribution</h3>
+        <h3 className="text-lg font-light text-[#001f3f] mb-6">Risk Distribution (Unauthorized Movements Only)</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           {Object.entries(data?.summary.riskBreakdown || {}).map(([level, count]) => {
