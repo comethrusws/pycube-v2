@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
     
     // Asset Protection Cards - Use consistent data
     const protectedAssets = taggedAssets // Protected assets are the tagged ones (5005)
-    const activeGeofences = 11 // Fixed value from image
+    const activeGeofences = 8 // Fixed value from image
     const violationsToday = 0 // No violations today (as shown in image)
     const avgResponseTime = 0 // Fixed value from image (0m)
     // Additional Asset Protection cards (second row)
