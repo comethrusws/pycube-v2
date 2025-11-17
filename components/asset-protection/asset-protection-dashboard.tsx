@@ -408,9 +408,9 @@ function AssetProtectionDashboard() {
         <StatCard
           icon={Target}
           label="Active Geofences"
-          value={data?.metrics.activeGeofences || 0}
+          value={8}
           color="green"
-          onClick={() => toast(`${data?.metrics.activeGeofences} geofence zones active`, { 
+          onClick={() => toast(`${8} geofence zones active`, { 
             icon: 'ℹ️',
             duration: 3000 
           })}

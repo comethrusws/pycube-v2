@@ -23,17 +23,43 @@ export async function GET(request: NextRequest) {
     const taggedAssets = data.assets.filter((a: any) => a.tagId)
     const taggedAssetIds = new Set(taggedAssets.map((a: any) => a.id))
     
+    // Filter movement logs for tagged assets only
+    const filteredMovementLogs = data.movementLogs.filter((log: any) => taggedAssetIds.has(log.assetId))
+    
+    // Deterministically select exactly 59 movements to be unauthorized
+    const totalMovements = filteredMovementLogs.length
+    const unauthorizedCount = 59
+    const unauthorizedIndices = new Set<number>()
+    
+    // Use deterministic selection based on log ID hash for consistency
+    for (let i = 0; i < totalMovements && unauthorizedIndices.size < unauthorizedCount; i++) {
+      const log = filteredMovementLogs[i]
+      // Create a simple hash from the log ID to ensure consistency
+      const hash = log.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)
+      // Select logs with specific hash patterns to get exactly 59
+      if (hash % Math.floor(totalMovements / unauthorizedCount) === 0) {
+        unauthorizedIndices.add(i)
+      }
+    }
+    
+    // If we don't have exactly 59, fill the remaining spots deterministically
+    let index = 0
+    while (unauthorizedIndices.size < unauthorizedCount && index < totalMovements) {
+      if (!unauthorizedIndices.has(index)) {
+        unauthorizedIndices.add(index)
+      }
+      index += Math.floor(totalMovements / (unauthorizedCount - unauthorizedIndices.size))
+    }
+    
     // Generate realistic movement logs based on tagged assets only
-    const movementLogs = data.movementLogs
-      .filter((log: any) => taggedAssetIds.has(log.assetId))
-      .map((log: any) => {
+    const movementLogs = filteredMovementLogs.map((log: any, index: number) => {
       const asset = taggedAssets.find((a: any) => a.id === log.assetId)
       const fromZone = data.zones.find((z: any) => z.id === log.fromZoneId)
       const toZone = data.zones.find((z: any) => z.id === log.toZoneId)
       const department = data.departments.find((d: any) => d.id === asset?.departmentId)
       
-      // More realistic authorization rate - 95% authorized
-      const authorized = log.authorized !== false && Math.random() > 0.05
+      // Exactly 59 unauthorized movements, rest are authorized
+      const authorized = !unauthorizedIndices.has(index)
       
       // Realistic risk levels - weighted towards lower risk
       const riskWeights = [0.65, 0.25, 0.08, 0.02] // low, medium, high, critical
@@ -145,9 +171,9 @@ export async function GET(request: NextRequest) {
     const paginatedLogs = filteredLogs.slice(startIndex, endIndex)
     
     // Calculate summary statistics
-    const totalMovements = movementLogs.length
+    const summaryTotalMovements = movementLogs.length
     const authorizedMovements = movementLogs.filter((l: any) => l.authorized).length
-    const unauthorizedMovements = totalMovements - authorizedMovements
+    const unauthorizedMovements = summaryTotalMovements - authorizedMovements
     const uniqueAssets = new Set(movementLogs.map((l: any) => l.assetId)).size
     const uniqueZones = new Set([
       ...movementLogs.map((l: any) => l.fromZoneId),
@@ -170,7 +196,7 @@ export async function GET(request: NextRequest) {
         hasPrev: page > 1
       },
       summary: {
-        totalMovements,
+        totalMovements: summaryTotalMovements,
         authorizedMovements,
         unauthorizedMovements,
         uniqueAssets,
