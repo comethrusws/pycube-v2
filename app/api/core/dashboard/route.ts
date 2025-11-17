@@ -50,10 +50,12 @@ export async function GET(request: NextRequest) {
 
     const recentlyActive = data.assets.filter((a) => new Date(a.lastActive) > recentPeriod)
 
+    // For Asset Search & Retrieval visibility, use tagged assets as "scanned"
+    // since they represent assets that have been identified and tracked
     const visibility = {
-      scanned: recentlyActive.length,
-      notScanned: totalAssets - recentlyActive.length,
-      trend: generateVisibilityTrend(data.movementLogs, totalAssets, range),
+      scanned: taggedAssets, // Tagged assets represent scanned/tracked assets
+      notScanned: totalAssets - taggedAssets, // Untagged assets are not scanned
+      trend: generateVisibilityTrend(data.movementLogs, taggedAssets, range),
     }
 
     // Real zones not scanned (zones with no recent movement based on selected range)
