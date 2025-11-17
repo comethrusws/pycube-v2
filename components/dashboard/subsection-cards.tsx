@@ -138,7 +138,11 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         <div className="flex items-center gap-3 mb-6">
           <h2 className="text-3xl font-light text-[#001f3f]">Asset Protection</h2>
         </div>
-        {/* First Row */}
+        {/* First Row */}        
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-[18px] font-light text-[#001f3f]">Geofencing</h2>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <DashboardCard
             title="Protected Assets"
@@ -172,6 +176,10 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
           />
         </div>
         {/* Second Row */}
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-[18px] font-light text-[#001f3f]">Movement Stats</h2>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <DashboardCard
             title="High-Risk Assets"

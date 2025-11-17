@@ -325,7 +325,7 @@ export default function MovementLogsContent() {
         />
         <StatCard
           icon={TrendingUp}
-          label="Unique Assets"
+          label="Total Protected Assets"
           value={data?.summary.uniqueAssets || 0}
           color="purple"
         />
