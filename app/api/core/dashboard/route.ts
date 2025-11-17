@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
     const totalMonitoredAssets = 3808 // Assets under PM program (consistent with predictive monitoring)
     const highRiskAssets = data.assets.filter(a => new Date(a.lastActive) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length
     const pmTasksCompleted = data.maintenanceTasks.filter(t => t.status === "completed").length
-    const potentialSavings = Math.floor(Math.random() * 50000) + 150000 // $150k-200k
+    const potentialSavings = 170600 // Fixed value consistent with Key Insights ($170,600)
     
     // Predictive Maintenance Insights (from tagged assets)
     const assetsMonitoredPredictive = 3808 // Fixed value from image
