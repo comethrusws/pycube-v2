@@ -307,19 +307,19 @@ export default function MovementLogsContent() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           icon={Activity}
-          label="Total Movements"
+          label="Total Movements (Cumulative)"
           value={data?.summary.totalMovements.toLocaleString() || 0}
           color="blue"
         />
         <StatCard
           icon={Shield}
-          label="Authorized"
+          label="Authorized (All Time)"
           value={data?.summary.authorizedMovements.toLocaleString() || 0}
           color="green"
         />
         <StatCard
           icon={AlertTriangle}
-          label="Unauthorized"
+          label="Unauthorized (All Time)"
           value={data?.summary.unauthorizedMovements.toLocaleString() || 0}
           color="red"
         />
