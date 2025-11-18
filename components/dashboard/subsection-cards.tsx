@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Shield, BarChart3, Wrench, TrendingUp, Building2, Target, AlertTriangle, Clock, CheckCircle, Users, MapPin, Eye, Search, Activity, Zap, DollarSign, TrendingDown, ZapOff,  } from "lucide-react"
+import { Shield, BarChart3, Wrench, TrendingUp, Building2, Target, AlertTriangle, Clock, CheckCircle, Users, MapPin, Eye, Search, Activity, Zap, DollarSign, TrendingDown, ZapOff, ChevronRight,  } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, CartesianGrid, Line, XAxis, YAxis } from 'recharts'
 import Link from "next/link"
 
@@ -135,9 +135,14 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
     <div className="space-y-8">
       {/* Asset Protection Section */}
       <div>
-        <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-3xl font-light text-[#001f3f]">Asset Protection</h2>
+        <Link href="/asset-protection">
+        <div className="flex items-center gap-1 mb-6 group cursor-pointer w-fit">
+          <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
+            Asset Protection
+          </h2>
+          <ChevronRight className="w-7 h-7 text-[#2e8bcb] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
         </div>
+        </Link>
         {/* First Row */}        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <DashboardCard
@@ -208,13 +213,21 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
       
       {/* Asset Utilization Section */}
       <div>
-        <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-3xl font-light text-[#001f3f]">Asset Utilization</h2>
+        <Link href="/asset-utilization">
+        <div className="flex items-center gap-1 mb-6 group cursor-pointer w-fit">
+          <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
+            Asset Utilization
+          </h2>
+          <ChevronRight className="w-7 h-7 text-[#2e8bcb] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
         </div>
+        </Link>
+
         {/* Utilization Analytics Row */}
-        <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-[18px] font-light text-[#001f3f]">Utilization</h2>
+        <Link href="/asset-utilization">
+        <div className="flex items-center gap-2 cursor-pointer mb-4">
+          <h2 className="text-[18px] font-light  text-[#001f3f] hover:text-[#2e8bcb] hover:underline hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">Utilization</h2>
         </div>
+        </Link>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <DashboardCard
             title="Average Utilization"
@@ -245,9 +258,11 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
             onClick={() => router.push('/asset-utilization')}
           />
         </div>
-         <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-[18px] font-light text-[#001f3f]">Location</h2>
+        <Link href="/asset-utilization?tab=location">
+         <div className="flex items-center cursor-pointer gap-2 mb-4">
+          <h2 className="text-[18px] font-light text-[#001f3f] hover:text-[#2e8bcb] hover:underline hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">Location</h2>
         </div>
+        </Link>
         {/* Location Overview Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <DashboardCard
@@ -283,9 +298,15 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
 
       {/* Asset Search and Retrieval Section */}
       <div>
-        <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-3xl font-light text-[#001f3f]">Asset Search & Retrieval</h2>
+        <Link href="/movile/asset-search">
+        <div className="flex items-center gap-1 mb-6 group cursor-pointer w-fit">
+          <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
+            Asset Search & Retrieval
+          </h2>
+          <ChevronRight className="w-7 h-7 text-[#2e8bcb] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
         </div>
+        </Link>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Asset Tagged Widget */}
           <Link href="/mobile/asset-search">
@@ -549,9 +570,14 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
 
       {/* Compliance & Risk Section */}
       <div>
-        <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-3xl font-light text-[#001f3f]">Compliance & Risk</h2>
+        <Link href="/compliance">
+        <div className="flex items-center gap-1 mb-6 group cursor-pointer w-fit">
+          <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
+            Compliance & Risk
+          </h2>
+          <ChevronRight className="w-7 h-7 text-[#2e8bcb] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
         </div>
+        </Link>
         {/* First Row - Main Compliance Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <DashboardCard
@@ -655,12 +681,20 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
 
       {/* Preventative Maintenance Section */}
       <div>
-        <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-3xl font-light text-[#001f3f]">Preventative Maintenance</h2>
+        <Link href="/asset-utilization">
+        <div className="flex items-center gap-1 mb-6 group cursor-pointer w-fit">
+          <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
+            Preventative Maintenance
+          </h2>
+          <ChevronRight className="w-7 h-7 text-[#2e8bcb] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
         </div>
+        </Link>
+
+        <Link href="/preventative-maintenance">
         <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-[18px] font-light text-[#001f3f]">Overview</h2>
+          <h2 className="text-[18px] font-light text-[#001f3f] hover:text-[#2e8bcb] hover:underline hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">Overview</h2>
         </div>
+        </Link>
         {/* First Row - Regular Maintenance Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <DashboardCard
@@ -693,9 +727,11 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
           />
         </div>
         {/* Second Row - Predictive Maintenance Insights */}
+        <Link href="/preventative-maintenance?tab=predictive">
         <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-[18px] font-light text-[#001f3f]">Key Insights</h2>
+          <h2 className="text-[18px] font-light text-[#001f3f] hover:text-[#2e8bcb] hover:underline hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">Key Insights</h2>
         </div>
+        </Link>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <DashboardCard
             title="Assets Monitored"
