@@ -140,7 +140,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
           <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
             Asset Protection
           </h2>
-          <ChevronRight className="w-7 h-7 text-[#2e8bcb] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+          <ChevronRight className="w-7 h-7 text-[#2e8bcb] group-hover:opacity-100 transition-opacity duration-200" />
         </div>
         </Link>
         {/* First Row */}        
@@ -218,7 +218,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
           <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
             Asset Utilization
           </h2>
-          <ChevronRight className="w-7 h-7 text-[#2e8bcb] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+          <ChevronRight className="w-7 h-7 text-[#2e8bcb] group-hover:opacity-100 transition-opacity duration-200" />
         </div>
         </Link>
 
@@ -303,7 +303,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
           <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
             Asset Search & Retrieval
           </h2>
-          <ChevronRight className="w-7 h-7 text-[#2e8bcb] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+          <ChevronRight className="w-7 h-7 text-[#2e8bcb] group-hover:opacity-100 transition-opacity duration-200" />
         </div>
         </Link>
 
@@ -575,7 +575,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
           <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
             Compliance & Risk
           </h2>
-          <ChevronRight className="w-7 h-7 text-[#2e8bcb] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+          <ChevronRight className="w-7 h-7 text-[#2e8bcb] group-hover:opacity-100 transition-opacity duration-200" />
         </div>
         </Link>
         {/* First Row - Main Compliance Metrics */}
@@ -686,7 +686,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
           <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
             Preventative Maintenance
           </h2>
-          <ChevronRight className="w-7 h-7 text-[#2e8bcb] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+          <ChevronRight className="w-7 h-7 text-[#2e8bcb] group-hover:opacity-100 transition-opacity duration-200" />
         </div>
         </Link>
 
