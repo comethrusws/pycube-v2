@@ -135,8 +135,8 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
     <div className="space-y-8">
       {/* Asset Protection Section */}
       <div>
-        <Link href="/asset-protection">
-        <div className="flex items-center gap-1 mb-6 group cursor-pointer w-fit">
+        <Link href="/asset-protection" className="group">
+        <div className="flex items-center gap-1 mb-6 cursor-pointer w-fit hover:bg-gray-50/50 p-2 -m-2 rounded-lg transition-all duration-200">
           <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
             Asset Protection
           </h2>
@@ -213,8 +213,8 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
       
       {/* Asset Utilization Section */}
       <div>
-        <Link href="/asset-utilization">
-        <div className="flex items-center gap-1 mb-6 group cursor-pointer w-fit">
+        <Link href="/asset-utilization" className="group">
+        <div className="flex items-center gap-1 mb-6 cursor-pointer w-fit hover:bg-gray-50/50 p-2 -m-2 rounded-lg transition-all duration-200">
           <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
             Asset Utilization
           </h2>
@@ -223,9 +223,9 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         </Link>
 
         {/* Utilization Analytics Row */}
-        <Link href="/asset-utilization">
-        <div className="flex items-center gap-2 cursor-pointer mb-4">
-          <h2 className="text-[18px] font-light  text-[#001f3f] hover:text-[#2e8bcb] hover:underline hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">Utilization</h2>
+        <Link href="/asset-utilization" className="group">
+        <div className="flex items-center gap-2 cursor-pointer mb-4 hover:bg-gray-50/50 p-2 -m-2 rounded-lg transition-all duration-200 w-fit">
+          <h2 className="text-[18px] font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">Utilization</h2>
         </div>
         </Link>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -258,9 +258,9 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
             onClick={() => router.push('/asset-utilization')}
           />
         </div>
-        <Link href="/asset-utilization?tab=location">
-         <div className="flex items-center cursor-pointer gap-2 mb-4">
-          <h2 className="text-[18px] font-light text-[#001f3f] hover:text-[#2e8bcb] hover:underline hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">Location</h2>
+        <Link href="/asset-utilization?tab=location" className="group">
+         <div className="flex items-center cursor-pointer gap-2 mb-4 hover:bg-gray-50/50 p-2 -m-2 rounded-lg transition-all duration-200 w-fit">
+          <h2 className="text-[18px] font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">Location</h2>
         </div>
         </Link>
         {/* Location Overview Row */}
@@ -298,8 +298,8 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
 
       {/* Asset Search and Retrieval Section */}
       <div>
-        <Link href="/movile/asset-search">
-        <div className="flex items-center gap-1 mb-6 group cursor-pointer w-fit">
+        <Link href="/movile/asset-search" className="group">
+        <div className="flex items-center gap-1 mb-6 cursor-pointer w-fit hover:bg-gray-50/50 p-2 -m-2 rounded-lg transition-all duration-200">
           <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
             Asset Search & Retrieval
           </h2>
@@ -570,8 +570,8 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
 
       {/* Compliance & Risk Section */}
       <div>
-        <Link href="/compliance">
-        <div className="flex items-center gap-1 mb-6 group cursor-pointer w-fit">
+        <Link href="/compliance" className="group">
+        <div className="flex items-center gap-1 mb-6 cursor-pointer w-fit hover:bg-gray-50/50 p-2 -m-2 rounded-lg transition-all duration-200">
           <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
             Compliance & Risk
           </h2>
@@ -681,8 +681,8 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
 
       {/* Preventative Maintenance Section */}
       <div>
-        <Link href="/asset-utilization">
-        <div className="flex items-center gap-1 mb-6 group cursor-pointer w-fit">
+        <Link href="/asset-utilization" className="group">
+        <div className="flex items-center gap-1 mb-6 cursor-pointer w-fit hover:bg-gray-50/50 p-2 -m-2 rounded-lg transition-all duration-200">
           <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
             Preventative Maintenance
           </h2>
@@ -690,9 +690,9 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
         </div>
         </Link>
 
-        <Link href="/preventative-maintenance">
-        <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-[18px] font-light text-[#001f3f] hover:text-[#2e8bcb] hover:underline hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">Overview</h2>
+        <Link href="/preventative-maintenance" className="group">
+        <div className="flex items-center gap-2 mb-4 hover:bg-gray-50/50 p-2 -m-2 rounded-lg transition-all duration-200 w-fit">
+          <h2 className="text-[18px] font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">Overview</h2>
         </div>
         </Link>
         {/* First Row - Regular Maintenance Metrics */}
@@ -727,9 +727,9 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
           />
         </div>
         {/* Second Row - Predictive Maintenance Insights */}
-        <Link href="/preventative-maintenance?tab=predictive">
-        <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-[18px] font-light text-[#001f3f] hover:text-[#2e8bcb] hover:underline hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">Key Insights</h2>
+        <Link href="/preventative-maintenance?tab=predictive" className="group">
+        <div className="flex items-center gap-2 mb-4 hover:bg-gray-50/50 p-2 -m-2 rounded-lg transition-all duration-200 w-fit">
+          <h2 className="text-[18px] font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">Key Insights</h2>
         </div>
         </Link>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
