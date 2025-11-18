@@ -300,7 +300,7 @@ export default function SubsectionCards({ data }: SubsectionCardsProps) {
 
       {/* Asset Search and Retrieval Section */}
       <div>
-        <Link href="/movile/asset-search" className="group">
+        <Link href="/mobile/asset-search" className="group">
         <div className="flex items-center gap-1 mb-6 cursor-pointer w-fit hover:bg-gray-50/50 p-2 -m-2 rounded-lg transition-all duration-200">
           <h2 className="text-3xl font-light text-[#001f3f] group-hover:text-[#2e8bcb] group-hover:underline group-hover:decoration-[#2e8bcb] decoration-1 underline-offset-4 transition-all duration-200">
             Asset Search & Retrieval
